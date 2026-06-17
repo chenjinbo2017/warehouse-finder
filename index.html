@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>仓库找货</title>
+<script src='https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/4.1.1/tesseract.min.js'></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#f0f2f5;min-height:100vh;color:#1a1a2e}
+header{background:#1a1a2e;color:white;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+header h1{font-size:17px;font-weight:700}
+.tab-bar{display:flex;background:white;border-bottom:1px solid #e0e0e0;position:sticky;top:52px;z-index:99}
+.tab{flex:1;padding:11px;text-align:center;font-size:13px;font-weight:600;color:#888;cursor:pointer;border-bottom:3px solid transparent}
+.tab.active{color:#1a1a2e;border-bottom-color:#e63946}
+.page{display:none;padding:14px}
+.page.active{display:block}
+
+/* SEARCH */
+.search-box{background:white;border-radius:14px;padding:16px;box-shadow:0 2px 10px rgba(0,0,0,.07);margin-bottom:14px}
+.search-label{font-size:11px;color:#888;margin-bottom:8px;text-transform:uppercase;letter-spacing:.8px}
+.search-row{display:flex;gap:8px}
+.search-input{flex:1;border:2px solid #e0e0e0;border-radius:10px;padding:12px 14px;font-size:16px;outline:none}
+.search-input:focus{border-color:#1a1a2e}
+.btn-cam{background:#1a1a2e;color:white;border:none;border-radius:10px;padding:12px 14px;font-size:20px;cursor:pointer}
+.btn-search{width:100%;background:#e63946;color:white;border:none;border-radius:10px;padding:13px;font-size:15px;font-weight:700;cursor:pointer;margin-top:10px}
+.result-card{background:white;border-radius:14px;padding:18px;box-shadow:0 2px 10px rgba(0,0,0,.07);border-left:5px solid #e63946;animation:fadeIn .3s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.result-sku{font-size:12px;color:#888;margin-bottom:4px}
+.result-name{font-size:17px;font-weight:700;margin-bottom:14px}
+.loc-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.loc-item{background:#f0f2f5;border-radius:10px;padding:10px;text-align:center}
+.loc-label{font-size:10px;color:#888;text-transform:uppercase;margin-bottom:3px}
+.loc-value{font-size:24px;font-weight:800;color:#e63946}
+.loc-full{margin-top:12px;text-align:center;font-size:13px;color:#888}
+.not-found{background:white;border-radius:14px;padding:28px 20px;text-align:center;box-shadow:0 2px 10px rgba(0,0,0,.07)}
+
+/* MAP */
+.group-tabs{display:flex;gap:6px;margin-bottom:10px;overflow-x:auto;padding-bottom:2px}
+.group-tab{background:white;border:2px solid #e0e0e0;border-radius:10px;padding:7px 16px;font-size:15px;font-weight:800;cursor:pointer;color:#888;white-space:nowrap;flex-shrink:0}
+.group-tab.active{background:#e63946;color:white;border-color:#e63946}
+
+.shelf-selector{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.shelf-btn{background:white;border:2px solid #e0e0e0;border-radius:8px;padding:6px 12px;font-size:13px;font-weight:700;cursor:pointer;color:#888}
+.shelf-btn.active{background:#1a1a2e;color:white;border-color:#1a1a2e}
+.shelf-btn.has-data{border-color:#4caf50;color:#2e7d32}
+.shelf-btn.active.has-data{background:#2e7d32;border-color:#2e7d32;color:white}
+
+.shelf-info{background:white;border-radius:14px;padding:12px 14px;margin-bottom:10px;box-shadow:0 2px 10px rgba(0,0,0,.07)}
+.shelf-title{font-size:15px;font-weight:700;margin-bottom:6px}
+.adjust-row{display:flex;align-items:center;gap:8px;font-size:13px;color:#555}
+.adjust-row span{min-width:60px}
+.adj-btn{background:#f0f2f5;border:1px solid #ddd;border-radius:6px;width:28px;height:28px;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:700;color:#333}
+.adj-val{font-size:15px;font-weight:700;min-width:24px;text-align:center;color:#1a1a2e}
+
+.grid-container{background:white;border-radius:14px;padding:12px;box-shadow:0 2px 10px rgba(0,0,0,.07);overflow-x:auto}
+.shelf-grid{display:inline-grid;gap:3px}
+.row-label{font-size:10px;color:#aaa;font-weight:700;display:flex;align-items:center;padding-right:3px;min-width:18px}
+.grid-cell{width:50px;height:50px;border-radius:8px;border:2px solid #e0e0e0;background:#f8f9fa;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:8px;color:#aaa;text-align:center;padding:2px;transition:all .15s;overflow:hidden}
+.grid-cell:active{transform:scale(.93);background:#e8eaf6}
+.grid-cell.filled{background:#e8f5e9;border-color:#4caf50}
+.cell-sku{font-size:7px;font-weight:700;line-height:1.2;word-break:break-all;color:#2e7d32}
+.cell-pos{font-size:9px;color:#bbb}
+.grid-cell.filled .cell-pos{color:#81c784;font-size:8px}
+
+/* SCAN MODAL */
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.93);z-index:200;flex-direction:column}
+.modal.open{display:flex}
+.modal-header{padding:14px 16px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0}
+.modal-title{color:white;font-size:15px;font-weight:700}
+.btn-close-modal{background:rgba(255,255,255,.2);color:white;border:none;border-radius:8px;padding:7px 13px;font-size:14px;cursor:pointer}
+.current-cell-info{background:rgba(255,193,7,.25);border-radius:8px;padding:8px 14px;margin:0 14px 8px;font-size:13px;color:#ffc107;font-weight:600;text-align:center;flex-shrink:0}
+.video-wrap{position:relative;flex:1;overflow:hidden;min-height:0}
+#scanVideo{width:100%;height:100%;object-fit:cover;display:block}
+.scan-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none}
+.scan-box{width:88%;height:90px;border:2px solid #e63946;border-radius:10px;position:relative;box-shadow:0 0 0 2000px rgba(0,0,0,.4)}
+.scan-line{position:absolute;left:0;right:0;height:2px;background:#e63946;animation:scan 2s linear infinite}
+@keyframes scan{0%{top:0}100%{top:calc(100% - 2px)}}
+.modal-bottom{padding:10px 14px 14px;flex-shrink:0}
+.btn-capture{width:100%;background:#e63946;color:white;border:none;border-radius:12px;padding:15px;font-size:16px;font-weight:700;cursor:pointer;margin-bottom:8px}
+.btn-capture:disabled{opacity:.5}
+.ocr-status{color:rgba(255,255,255,.7);text-align:center;font-size:13px;margin-bottom:8px;min-height:18px}
+.words-hint{color:rgba(255,255,255,.5);font-size:12px;text-align:center;margin-bottom:6px}
+.words-list{display:flex;flex-wrap:wrap;gap:6px;max-height:100px;overflow-y:auto;margin-bottom:6px}
+.word-chip{background:rgba(255,255,255,.15);color:white;border:1px solid rgba(255,255,255,.3);border-radius:20px;padding:6px 12px;font-size:12px;cursor:pointer;font-family:monospace}
+.word-chip:active{background:#e63946;border-color:#e63946}
+#captureCanvas{display:none}
+.photo-fallback{flex:1;display:none;flex-direction:column;align-items:center;justify-content:center;padding:20px;min-height:0}
+.photo-placeholder{text-align:center;color:rgba(255,255,255,.6)}
+.photo-placeholder .icon{font-size:56px;margin-bottom:12px}
+.photo-placeholder .hint{font-size:13px;line-height:1.5;margin-top:8px;color:rgba(255,255,255,.4)}
+#photoPreview{max-width:100%;max-height:100%;object-fit:contain;border-radius:10px;display:none}
+
+/* LIST */
+.list-search{background:white;border-radius:10px;padding:11px 13px;border:2px solid #e0e0e0;font-size:15px;width:100%;outline:none;margin-bottom:10px}
+.sku-item{background:white;border-radius:12px;padding:13px 15px;margin-bottom:7px;box-shadow:0 1px 5px rgba(0,0,0,.06);display:flex;justify-content:space-between;align-items:center}
+.sku-code{font-size:13px;font-weight:700;color:#e63946;font-family:monospace}
+.sku-name-text{font-size:13px;color:#1a1a2e;margin-top:1px}
+.sku-loc{font-size:11px;color:#888;margin-top:2px}
+.btn-del{background:none;border:none;font-size:17px;cursor:pointer;color:#ccc;padding:4px 8px}
+.empty{text-align:center;padding:36px 20px;color:#aaa;font-size:14px}
+.count-badge{background:#e63946;color:white;border-radius:10px;padding:2px 8px;font-size:12px;font-weight:700}
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:#1a1a2e;color:white;padding:11px 22px;border-radius:100px;font-size:14px;font-weight:600;z-index:9999;opacity:0;transition:opacity .3s;white-space:nowrap;pointer-events:none}
+.toast.show{opacity:1}
+</style>
+</head>
+<body>
+<header>
+  <h1>📦 仓库找货</h1>
+  <span class="count-badge" id="totalCount">0</span>
+</header>
+<div class="tab-bar">
+  <div class="tab active" onclick="switchTab('search')">🔍 查找</div>
+  <div class="tab" onclick="switchTab('map')">🗺️ 录入</div>
+  <div class="tab" onclick="switchTab('list')">📋 列表</div>
+</div>
+
+<!-- SEARCH -->
+<div class="page active" id="page-search">
+  <div class="search-box">
+    <div class="search-label">输入或扫描 SKU</div>
+    <div class="search-row">
+      <input type="text" class="search-input" id="searchInput" placeholder="如 R-S-AGA-0021-8" oninput="this.value=this.value.toUpperCase()" onkeydown="if(event.key==='Enter')doSearch()">
+      <button class="btn-cam" onclick="openScan('search')">📷</button>
+    </div>
+    <button class="btn-search" onclick="doSearch()">查找位置</button>
+  </div>
+  <div id="searchResult"></div>
+</div>
+
+<!-- MAP -->
+<div class="page" id="page-map">
+  <div class="group-tabs" id="groupTabs"></div>
+  <div class="shelf-selector" id="shelfSelector"></div>
+  <div class="shelf-info">
+    <div class="shelf-title" id="shelfTitle">A1</div>
+    <div class="adjust-row" style="margin-bottom:6px">
+      <span>层数</span>
+      <button class="adj-btn" onclick="adjustShelf('rows',-1)">−</button>
+      <div class="adj-val" id="rowsVal">9</div>
+      <button class="adj-btn" onclick="adjustShelf('rows',1)">+</button>
+    </div>
+    <div class="adjust-row">
+      <span>每层格数</span>
+      <button class="adj-btn" onclick="adjustShelf('cols',-1)">−</button>
+      <div class="adj-val" id="colsVal">15</div>
+      <button class="adj-btn" onclick="adjustShelf('cols',1)">+</button>
+    </div>
+  </div>
+  <div class="grid-container">
+    <div class="shelf-grid" id="shelfGrid"></div>
+  </div>
+</div>
+
+<!-- LIST -->
+<div class="page" id="page-list">
+  <input type="text" class="list-search" placeholder="搜索 SKU 或名称..." oninput="renderList(this.value)">
+  <div id="skuList"></div>
+</div>
+
+<!-- SCAN MODAL -->
+<div class="modal" id="scanModal">
+  <div class="modal-header">
+    <div class="modal-title" id="modalTitle">扫描标签</div>
+    <button class="btn-close-modal" onclick="closeScan()">关闭</button>
+  </div>
+  <div class="current-cell-info" id="currentCellInfo" style="display:none"></div>
+  <div class="video-wrap" id="videoWrap">
+    <video id="scanVideo" autoplay playsinline muted></video>
+    <div class="scan-overlay"><div class="scan-box"><div class="scan-line"></div></div></div>
+  </div>
+  <div class="photo-fallback" id="photoFallback">
+    <img id="photoPreview" alt="预览">
+    <div class="photo-placeholder" id="photoPlaceholder">
+      <div class="icon">📷</div>
+      <div>点击下方按钮拍摄标签</div>
+      <div class="hint">直接打开文件时无法使用实时相机<br>拍照模式可正常使用</div>
+    </div>
+  </div>
+  <input type="file" id="photoInput" accept="image/*" capture="environment" hidden onchange="onPhotoSelected(event)">
+  <canvas id="captureCanvas"></canvas>
+  <div class="modal-bottom">
+    <div class="ocr-status" id="ocrStatus">将标签对准红框，点击识别</div>
+    <div class="words-hint" id="wordsHint" style="display:none">👆 点击选择正确的 SKU</div>
+    <div class="words-list" id="wordsList"></div>
+    <button class="btn-capture" id="captureBtn" onclick="captureFrame()">📷 识别标签</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ---- DATA ----
+let db = JSON.parse(localStorage.getItem('wdb4') || '{}');
+
+// Shelf config: key = "A1", value = {rows, cols}
+let shelfCfg = JSON.parse(localStorage.getItem('wdb4_cfg') || '{}');
+
+const GROUPS = ['A','B','C','D'];
+
+function getShelfCfg(key) {
+  return shelfCfg[key] || { rows: 9, cols: 15 };
+}
+
+function saveCfg() { localStorage.setItem('wdb4_cfg', JSON.stringify(shelfCfg)); }
+function saveDB() { localStorage.setItem('wdb4', JSON.stringify(db)); updateCount(); }
+
+function updateCount() {
+  const n = Object.keys(db).filter(k => !k.match(/^[A-Z]\d+-\d+-\d+$/)).length;
+  document.getElementById('totalCount').textContent = n;
+}
+
+function showToast(m) {
+  const t = document.getElementById('toast');
+  t.textContent = m; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ---- TABS ----
+function switchTab(n) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  ['search','map','list'].forEach((t,i) => {
+    if (t === n) {
+      document.querySelectorAll('.tab')[i].classList.add('active');
+      document.getElementById('page-'+t).classList.add('active');
+    }
+  });
+  if (n === 'map') renderMap();
+  if (n === 'list') renderList('');
+}
+
+// ---- SEARCH ----
+function doSearch() {
+  const sku = document.getElementById('searchInput').value.trim().toUpperCase();
+  const el = document.getElementById('searchResult');
+  if (!sku) return;
+  const d = db[sku];
+  if (d) {
+    el.innerHTML = `<div class="result-card">
+      <div class="result-sku">SKU: ${sku}</div>
+      <div class="result-name">${d.name || '（未填名称）'}</div>
+      <div class="loc-grid">
+        <div class="loc-item"><div class="loc-label">货架</div><div class="loc-value">${d.shelf}</div></div>
+        <div class="loc-item"><div class="loc-label">层</div><div class="loc-value">${d.row}</div></div>
+        <div class="loc-item"><div class="loc-label">位置</div><div class="loc-value">${d.col}</div></div>
+      </div>
+      <div class="loc-full">📍 ${d.shelf}-${d.row}-${d.col}</div>
+    </div>`;
+  } else {
+    el.innerHTML = `<div class="not-found"><div style="font-size:36px;margin-bottom:8px">🔍</div><div style="color:#888;font-size:14px">找不到 <strong>${sku}</strong><br>请先录入这个产品</div></div>`;
+  }
+}
+
+// ---- MAP ----
+let currentGroup = 'A';
+let currentShelf = 'A1';
+let scanMode = 'search';
+let currentCell = null;
+
+function renderGroupTabs() {
+  document.getElementById('groupTabs').innerHTML = GROUPS.map(g =>
+    `<button class="group-tab ${g===currentGroup?'active':''}" onclick="selectGroup('${g}')">${g} 区</button>`
+  ).join('');
+}
+
+function selectGroup(g) {
+  currentGroup = g;
+  currentShelf = g + '1';
+  renderMap();
+}
+
+function renderShelfSelector() {
+  document.getElementById('shelfSelector').innerHTML = Array.from({length:9}, (_,i) => {
+    const key = currentGroup + (i+1);
+    const hasData = Object.keys(db).some(k => k.startsWith(key+'-') || (db[k] && db[k].shelf === key));
+    return `<button class="shelf-btn ${key===currentShelf?'active':''} ${hasData?'has-data':''}" onclick="selectShelf('${key}')">${key}</button>`;
+  }).join('');
+}
+
+function selectShelf(s) {
+  currentShelf = s;
+  renderMap();
+}
+
+function adjustShelf(prop, delta) {
+  const cfg = getShelfCfg(currentShelf);
+  if (prop === 'rows') cfg.rows = Math.max(1, Math.min(20, cfg.rows + delta));
+  if (prop === 'cols') cfg.cols = Math.max(1, Math.min(30, cfg.cols + delta));
+  shelfCfg[currentShelf] = cfg;
+  saveCfg();
+  renderMap();
+}
+
+function renderMap() {
+  renderGroupTabs();
+  renderShelfSelector();
+  const cfg = getShelfCfg(currentShelf);
+  document.getElementById('shelfTitle').textContent = currentShelf + ' 货架';
+  document.getElementById('rowsVal').textContent = cfg.rows;
+  document.getElementById('colsVal').textContent = cfg.cols;
+
+  const grid = document.getElementById('shelfGrid');
+  grid.style.gridTemplateColumns = '20px ' + `50px `.repeat(cfg.cols);
+
+  let html = '<div></div>';
+  for (let c = 1; c <= cfg.cols; c++)
+    html += `<div style="text-align:center;font-size:9px;color:#bbb;padding-bottom:3px;font-weight:700">${c}</div>`;
+
+  for (let r = 1; r <= cfg.rows; r++) {
+    html += `<div class="row-label">${r}</div>`;
+    for (let c = 1; c <= cfg.cols; c++) {
+      const pk = `${currentShelf}-${r}-${c}`;
+      const e = db[pk];
+      if (e) {
+        html += `<div class="grid-cell filled" onclick="cellClick('${currentShelf}',${r},${c})"><div class="cell-sku">${e.sku||''}</div><div class="cell-pos">${r}-${c}</div></div>`;
+      } else {
+        html += `<div class="grid-cell" onclick="cellClick('${currentShelf}',${r},${c})"><div class="cell-pos">${r}-${c}</div></div>`;
+      }
+    }
+  }
+  grid.innerHTML = html;
+}
+
+function cellClick(shelf, row, col) {
+  currentCell = { shelf, row, col };
+  openScan('map');
+}
+
+// ---- SCAN / OCR ----
+let videoStream = null, twk = null, ocrReady = false, usePhotoMode = false;
+
+async function initOcr() {
+  if (twk) return;
+  try { twk = await Tesseract.createWorker('eng'); ocrReady = true; } catch(e) {}
+}
+
+function setScanUI(mode) {
+  usePhotoMode = mode === 'photo';
+  document.getElementById('videoWrap').style.display = mode === 'live' ? '' : 'none';
+  document.getElementById('photoFallback').style.display = mode === 'photo' ? 'flex' : 'none';
+  document.getElementById('captureBtn').textContent = mode === 'photo' ? '📷 拍照识别' : '📷 识别标签';
+}
+
+function resetPhotoPreview() {
+  document.getElementById('photoPreview').style.display = 'none';
+  document.getElementById('photoPreview').src = '';
+  document.getElementById('photoPlaceholder').style.display = 'block';
+}
+
+function enablePhotoMode(msg) {
+  setScanUI('photo');
+  resetPhotoPreview();
+  document.getElementById('ocrStatus').textContent = msg || '点击拍照，对准标签后确认';
+}
+
+function openScan(mode) {
+  scanMode = mode;
+  document.getElementById('scanModal').classList.add('open');
+  document.getElementById('wordsList').innerHTML = '';
+  document.getElementById('wordsHint').style.display = 'none';
+  document.getElementById('captureBtn').disabled = false;
+  resetPhotoPreview();
+
+  const ci = document.getElementById('currentCellInfo');
+  if (mode === 'map' && currentCell) {
+    ci.style.display = 'block';
+    ci.textContent = `录入：${currentCell.shelf} 第${currentCell.row}层 第${currentCell.col}个`;
+    document.getElementById('modalTitle').textContent = `录入 ${currentCell.shelf}-${currentCell.row}-${currentCell.col}`;
+  } else {
+    ci.style.display = 'none';
+    document.getElementById('modalTitle').textContent = '扫描 SKU 标签';
+  }
+
+  if (window.isSecureContext && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+    setScanUI('live');
+    document.getElementById('ocrStatus').textContent = '将标签对准红框，点击识别';
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment', width: {ideal:1920}, height: {ideal:1080} } })
+      .then(s => { videoStream = s; document.getElementById('scanVideo').srcObject = s; })
+      .catch(() => enablePhotoMode('无法打开相机，请用拍照模式'));
+  } else {
+    enablePhotoMode('当前环境不支持实时相机，请用拍照模式');
+  }
+
+  if (!ocrReady) initOcr();
+}
+
+function closeScan() {
+  if (videoStream) { videoStream.getTracks().forEach(t => t.stop()); videoStream = null; }
+  document.getElementById('scanVideo').srcObject = null;
+  document.getElementById('scanModal').classList.remove('open');
+}
+
+function extractWords(data) {
+  return data.words
+    .filter(w => w.confidence > 25 && w.text.trim().length > 2)
+    .map(w => w.text.trim().replace(/[^A-Z0-9\-\.]/gi,'').toUpperCase())
+    .filter(w => w.length > 2)
+    .filter((v,i,a) => a.indexOf(v) === i)
+    .slice(0, 24);
+}
+
+function showOcrResults(words) {
+  if (words.length === 0) {
+    document.getElementById('ocrStatus').textContent = usePhotoMode ? '未识别到文字，请重新拍照' : '未识别到文字，请靠近重试';
+  } else {
+    document.getElementById('ocrStatus').textContent = `识别到 ${words.length} 个词：`;
+    document.getElementById('wordsHint').style.display = 'block';
+    document.getElementById('wordsList').innerHTML = words.map(w =>
+      `<div class="word-chip" onclick="selectWord('${w.replace(/'/g, "\\'")}')">${w}</div>`
+    ).join('');
+  }
+}
+
+async function runOcr(canvas) {
+  document.getElementById('ocrStatus').textContent = '识别中...';
+  document.getElementById('wordsList').innerHTML = '';
+  document.getElementById('wordsHint').style.display = 'none';
+  document.getElementById('captureBtn').disabled = true;
+  try {
+    let words = [];
+    if (ocrReady && twk) {
+      const { data } = await twk.recognize(canvas);
+      words = extractWords(data);
+    }
+    showOcrResults(words);
+  } catch(e) {
+    document.getElementById('ocrStatus').textContent = '识别失败，请重试';
+  }
+  document.getElementById('captureBtn').disabled = false;
+}
+
+async function captureFrame() {
+  if (usePhotoMode) {
+    document.getElementById('photoInput').click();
+    return;
+  }
+  const video = document.getElementById('scanVideo');
+  if (!video.videoWidth) return;
+  const canvas = document.getElementById('captureCanvas');
+  canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+  canvas.getContext('2d').drawImage(video, 0, 0);
+  await runOcr(canvas);
+}
+
+function onPhotoSelected(e) {
+  const file = e.target.files && e.target.files[0];
+  e.target.value = '';
+  if (!file) return;
+  const img = new Image();
+  const url = URL.createObjectURL(file);
+  img.onload = async () => {
+    const canvas = document.getElementById('captureCanvas');
+    canvas.width = img.width; canvas.height = img.height;
+    canvas.getContext('2d').drawImage(img, 0, 0);
+    URL.revokeObjectURL(url);
+    const preview = document.getElementById('photoPreview');
+    preview.src = canvas.toDataURL('image/jpeg', 0.9);
+    preview.style.display = 'block';
+    document.getElementById('photoPlaceholder').style.display = 'none';
+    await runOcr(canvas);
+  };
+  img.onerror = () => { URL.revokeObjectURL(url); showToast('图片加载失败'); };
+  img.src = url;
+}
+
+function selectWord(word) {
+  if (scanMode === 'search') {
+    document.getElementById('searchInput').value = word;
+    closeScan(); doSearch();
+  } else if (scanMode === 'map' && currentCell) {
+    const pk = `${currentCell.shelf}-${currentCell.row}-${currentCell.col}`;
+    db[pk] = { sku: word, shelf: currentCell.shelf, row: currentCell.row, col: currentCell.col };
+    db[word] = { name: '', shelf: currentCell.shelf, row: currentCell.row, col: currentCell.col };
+    saveDB();
+    showToast(`✅ ${word} → ${pk}`);
+    closeScan();
+
+    // Auto advance
+    const cfg = getShelfCfg(currentCell.shelf);
+    let nr = currentCell.row, nc = currentCell.col + 1;
+    if (nc > cfg.cols) { nc = 1; nr++; }
+    if (nr <= cfg.rows) {
+      currentCell = { shelf: currentCell.shelf, row: nr, col: nc };
+      renderMap();
+      setTimeout(() => openScan('map'), 400);
+    } else {
+      currentCell = null; renderMap();
+    }
+  }
+}
+
+// ---- LIST ----
+function renderList(filter) {
+  const el = document.getElementById('skuList');
+  const keys = Object.keys(db).filter(k => {
+    if (k.match(/^[A-Z]\d+-\d+-\d+$/)) return false;
+    if (!filter) return true;
+    const f = filter.toUpperCase();
+    return k.includes(f) || (db[k].name||'').toUpperCase().includes(f);
+  }).sort();
+  if (keys.length === 0) {
+    el.innerHTML = '<div class="empty">还没有录入任何产品<br>去「录入」页面点格子开始</div>';
+    return;
+  }
+  el.innerHTML = keys.map(k => {
+    const d = db[k];
+    return `<div class="sku-item">
+      <div>
+        <div class="sku-code">${k}</div>
+        <div class="sku-name-text">${d.name||'（未填名称）'}</div>
+        <div class="sku-loc">📍 ${d.shelf}-${d.row}-${d.col}</div>
+      </div>
+      <button class="btn-del" onclick="deleteSku('${k}')">🗑️</button>
+    </div>`;
+  }).join('');
+}
+
+function deleteSku(sku) {
+  if (!confirm('删除 ' + sku + '？')) return;
+  const d = db[sku];
+  if (d) { delete db[`${d.shelf}-${d.row}-${d.col}`]; }
+  delete db[sku]; saveDB();
+  renderList(document.querySelector('.list-search').value);
+  showToast('已删除');
+}
+
+// ---- INIT ----
+updateCount(); renderMap();
+</script>
+</body>
+</html>
