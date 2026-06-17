@@ -71,8 +71,32 @@
       "shelf": "A1",
       "row": 1,
       "col": 6
+    },
+    "A9-1-1": {
+      "sku": "GEM-2404MLY-63-6",
+      "shelf": "A9",
+      "row": 1,
+      "col": 1
+    },
+    "GEM-2404MLY-63-6": {
+      "name": "",
+      "shelf": "A9",
+      "row": 1,
+      "col": 1
+    },
+    "A9-1-2": {
+      "sku": "GEM-2404MVILY-63-8",
+      "shelf": "A9",
+      "row": 1,
+      "col": 2
+    },
+    "GEM-2404MVILY-63-8": {
+      "name": "",
+      "shelf": "A9",
+      "row": 1,
+      "col": 2
     }
   },
   "shelfCfg": {},
-  "updatedAt": "2026-06-17T03:49:03.689Z"
+  "updatedAt": "2026-06-17T16:42:54.035Z"
 }
