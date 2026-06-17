@@ -328,11 +328,26 @@ function cellClick(shelf, row, col) {
 }
 
 // ---- SCAN / OCR ----
-let videoStream = null, twk = null, ocrReady = false, usePhotoMode = false;
+let videoStream = null, twk = null, ocrReady = false, usePhotoMode = false, ocrInitPromise = null;
 
-async function initOcr() {
-  if (twk) return;
-  try { twk = await Tesseract.createWorker('eng'); ocrReady = true; } catch(e) {}
+const TESS_OPTS = {
+  workerPath: 'https://cdn.jsdelivr.net/npm/tesseract.js@4.1.1/dist/worker.min.js',
+  corePath: 'https://cdn.jsdelivr.net/npm/tesseract.js-core@4.0.4',
+  langPath: 'https://tessdata.projectnaptha.com/4.0.0'
+};
+
+function initOcr() {
+  if (ocrReady) return Promise.resolve();
+  if (ocrInitPromise) return ocrInitPromise;
+  ocrInitPromise = (async () => {
+    if (typeof Tesseract === 'undefined') throw new Error('OCR 库未加载');
+    twk = await Tesseract.createWorker('eng', 1, TESS_OPTS);
+    ocrReady = true;
+  })().catch(e => {
+    ocrInitPromise = null;
+    throw e;
+  });
+  return ocrInitPromise;
 }
 
 function setScanUI(mode) {
@@ -382,7 +397,13 @@ function openScan(mode) {
     enablePhotoMode('当前环境不支持实时相机，请用拍照模式');
   }
 
-  if (!ocrReady) initOcr();
+  initOcr().then(() => {
+    if (document.getElementById('scanModal').classList.contains('open') && !usePhotoMode)
+      document.getElementById('ocrStatus').textContent = '将标签对准红框，点击识别';
+  }).catch(() => {
+    if (document.getElementById('scanModal').classList.contains('open'))
+      document.getElementById('ocrStatus').textContent = '识别引擎加载失败，请刷新页面';
+  });
 }
 
 function closeScan() {
@@ -391,13 +412,70 @@ function closeScan() {
   document.getElementById('scanModal').classList.remove('open');
 }
 
+function cleanToken(s) {
+  return s.trim().replace(/[^A-Z0-9\-\.]/gi, '').toUpperCase();
+}
+
 function extractWords(data) {
-  return data.words
-    .filter(w => w.confidence > 25 && w.text.trim().length > 2)
-    .map(w => w.text.trim().replace(/[^A-Z0-9\-\.]/gi,'').toUpperCase())
-    .filter(w => w.length > 2)
-    .filter((v,i,a) => a.indexOf(v) === i)
-    .slice(0, 24);
+  const found = new Set();
+  const text = (data.text || '').toUpperCase();
+  const patterns = [
+    /[A-Z]{2,5}-[A-Z0-9]{3,}-[A-Z0-9]{2,}/g,
+    /[A-Z]{2,5}-[A-Z0-9]{4,}/g,
+    /R-S-[A-Z]{3}-\d{4}-\d/g
+  ];
+  for (const p of patterns) {
+    for (const m of text.matchAll(p)) {
+      const t = cleanToken(m[0]);
+      if (t.length > 2) found.add(t);
+    }
+  }
+  for (const w of (data.words || [])) {
+    if (w.confidence > 10) {
+      const t = cleanToken(w.text);
+      if (t.length > 2) found.add(t);
+    }
+  }
+  for (const line of (data.lines || [])) {
+    const t = cleanToken(line.text);
+    if (t.length > 2 && /[A-Z0-9]/.test(t)) found.add(t);
+  }
+  return [...found].sort((a, b) => {
+    const score = s => (/^[A-Z]{2,5}-/.test(s) ? 0 : 1);
+    return score(a) - score(b) || b.length - a.length;
+  }).slice(0, 24);
+}
+
+function preprocessForOcr(srcCanvas) {
+  const vw = srcCanvas.width, vh = srcCanvas.height;
+  const cropW = vw * 0.88, cropH = Math.max(vh * 0.18, 120);
+  const cropX = (vw - cropW) / 2, cropY = (vh - cropH) / 2;
+  const scale = 2;
+  const out = document.createElement('canvas');
+  out.width = cropW * scale;
+  out.height = cropH * scale;
+  const ctx = out.getContext('2d');
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, out.width, out.height);
+  ctx.drawImage(srcCanvas, cropX, cropY, cropW, cropH, 0, 0, out.width, out.height);
+  const img = ctx.getImageData(0, 0, out.width, out.height);
+  const d = img.data;
+  for (let i = 0; i < d.length; i += 4) {
+    let g = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+    g = Math.min(255, Math.max(0, (g - 128) * 1.6 + 128));
+    d[i] = d[i + 1] = d[i + 2] = g;
+  }
+  ctx.putImageData(img, 0, 0);
+  return out;
+}
+
+async function recognizeCanvas(canvas) {
+  const processed = preprocessForOcr(canvas);
+  try {
+    await initOcr();
+    if (twk) return await twk.recognize(processed);
+  } catch (e) {}
+  return await Tesseract.recognize(processed, 'eng', TESS_OPTS);
 }
 
 function showOcrResults(words) {
@@ -413,19 +491,15 @@ function showOcrResults(words) {
 }
 
 async function runOcr(canvas) {
-  document.getElementById('ocrStatus').textContent = '识别中...';
+  document.getElementById('ocrStatus').textContent = ocrReady ? '识别中...' : '引擎加载中，请稍候...';
   document.getElementById('wordsList').innerHTML = '';
   document.getElementById('wordsHint').style.display = 'none';
   document.getElementById('captureBtn').disabled = true;
   try {
-    let words = [];
-    if (ocrReady && twk) {
-      const { data } = await twk.recognize(canvas);
-      words = extractWords(data);
-    }
-    showOcrResults(words);
-  } catch(e) {
-    document.getElementById('ocrStatus').textContent = '识别失败，请重试';
+    const { data } = await recognizeCanvas(canvas);
+    showOcrResults(extractWords(data));
+  } catch (e) {
+    document.getElementById('ocrStatus').textContent = '识别失败，请靠近标签重试';
   }
   document.getElementById('captureBtn').disabled = false;
 }
@@ -527,6 +601,7 @@ function deleteSku(sku) {
 
 // ---- INIT ----
 updateCount(); renderMap();
+initOcr().catch(() => {});
 </script>
 </body>
 </html>
