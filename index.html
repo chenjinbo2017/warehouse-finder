@@ -100,6 +100,17 @@ header h1{font-size:17px;font-weight:700}
 .btn-del{background:none;border:none;font-size:17px;cursor:pointer;color:#ccc;padding:4px 8px}
 .empty{text-align:center;padding:36px 20px;color:#aaa;font-size:14px}
 .count-badge{background:#e63946;color:white;border-radius:10px;padding:2px 8px;font-size:12px;font-weight:700}
+.sync-badge{font-size:18px;cursor:pointer;padding:4px}
+.sync-box{background:white;border-radius:14px;padding:16px;box-shadow:0 2px 10px rgba(0,0,0,.07);margin-bottom:12px}
+.sync-title{font-size:14px;font-weight:700;margin-bottom:8px}
+.sync-desc{font-size:12px;color:#888;line-height:1.6;margin-bottom:12px}
+.sync-input{width:100%;border:2px solid #e0e0e0;border-radius:10px;padding:11px 13px;font-size:14px;margin-bottom:10px;outline:none}
+.sync-input:focus{border-color:#1a1a2e}
+.sync-row{display:flex;gap:8px;margin-top:8px}
+.btn-sync{flex:1;background:#1a1a2e;color:white;border:none;border-radius:10px;padding:12px;font-size:14px;font-weight:700;cursor:pointer}
+.btn-sync.secondary{background:#f0f2f5;color:#1a1a2e}
+.sync-status{font-size:12px;color:#4caf50;margin-top:10px;text-align:center}
+.sync-status.err{color:#e63946}
 .toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:#1a1a2e;color:white;padding:11px 22px;border-radius:100px;font-size:14px;font-weight:600;z-index:9999;opacity:0;transition:opacity .3s;white-space:nowrap;pointer-events:none}
 .toast.show{opacity:1}
 </style>
@@ -107,12 +118,16 @@ header h1{font-size:17px;font-weight:700}
 <body>
 <header>
   <h1>📦 仓库找货</h1>
-  <span class="count-badge" id="totalCount">0</span>
+  <div style="display:flex;align-items:center;gap:8px">
+    <span class="sync-badge" id="syncBadge" onclick="switchTab('sync')" title="云端同步">☁️</span>
+    <span class="count-badge" id="totalCount">0</span>
+  </div>
 </header>
 <div class="tab-bar">
   <div class="tab active" onclick="switchTab('search')">🔍 查找</div>
   <div class="tab" onclick="switchTab('map')">🗺️ 录入</div>
   <div class="tab" onclick="switchTab('list')">📋 列表</div>
+  <div class="tab" onclick="switchTab('sync')">☁️ 云</div>
 </div>
 
 <!-- SEARCH -->
@@ -158,6 +173,22 @@ header h1{font-size:17px;font-weight:700}
   <div id="skuList"></div>
 </div>
 
+<!-- SYNC -->
+<div class="page" id="page-sync">
+  <div class="sync-box">
+    <div class="sync-title">GitHub 云端同步</div>
+    <div class="sync-desc">数据保存在仓库 <strong>warehouse-data.json</strong>。录入后自动上传；其他手机打开网页会自动下载最新数据。</div>
+    <div class="sync-desc">首次使用：在 GitHub → Settings → Developer settings → Personal access tokens 创建 Token，勾选 <strong>repo</strong> 权限，粘贴到下方（只需设置一次）。</div>
+    <input type="password" class="sync-input" id="ghTokenInput" placeholder="GitHub Token（ghp_...）" autocomplete="off">
+    <button class="btn-search" onclick="saveGhToken()">保存 Token</button>
+    <div class="sync-row">
+      <button class="btn-sync secondary" onclick="pullFromCloud()">⬇️ 下载</button>
+      <button class="btn-sync" onclick="pushToCloud()">⬆️ 上传</button>
+    </div>
+    <div class="sync-status" id="syncStatus">未连接</div>
+  </div>
+</div>
+
 <!-- SCAN MODAL -->
 <div class="modal" id="scanModal">
   <div class="modal-header">
@@ -192,18 +223,192 @@ header h1{font-size:17px;font-weight:700}
 <script>
 // ---- DATA ----
 let db = JSON.parse(localStorage.getItem('wdb4') || '{}');
-
-// Shelf config: key = "A1", value = {rows, cols}
 let shelfCfg = JSON.parse(localStorage.getItem('wdb4_cfg') || '{}');
+let ghFileSha = null;
+let syncPushTimer = null;
+
+const GH_OWNER = 'chenjinbo2017';
+const GH_REPO = 'warehouse-finder';
+const GH_BRANCH = 'main';
+const GH_DATA_FILE = 'warehouse-data.json';
+const GH_RAW_URL = `https://raw.githubusercontent.com/${GH_OWNER}/${GH_REPO}/${GH_BRANCH}/${GH_DATA_FILE}`;
 
 const GROUPS = ['A','B','C','D'];
+
+function getGhToken() {
+  return localStorage.getItem('wdb4_gh_token') || '';
+}
+
+function buildPayload() {
+  return { db, shelfCfg, updatedAt: new Date().toISOString() };
+}
+
+function applyPayload(payload) {
+  if (payload.db) db = payload.db;
+  if (payload.shelfCfg) shelfCfg = payload.shelfCfg;
+  localStorage.setItem('wdb4', JSON.stringify(db));
+  localStorage.setItem('wdb4_cfg', JSON.stringify(shelfCfg));
+  if (payload.updatedAt) localStorage.setItem('wdb4_updated', payload.updatedAt);
+  updateCount();
+}
+
+function toBase64Utf8(str) {
+  const bytes = new TextEncoder().encode(str);
+  let bin = '';
+  bytes.forEach(b => { bin += String.fromCharCode(b); });
+  return btoa(bin);
+}
+
+function fromBase64Utf8(b64) {
+  const bin = atob(b64.replace(/\n/g, ''));
+  const bytes = Uint8Array.from(bin, c => c.charCodeAt(0));
+  return new TextDecoder().decode(bytes);
+}
+
+function setSyncStatus(msg, isErr) {
+  const el = document.getElementById('syncStatus');
+  if (!el) return;
+  el.textContent = msg;
+  el.className = 'sync-status' + (isErr ? ' err' : '');
+}
+
+async function ghApi(path, opts) {
+  const token = getGhToken();
+  if (!token) throw new Error('请先保存 GitHub Token');
+  const res = await fetch(`https://api.github.com${path}`, {
+    method: opts && opts.method || 'GET',
+    headers: {
+      'Accept': 'application/vnd.github+json',
+      'Authorization': `Bearer ${token}`,
+      'X-GitHub-Api-Version': '2022-11-28',
+      'Content-Type': 'application/json'
+    },
+    body: opts && opts.body
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.message || `请求失败 ${res.status}`);
+  }
+  if (res.status === 204) return null;
+  return res.json();
+}
+
+async function loadFromGitHub() {
+  const data = await ghApi(`/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_DATA_FILE}?ref=${GH_BRANCH}`);
+  ghFileSha = data.sha;
+  const json = JSON.parse(fromBase64Utf8(data.content));
+  applyPayload(json);
+  return json;
+}
+
+async function loadFromPublicRaw() {
+  const res = await fetch(`${GH_RAW_URL}?t=${Date.now()}`);
+  if (!res.ok) return null;
+  return res.json();
+}
+
+async function pushToGitHub() {
+  const content = toBase64Utf8(JSON.stringify(buildPayload(), null, 2));
+  const body = {
+    message: 'Update warehouse data',
+    branch: GH_BRANCH,
+    content
+  };
+  if (ghFileSha) body.sha = ghFileSha;
+  const data = await ghApi(`/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_DATA_FILE}`, {
+    method: 'PUT',
+    body: JSON.stringify(body)
+  });
+  ghFileSha = data.content.sha;
+}
+
+function scheduleSyncPush() {
+  if (!getGhToken()) return;
+  clearTimeout(syncPushTimer);
+  syncPushTimer = setTimeout(() => {
+    pushToGitHub()
+      .then(() => setSyncStatus('已自动同步到 GitHub'))
+      .catch(e => setSyncStatus('自动上传失败: ' + e.message, true));
+  }, 1200);
+}
+
+function persistAll() {
+  const payload = buildPayload();
+  localStorage.setItem('wdb4', JSON.stringify(db));
+  localStorage.setItem('wdb4_cfg', JSON.stringify(shelfCfg));
+  localStorage.setItem('wdb4_updated', payload.updatedAt);
+  updateCount();
+  scheduleSyncPush();
+}
+
+function saveGhToken() {
+  const token = document.getElementById('ghTokenInput').value.trim();
+  if (!token) { showToast('请输入 Token'); return; }
+  localStorage.setItem('wdb4_gh_token', token);
+  document.getElementById('ghTokenInput').value = '';
+  showToast('Token 已保存');
+  pushToCloud();
+}
+
+async function pullFromCloud() {
+  setSyncStatus('下载中...');
+  try {
+    if (getGhToken()) await loadFromGitHub();
+    else {
+      const remote = await loadFromPublicRaw();
+      if (!remote) throw new Error('云端暂无数据');
+      applyPayload(remote);
+    }
+    renderMap();
+    renderList(document.querySelector('.list-search')?.value || '');
+    setSyncStatus('已下载最新数据');
+    showToast('数据已更新');
+  } catch (e) {
+    setSyncStatus('下载失败: ' + e.message, true);
+  }
+}
+
+async function pushToCloud() {
+  setSyncStatus('上传中...');
+  try {
+    await pushToGitHub();
+    setSyncStatus('已上传到 GitHub');
+    showToast('上传成功');
+  } catch (e) {
+    setSyncStatus('上传失败: ' + e.message, true);
+  }
+}
+
+async function initCloudData() {
+  const token = getGhToken();
+  if (token) document.getElementById('ghTokenInput').placeholder = 'Token 已保存（输入可更换）';
+  try {
+    if (token) {
+      await loadFromGitHub();
+      setSyncStatus('已从 GitHub 加载');
+    } else {
+      const remote = await loadFromPublicRaw();
+      const localUpdated = localStorage.getItem('wdb4_updated') || '';
+      if (remote && remote.updatedAt && (!localUpdated || remote.updatedAt > localUpdated)) {
+        applyPayload(remote);
+        setSyncStatus('已自动下载云端数据');
+      } else if (Object.keys(db).length) {
+        setSyncStatus('使用本机数据（可在「云」页上传）');
+      } else {
+        setSyncStatus('暂无云端数据');
+      }
+    }
+  } catch (e) {
+    setSyncStatus('同步失败，使用本机数据', true);
+  }
+}
 
 function getShelfCfg(key) {
   return shelfCfg[key] || { rows: 9, cols: 15 };
 }
 
-function saveCfg() { localStorage.setItem('wdb4_cfg', JSON.stringify(shelfCfg)); }
-function saveDB() { localStorage.setItem('wdb4', JSON.stringify(db)); updateCount(); }
+function saveCfg() { persistAll(); }
+function saveDB() { persistAll(); }
 
 function updateCount() {
   const n = Object.keys(db).filter(k => !k.match(/^[A-Z]\d+-\d+-\d+$/)).length;
@@ -220,7 +425,7 @@ function showToast(m) {
 function switchTab(n) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  ['search','map','list'].forEach((t,i) => {
+  ['search','map','list','sync'].forEach((t,i) => {
     if (t === n) {
       document.querySelectorAll('.tab')[i].classList.add('active');
       document.getElementById('page-'+t).classList.add('active');
@@ -688,8 +893,8 @@ function deleteSku(sku) {
 }
 
 // ---- INIT ----
-updateCount(); renderMap();
-initOcr().catch(() => {});
+initCloudData().then(() => { renderMap(); initOcr().catch(() => {}); });
+updateCount();
 </script>
 </body>
 </html>
