@@ -113,8 +113,20 @@
       "shelf": "A9",
       "row": 1,
       "col": 3
+    },
+    "A2-1-1": {
+      "sku": "R-S-OPA-0323-4",
+      "shelf": "A2",
+      "row": 1,
+      "col": 1
+    },
+    "R-S-OPA-0323-4": {
+      "name": "",
+      "shelf": "A2",
+      "row": 1,
+      "col": 1
     }
   },
   "shelfCfg": {},
-  "updatedAt": "2026-06-17T18:41:08.137Z"
+  "updatedAt": "2026-06-17T19:16:16.950Z"
 }
