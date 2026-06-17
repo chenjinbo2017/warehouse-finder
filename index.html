@@ -180,7 +180,7 @@ header h1{font-size:17px;font-weight:700}
   <input type="file" id="photoInput" accept="image/*" capture="environment" hidden onchange="onPhotoSelected(event)">
   <canvas id="captureCanvas"></canvas>
   <div class="modal-bottom">
-    <div class="ocr-status" id="ocrStatus">将编号那一行对准红框</div>
+    <div class="ocr-status" id="ocrStatus">对准编号后，点击「识别标签」</div>
     <div class="words-hint" id="wordsHint" style="display:none">👆 点击选择正确的 SKU</div>
     <div class="words-list" id="wordsList"></div>
     <button class="btn-capture" id="captureBtn" onclick="captureFrame()">📷 识别标签</button>
@@ -328,12 +328,12 @@ function cellClick(shelf, row, col) {
 }
 
 // ---- SCAN / OCR ----
-let videoStream = null, twk = null, ocrReady = false, usePhotoMode = false, ocrInitPromise = null, lastOcrWords = [];
+let videoStream = null, twk = null, ocrReady = false, usePhotoMode = false, ocrInitPromise = null, lastOcrWords = [], capturedPhoto = null;
 
 const TESS_OPTS = {
   workerPath: 'https://cdn.jsdelivr.net/npm/tesseract.js@4.1.1/dist/worker.min.js',
   corePath: 'https://cdn.jsdelivr.net/npm/tesseract.js-core@4.0.4',
-  langPath: 'https://tessdata.projectnaptha.com/4.0.0'
+  langPath: 'https://cdn.jsdelivr.net/npm/@tesseract.js-data/eng/4.0.0_best_int'
 };
 
 function initOcr() {
@@ -342,12 +342,24 @@ function initOcr() {
   ocrInitPromise = (async () => {
     if (typeof Tesseract === 'undefined') throw new Error('OCR 库未加载');
     twk = await Tesseract.createWorker('eng', 1, TESS_OPTS);
+    try {
+      await twk.setParameters({ tessedit_pageseg_mode: '7' });
+    } catch (e) {}
     ocrReady = true;
   })().catch(e => {
     ocrInitPromise = null;
     throw e;
   });
   return ocrInitPromise;
+}
+
+async function resetOcrWorker() {
+  ocrReady = false;
+  ocrInitPromise = null;
+  if (twk) {
+    try { await twk.terminate(); } catch (e) {}
+    twk = null;
+  }
 }
 
 function setScanUI(mode) {
@@ -371,6 +383,7 @@ function enablePhotoMode(msg) {
 
 function openScan(mode) {
   scanMode = mode;
+  capturedPhoto = null;
   document.getElementById('scanModal').classList.add('open');
   document.getElementById('wordsList').innerHTML = '';
   document.getElementById('wordsHint').style.display = 'none';
@@ -389,7 +402,7 @@ function openScan(mode) {
 
   if (window.isSecureContext && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
     setScanUI('live');
-    document.getElementById('ocrStatus').textContent = '将编号那一行对准红框';
+    document.getElementById('ocrStatus').textContent = '对准编号后，点击「识别标签」';
     navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment', width: {ideal:1920}, height: {ideal:1080} } })
       .then(s => { videoStream = s; document.getElementById('scanVideo').srcObject = s; })
       .catch(() => enablePhotoMode('无法打开相机，请用拍照模式'));
@@ -399,7 +412,7 @@ function openScan(mode) {
 
   initOcr().then(() => {
     if (document.getElementById('scanModal').classList.contains('open') && !usePhotoMode)
-      document.getElementById('ocrStatus').textContent = '将编号那一行对准红框';
+      document.getElementById('ocrStatus').textContent = '对准编号后，点击「识别标签」';
   }).catch(() => {
     if (document.getElementById('scanModal').classList.contains('open'))
       document.getElementById('ocrStatus').textContent = '识别引擎加载失败，请刷新页面';
@@ -429,31 +442,35 @@ function isSkuCode(s) {
 }
 
 function extractWords(data) {
-  const found = [];
+  const candidates = [];
   const seen = new Set();
-  const add = (raw) => {
+  const push = (raw) => {
     const text = normalizeText(raw).toUpperCase().replace(/\s+/g, '');
     if (!isSkuCode(text) || seen.has(text)) return;
     seen.add(text);
-    found.push(text);
+    candidates.push(text);
   };
 
   let bestLine = '', bestConf = 0;
   for (const line of (data.lines || [])) {
-    const t = normalizeText(line.text);
-    if (line.confidence >= bestConf && t.length >= 4) {
+    if (line.confidence >= bestConf && normalizeText(line.text).length >= 4) {
       bestConf = line.confidence;
-      bestLine = t;
+      bestLine = line.text;
     }
   }
-  if (bestLine) add(bestLine);
+  if (bestLine) push(bestLine);
 
-  const oneRow = normalizeText((data.text || '').replace(/\s*\n\s*/g, ' '));
-  if (oneRow) add(oneRow);
+  const oneRow = (data.text || '').replace(/\s*\n\s*/g, ' ');
+  if (oneRow) push(oneRow);
 
-  for (const m of (data.text || '').match(/[A-Z0-9][A-Z0-9\-./]{3,}/gi) || []) add(m);
+  const tokens = [...(data.text || '').match(/[A-Z0-9][A-Z0-9\-./]{3,}/gi) || []]
+    .sort((a, b) => b.length - a.length);
+  for (const t of tokens) {
+    push(t);
+    if (candidates.length >= 2) break;
+  }
 
-  return found.slice(0, 4);
+  return candidates.slice(0, 2);
 }
 
 function cropScanRegionFromVideo(video) {
@@ -491,10 +508,10 @@ function cropScanRegionFromImage(img) {
 
 function buildOcrCanvas(source, crop) {
   const { cropX, cropY, cropW, cropH } = crop;
-  const scale = 3;
+  const scale = 4;
   const out = document.createElement('canvas');
-  out.width = Math.max(1, Math.round(cropW * scale));
-  out.height = Math.max(1, Math.round(cropH * scale));
+  out.width = Math.max(280, Math.round(cropW * scale));
+  out.height = Math.max(56, Math.round(cropH * scale));
   const ctx = out.getContext('2d');
   ctx.fillStyle = '#fff';
   ctx.fillRect(0, 0, out.width, out.height);
@@ -520,9 +537,12 @@ function captureScanRegionFromImage(img) {
 
 async function recognizeImage(processed) {
   await initOcr();
-  if (twk) {
-    await twk.setParameters({ tessedit_pageseg_mode: '7' });
-    return await twk.recognize(processed);
+  try {
+    if (twk) return await twk.recognize(processed);
+  } catch (e) {
+    await resetOcrWorker();
+    await initOcr();
+    if (twk) return await twk.recognize(processed);
   }
   return await Tesseract.recognize(processed, 'eng', TESS_OPTS);
 }
@@ -547,7 +567,7 @@ function showOcrResults(words) {
   if (words.length === 0) {
     document.getElementById('ocrStatus').textContent = usePhotoMode ? '未识别到文字，请重新拍照' : '未识别到文字，请靠近重试';
   } else {
-    document.getElementById('ocrStatus').textContent = `识别到 ${words.length} 个编号，点击选择：`;
+    document.getElementById('ocrStatus').textContent = words.length === 1 ? '识别到编号，点击确认：' : '识别到编号，点击选择：';
     document.getElementById('wordsHint').style.display = 'block';
     document.getElementById('wordsList').innerHTML = words.map((w, i) =>
       `<div class="word-chip" onclick="selectWordByIndex(${i})">${escHtml(w)}</div>`
@@ -565,11 +585,18 @@ async function runOcr(canvas) {
 
 async function captureFrame() {
   if (usePhotoMode) {
-    document.getElementById('photoInput').click();
+    if (!capturedPhoto) {
+      document.getElementById('photoInput').click();
+      return;
+    }
+    await runOcrFromSource(() => captureScanRegionFromImage(capturedPhoto));
     return;
   }
   const video = document.getElementById('scanVideo');
-  if (!video.videoWidth) return;
+  if (!video.videoWidth) {
+    showToast('相机未就绪');
+    return;
+  }
   await runOcrFromSource(() => captureScanRegion(video));
 }
 
@@ -579,16 +606,20 @@ function onPhotoSelected(e) {
   if (!file) return;
   const img = new Image();
   const url = URL.createObjectURL(file);
-  img.onload = async () => {
+  img.onload = () => {
+    capturedPhoto = img;
     const canvas = document.getElementById('captureCanvas');
-    canvas.width = img.width; canvas.height = img.height;
+    canvas.width = img.width;
+    canvas.height = img.height;
     canvas.getContext('2d').drawImage(img, 0, 0);
     URL.revokeObjectURL(url);
     const preview = document.getElementById('photoPreview');
     preview.src = canvas.toDataURL('image/jpeg', 0.9);
     preview.style.display = 'block';
     document.getElementById('photoPlaceholder').style.display = 'none';
-    await runOcrFromSource(() => captureScanRegionFromImage(img));
+    document.getElementById('ocrStatus').textContent = '照片已备好，点击「识别标签」';
+    document.getElementById('wordsList').innerHTML = '';
+    document.getElementById('wordsHint').style.display = 'none';
   };
   img.onerror = () => { URL.revokeObjectURL(url); showToast('图片加载失败'); };
   img.src = url;
