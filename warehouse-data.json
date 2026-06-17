@@ -137,8 +137,20 @@
       "shelf": "A2",
       "row": 1,
       "col": 2
+    },
+    "A1-2-1": {
+      "sku": "GEM-2107XC-167-D",
+      "shelf": "A1",
+      "row": 2,
+      "col": 1
+    },
+    "GEM-2107XC-167-D": {
+      "name": "",
+      "shelf": "A1",
+      "row": 2,
+      "col": 1
     }
   },
   "shelfCfg": {},
-  "updatedAt": "2026-06-17T19:17:31.474Z"
+  "updatedAt": "2026-06-17T19:50:04.808Z"
 }
