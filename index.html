@@ -177,7 +177,7 @@ header h1{font-size:17px;font-weight:700}
 <div class="page" id="page-sync">
   <div class="sync-box">
     <div class="sync-title">GitHub 云端同步</div>
-    <div class="sync-desc">数据保存在仓库 <strong>warehouse-data.json</strong>。录入后自动上传；其他手机打开网页会自动下载最新数据。</div>
+    <div class="sync-desc">其他设备（如电脑）打开网页会自动下载；没看到数据时点 <strong>⬇️ 下载</strong>，或强制刷新页面（Ctrl+Shift+R）。</div>
     <div class="sync-desc">首次使用：在 GitHub → Settings → Developer settings → Personal access tokens 创建 Token，勾选 <strong>repo</strong> 权限，粘贴到下方（只需设置一次）。</div>
     <input type="password" class="sync-input" id="ghTokenInput" placeholder="GitHub Token（ghp_...）" autocomplete="off">
     <button class="btn-search" onclick="saveGhToken()">保存 Token</button>
@@ -406,6 +406,10 @@ async function pushToCloud() {
   }
 }
 
+function countSkus(data) {
+  return Object.keys(data || {}).filter(k => !k.match(/^[A-Z]\d+-\d+-\d+$/)).length;
+}
+
 async function initCloudData() {
   const token = getGhToken();
   if (token) document.getElementById('ghTokenInput').placeholder = 'Token 已保存（输入可更换）';
@@ -413,18 +417,22 @@ async function initCloudData() {
     if (token) await fetchGitHubFileSha();
     const remote = await loadFromPublicRaw();
     const localUpdated = localStorage.getItem('wdb4_updated') || '';
-    const hasLocal = Object.keys(db).length > 0;
-    if (remote && remote.updatedAt && (!hasLocal || (localUpdated && remote.updatedAt > localUpdated))) {
+    const remoteUpdated = remote && remote.updatedAt;
+    const remoteCount = countSkus(remote && remote.db);
+    const localCount = countSkus(db);
+
+    if (remoteCount > 0 && (!localUpdated || !localCount || (remoteUpdated && remoteUpdated > localUpdated))) {
       applyPayload(remote);
+      renderMap();
       if (token) await fetchGitHubFileSha();
-      setSyncStatus('已从 GitHub 加载');
-    } else if (hasLocal) {
-      setSyncStatus(token ? '本机有数据，点上传同步' : '使用本机数据');
+      setSyncStatus(`已从云端加载 ${remoteCount} 条`);
+    } else if (localCount > 0) {
+      setSyncStatus(token ? `本机 ${localCount} 条，可点上传` : `本机 ${localCount} 条`);
     } else {
-      setSyncStatus('暂无数据，开始录入吧');
+      setSyncStatus(remoteCount ? '点「下载」获取云端数据' : '暂无数据，开始录入吧');
     }
   } catch (e) {
-    setSyncStatus('同步失败，使用本机数据', true);
+    setSyncStatus('同步失败，点「下载」重试', true);
   }
 }
 
