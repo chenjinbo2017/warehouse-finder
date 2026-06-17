@@ -15,8 +15,6 @@ header h1{font-size:17px;font-weight:700}
 .tab.active{color:#1a1a2e;border-bottom-color:#e63946}
 .page{display:none;padding:14px}
 .page.active{display:block}
-
-/* SEARCH */
 .search-box{background:white;border-radius:14px;padding:16px;box-shadow:0 2px 10px rgba(0,0,0,.07);margin-bottom:14px}
 .search-label{font-size:11px;color:#888;margin-bottom:8px;text-transform:uppercase;letter-spacing:.8px}
 .search-row{display:flex;gap:8px}
@@ -34,25 +32,20 @@ header h1{font-size:17px;font-weight:700}
 .loc-value{font-size:24px;font-weight:800;color:#e63946}
 .loc-full{margin-top:12px;text-align:center;font-size:13px;color:#888}
 .not-found{background:white;border-radius:14px;padding:28px 20px;text-align:center;box-shadow:0 2px 10px rgba(0,0,0,.07)}
-
-/* MAP */
 .group-tabs{display:flex;gap:6px;margin-bottom:10px;overflow-x:auto;padding-bottom:2px}
 .group-tab{background:white;border:2px solid #e0e0e0;border-radius:10px;padding:7px 16px;font-size:15px;font-weight:800;cursor:pointer;color:#888;white-space:nowrap;flex-shrink:0}
 .group-tab.active{background:#e63946;color:white;border-color:#e63946}
-
 .shelf-selector{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
 .shelf-btn{background:white;border:2px solid #e0e0e0;border-radius:8px;padding:6px 12px;font-size:13px;font-weight:700;cursor:pointer;color:#888}
 .shelf-btn.active{background:#1a1a2e;color:white;border-color:#1a1a2e}
 .shelf-btn.has-data{border-color:#4caf50;color:#2e7d32}
 .shelf-btn.active.has-data{background:#2e7d32;border-color:#2e7d32;color:white}
-
 .shelf-info{background:white;border-radius:14px;padding:12px 14px;margin-bottom:10px;box-shadow:0 2px 10px rgba(0,0,0,.07)}
 .shelf-title{font-size:15px;font-weight:700;margin-bottom:6px}
 .adjust-row{display:flex;align-items:center;gap:8px;font-size:13px;color:#555}
 .adjust-row span{min-width:60px}
 .adj-btn{background:#f0f2f5;border:1px solid #ddd;border-radius:6px;width:28px;height:28px;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:700;color:#333}
 .adj-val{font-size:15px;font-weight:700;min-width:24px;text-align:center;color:#1a1a2e}
-
 .grid-container{background:white;border-radius:14px;padding:12px;box-shadow:0 2px 10px rgba(0,0,0,.07);overflow-x:auto}
 .shelf-grid{display:inline-grid;gap:3px}
 .row-label{font-size:10px;color:#aaa;font-weight:700;display:flex;align-items:center;padding-right:3px;min-width:18px}
@@ -62,8 +55,6 @@ header h1{font-size:17px;font-weight:700}
 .cell-sku{font-size:7px;font-weight:700;line-height:1.2;word-break:break-all;color:#2e7d32}
 .cell-pos{font-size:9px;color:#bbb}
 .grid-cell.filled .cell-pos{color:#81c784;font-size:8px}
-
-/* SCAN MODAL */
 .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.93);z-index:200;flex-direction:column}
 .modal.open{display:flex}
 .modal-header{padding:14px 16px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0}
@@ -90,8 +81,6 @@ header h1{font-size:17px;font-weight:700}
 .photo-placeholder .icon{font-size:56px;margin-bottom:12px}
 .photo-placeholder .hint{font-size:13px;line-height:1.5;margin-top:8px;color:rgba(255,255,255,.4)}
 #photoPreview{max-width:100%;max-height:100%;object-fit:contain;border-radius:10px;display:none}
-
-/* LIST */
 .list-search{background:white;border-radius:10px;padding:11px 13px;border:2px solid #e0e0e0;font-size:15px;width:100%;outline:none;margin-bottom:10px}
 .sku-item{background:white;border-radius:12px;padding:13px 15px;margin-bottom:7px;box-shadow:0 1px 5px rgba(0,0,0,.06);display:flex;justify-content:space-between;align-items:center}
 .sku-code{font-size:13px;font-weight:700;color:#e63946;font-family:monospace}
@@ -111,6 +100,10 @@ header h1{font-size:17px;font-weight:700}
 .btn-sync.secondary{background:#f0f2f5;color:#1a1a2e}
 .sync-status{font-size:12px;color:#4caf50;margin-top:10px;text-align:center}
 .sync-status.err{color:#e63946}
+.export-box{background:white;border-radius:14px;padding:16px;box-shadow:0 2px 10px rgba(0,0,0,.07);margin-bottom:12px}
+.export-title{font-size:14px;font-weight:700;margin-bottom:8px}
+.export-desc{font-size:12px;color:#888;line-height:1.6;margin-bottom:12px}
+.btn-export{width:100%;background:#4caf50;color:white;border:none;border-radius:10px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:8px}
 .toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:#1a1a2e;color:white;padding:11px 22px;border-radius:100px;font-size:14px;font-weight:600;z-index:9999;opacity:0;transition:opacity .3s;white-space:nowrap;pointer-events:none}
 .toast.show{opacity:1}
 </style>
@@ -130,7 +123,6 @@ header h1{font-size:17px;font-weight:700}
   <div class="tab" onclick="switchTab('sync')">☁️ 云</div>
 </div>
 
-<!-- SEARCH -->
 <div class="page active" id="page-search">
   <div class="search-box">
     <div class="search-label">输入或扫描 SKU</div>
@@ -143,7 +135,6 @@ header h1{font-size:17px;font-weight:700}
   <div id="searchResult"></div>
 </div>
 
-<!-- MAP -->
 <div class="page" id="page-map">
   <div class="group-tabs" id="groupTabs"></div>
   <div class="shelf-selector" id="shelfSelector"></div>
@@ -167,18 +158,22 @@ header h1{font-size:17px;font-weight:700}
   </div>
 </div>
 
-<!-- LIST -->
 <div class="page" id="page-list">
   <input type="text" class="list-search" placeholder="搜索 SKU 或名称..." oninput="renderList(this.value)">
   <div id="skuList"></div>
 </div>
 
-<!-- SYNC -->
 <div class="page" id="page-sync">
+  <div class="export-box">
+    <div class="export-title">📋 本地备份</div>
+    <div class="export-desc">把所有数据复制到剪贴板，粘贴到备忘录保存，防止数据丢失。</div>
+    <button class="btn-export" onclick="exportToClipboard()">📋 复制数据到剪贴板</button>
+    <button class="btn-export" style="background:#2196f3" onclick="importFromClipboard()">📥 从剪贴板恢复数据</button>
+  </div>
   <div class="sync-box">
     <div class="sync-title">GitHub 云端同步</div>
-    <div class="sync-desc">其他设备（如电脑）打开网页会自动下载；没看到数据时点 <strong>⬇️ 下载</strong>，或强制刷新页面（Ctrl+Shift+R）。</div>
-    <div class="sync-desc">首次使用：在 GitHub → Settings → Developer settings → Personal access tokens 创建 Token，勾选 <strong>repo</strong> 权限，粘贴到下方（只需设置一次）。</div>
+    <div class="sync-desc">其他设备打开网页会自动下载；没看到数据时点 <strong>⬇️ 下载</strong>。</div>
+    <div class="sync-desc">首次使用：在 GitHub → Settings → Developer settings → Personal access tokens 创建 Token，勾选 <strong>repo</strong> 权限，粘贴到下方。</div>
     <input type="password" class="sync-input" id="ghTokenInput" placeholder="GitHub Token（ghp_...）" autocomplete="off">
     <button class="btn-search" onclick="saveGhToken()">保存 Token</button>
     <div class="sync-row">
@@ -189,7 +184,6 @@ header h1{font-size:17px;font-weight:700}
   </div>
 </div>
 
-<!-- SCAN MODAL -->
 <div class="modal" id="scanModal">
   <div class="modal-header">
     <div class="modal-title" id="modalTitle">扫描标签</div>
@@ -221,7 +215,6 @@ header h1{font-size:17px;font-weight:700}
 <div class="toast" id="toast"></div>
 
 <script>
-// ---- DATA ----
 let db = JSON.parse(localStorage.getItem('wdb4') || '{}');
 let shelfCfg = JSON.parse(localStorage.getItem('wdb4_cfg') || '{}');
 let ghFileSha = null;
@@ -232,17 +225,10 @@ const GH_REPO = 'warehouse-finder';
 const GH_BRANCH = 'main';
 const GH_DATA_FILE = 'warehouse-data.json';
 const GH_RAW_URL = `https://raw.githubusercontent.com/${GH_OWNER}/${GH_REPO}/${GH_BRANCH}/${GH_DATA_FILE}`;
-
 const GROUPS = ['A','B','C','D'];
 
-function getGhToken() {
-  return localStorage.getItem('wdb4_gh_token') || '';
-}
-
-function buildPayload() {
-  return { db, shelfCfg, updatedAt: new Date().toISOString() };
-}
-
+function getGhToken() { return localStorage.getItem('wdb4_gh_token') || ''; }
+function buildPayload() { return { db, shelfCfg, updatedAt: new Date().toISOString() }; }
 function applyPayload(payload) {
   if (payload.db) db = payload.db;
   if (payload.shelfCfg) shelfCfg = payload.shelfCfg;
@@ -251,20 +237,17 @@ function applyPayload(payload) {
   if (payload.updatedAt) localStorage.setItem('wdb4_updated', payload.updatedAt);
   updateCount();
 }
-
 function toBase64Utf8(str) {
   const bytes = new TextEncoder().encode(str);
   let bin = '';
   bytes.forEach(b => { bin += String.fromCharCode(b); });
   return btoa(bin);
 }
-
 function fromBase64Utf8(b64) {
   const bin = atob(b64.replace(/\n/g, ''));
   const bytes = Uint8Array.from(bin, c => c.charCodeAt(0));
   return new TextDecoder().decode(bytes);
 }
-
 function setSyncStatus(msg, isErr) {
   const el = document.getElementById('syncStatus');
   if (!el) return;
@@ -272,55 +255,101 @@ function setSyncStatus(msg, isErr) {
   el.className = 'sync-status' + (isErr ? ' err' : '');
 }
 
-async function ghApi(path, opts) {
-  const token = getGhToken();
-  if (!token) throw new Error('请先保存 GitHub Token');
-  const res = await fetch(`https://api.github.com${path}`, {
-    method: opts && opts.method || 'GET',
-    headers: {
-      'Accept': 'application/vnd.github+json',
-      'Authorization': `Bearer ${token}`,
-      'X-GitHub-Api-Version': '2022-11-28',
-      'Content-Type': 'application/json'
-    },
-    body: opts && opts.body
+// ---- EXPORT / IMPORT ----
+function exportToClipboard() {
+  const data = JSON.stringify(buildPayload(), null, 2);
+  navigator.clipboard.writeText(data).then(() => {
+    showToast('✅ 已复制到剪贴板，请粘贴到备忘录保存');
+  }).catch(() => {
+    const ta = document.createElement('textarea');
+    ta.value = data;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    showToast('✅ 已复制，请粘贴到备忘录保存');
   });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.message || `请求失败 ${res.status}`);
-  }
-  if (res.status === 204) return null;
-  return res.json();
 }
 
-async function fetchGitHubFileSha() {
+async function importFromClipboard() {
+  try {
+    let text = '';
+    try {
+      text = await navigator.clipboard.readText();
+    } catch(e) {
+      text = prompt('请粘贴备份数据：');
+    }
+    if (!text) return;
+    const payload = JSON.parse(text);
+    if (!payload.db) { showToast('数据格式不对'); return; }
+    applyPayload(payload);
+    renderMap();
+    renderList('');
+    showToast('✅ 数据已恢复');
+  } catch(e) {
+    showToast('恢复失败，请检查数据格式');
+  }
+}
+
+// ---- GITHUB SYNC (FIXED) ----
+async function pushToGitHub() {
   const token = getGhToken();
-  if (!token) return false;
+  if (!token) throw new Error('请先保存 GitHub Token');
+
+  // 每次上传前强制重新获取最新SHA
+  const checkRes = await fetch(
+    `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_DATA_FILE}?ref=${GH_BRANCH}&t=${Date.now()}`,
+    { headers: {
+      'Accept': 'application/vnd.github+json',
+      'Authorization': `Bearer ${token}`,
+      'X-GitHub-Api-Version': '2022-11-28'
+    }}
+  );
+  if (checkRes.ok) {
+    const fileInfo = await checkRes.json();
+    ghFileSha = fileInfo.sha;
+  } else if (checkRes.status === 404) {
+    ghFileSha = null;
+  } else {
+    throw new Error('获取文件信息失败 ' + checkRes.status);
+  }
+
+  const content = toBase64Utf8(JSON.stringify(buildPayload(), null, 2));
+  const body = { message: 'Update warehouse data', branch: GH_BRANCH, content };
+  if (ghFileSha) body.sha = ghFileSha;
+
   const res = await fetch(
-    `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_DATA_FILE}?ref=${GH_BRANCH}`,
-    {
+    `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_DATA_FILE}`,
+    { method: 'PUT',
       headers: {
         'Accept': 'application/vnd.github+json',
         'Authorization': `Bearer ${token}`,
-        'X-GitHub-Api-Version': '2022-11-28'
-      }
+        'X-GitHub-Api-Version': '2022-11-28',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(body)
     }
   );
-  if (res.status === 404) {
-    ghFileSha = null;
-    return false;
-  }
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error(err.message || `请求失败 ${res.status}`);
+    throw new Error(err.message || `上传失败 ${res.status}`);
   }
   const data = await res.json();
-  ghFileSha = data.sha;
-  return true;
+  ghFileSha = data.content.sha;
 }
 
 async function loadFromGitHub() {
-  const data = await ghApi(`/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_DATA_FILE}?ref=${GH_BRANCH}`);
+  const token = getGhToken();
+  const res = await fetch(
+    `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_DATA_FILE}?ref=${GH_BRANCH}&t=${Date.now()}`,
+    { headers: {
+      'Accept': 'application/vnd.github+json',
+      'Authorization': `Bearer ${token}`,
+      'X-GitHub-Api-Version': '2022-11-28'
+    }}
+  );
+  if (!res.ok) throw new Error('下载失败 ' + res.status);
+  const data = await res.json();
   ghFileSha = data.sha;
   const json = JSON.parse(fromBase64Utf8(data.content));
   applyPayload(json);
@@ -331,22 +360,6 @@ async function loadFromPublicRaw() {
   const res = await fetch(`${GH_RAW_URL}?t=${Date.now()}`);
   if (!res.ok) return null;
   return res.json();
-}
-
-async function pushToGitHub() {
-  await fetchGitHubFileSha();
-  const content = toBase64Utf8(JSON.stringify(buildPayload(), null, 2));
-  const body = {
-    message: 'Update warehouse data',
-    branch: GH_BRANCH,
-    content
-  };
-  if (ghFileSha) body.sha = ghFileSha;
-  const data = await ghApi(`/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_DATA_FILE}`, {
-    method: 'PUT',
-    body: JSON.stringify(body)
-  });
-  ghFileSha = data.content.sha;
 }
 
 function scheduleSyncPush() {
@@ -360,10 +373,9 @@ function scheduleSyncPush() {
 }
 
 function persistAll() {
-  const payload = buildPayload();
   localStorage.setItem('wdb4', JSON.stringify(db));
   localStorage.setItem('wdb4_cfg', JSON.stringify(shelfCfg));
-  localStorage.setItem('wdb4_updated', payload.updatedAt);
+  localStorage.setItem('wdb4_updated', new Date().toISOString());
   updateCount();
   scheduleSyncPush();
 }
@@ -399,7 +411,7 @@ async function pushToCloud() {
   setSyncStatus('上传中...');
   try {
     await pushToGitHub();
-    setSyncStatus('已上传到 GitHub');
+    setSyncStatus('已上传到 GitHub ✅');
     showToast('上传成功');
   } catch (e) {
     setSyncStatus('上传失败: ' + e.message, true);
@@ -414,17 +426,14 @@ async function initCloudData() {
   const token = getGhToken();
   if (token) document.getElementById('ghTokenInput').placeholder = 'Token 已保存（输入可更换）';
   try {
-    if (token) await fetchGitHubFileSha();
     const remote = await loadFromPublicRaw();
     const localUpdated = localStorage.getItem('wdb4_updated') || '';
     const remoteUpdated = remote && remote.updatedAt;
     const remoteCount = countSkus(remote && remote.db);
     const localCount = countSkus(db);
-
     if (remoteCount > 0 && (!localUpdated || !localCount || (remoteUpdated && remoteUpdated > localUpdated))) {
       applyPayload(remote);
       renderMap();
-      if (token) await fetchGitHubFileSha();
       setSyncStatus(`已从云端加载 ${remoteCount} 条`);
     } else if (localCount > 0) {
       setSyncStatus(token ? `本机 ${localCount} 条，可点上传` : `本机 ${localCount} 条`);
@@ -432,16 +441,13 @@ async function initCloudData() {
       setSyncStatus(remoteCount ? '点「下载」获取云端数据' : '暂无数据，开始录入吧');
     }
   } catch (e) {
-    setSyncStatus('同步失败，点「下载」重试', true);
+    setSyncStatus('同步检查失败', true);
   }
 }
 
-function getShelfCfg(key) {
-  return shelfCfg[key] || { rows: 9, cols: 15 };
-}
-
-function saveCfg() { persistAll(); }
+function getShelfCfg(key) { return shelfCfg[key] || { rows: 9, cols: 15 }; }
 function saveDB() { persistAll(); }
+function saveCfg() { persistAll(); }
 
 function updateCount() {
   const n = Object.keys(db).filter(k => !k.match(/^[A-Z]\d+-\d+-\d+$/)).length;
@@ -451,10 +457,9 @@ function updateCount() {
 function showToast(m) {
   const t = document.getElementById('toast');
   t.textContent = m; t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2500);
+  setTimeout(() => t.classList.remove('show'), 2800);
 }
 
-// ---- TABS ----
 function switchTab(n) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -468,7 +473,6 @@ function switchTab(n) {
   if (n === 'list') renderList('');
 }
 
-// ---- SEARCH ----
 function doSearch() {
   const sku = document.getElementById('searchInput').value.trim().toUpperCase();
   const el = document.getElementById('searchResult');
@@ -477,7 +481,7 @@ function doSearch() {
   if (d) {
     el.innerHTML = `<div class="result-card">
       <div class="result-sku">SKU: ${sku}</div>
-      <div class="result-name">${d.name || '（未填名称）'}</div>
+      <div class="result-name">${d.name||'（未填名称）'}</div>
       <div class="loc-grid">
         <div class="loc-item"><div class="loc-label">货架</div><div class="loc-value">${d.shelf}</div></div>
         <div class="loc-item"><div class="loc-label">层</div><div class="loc-value">${d.row}</div></div>
@@ -490,469 +494,274 @@ function doSearch() {
   }
 }
 
-// ---- MAP ----
-let currentGroup = 'A';
-let currentShelf = 'A1';
-let scanMode = 'search';
-let currentCell = null;
+let currentGroup='A', currentShelf='A1', scanMode='search', currentCell=null;
 
 function renderGroupTabs() {
   document.getElementById('groupTabs').innerHTML = GROUPS.map(g =>
     `<button class="group-tab ${g===currentGroup?'active':''}" onclick="selectGroup('${g}')">${g} 区</button>`
   ).join('');
 }
-
-function selectGroup(g) {
-  currentGroup = g;
-  currentShelf = g + '1';
-  renderMap();
-}
-
+function selectGroup(g) { currentGroup=g; currentShelf=g+'1'; renderMap(); }
 function renderShelfSelector() {
-  document.getElementById('shelfSelector').innerHTML = Array.from({length:9}, (_,i) => {
-    const key = currentGroup + (i+1);
-    const hasData = Object.keys(db).some(k => k.startsWith(key+'-') || (db[k] && db[k].shelf === key));
+  document.getElementById('shelfSelector').innerHTML = Array.from({length:9},(_,i)=>{
+    const key=currentGroup+(i+1);
+    const hasData=Object.keys(db).some(k=>k.startsWith(key+'-')||(db[k]&&db[k].shelf===key));
     return `<button class="shelf-btn ${key===currentShelf?'active':''} ${hasData?'has-data':''}" onclick="selectShelf('${key}')">${key}</button>`;
   }).join('');
 }
-
-function selectShelf(s) {
-  currentShelf = s;
-  renderMap();
+function selectShelf(s) { currentShelf=s; renderMap(); }
+function adjustShelf(prop,delta) {
+  const cfg=getShelfCfg(currentShelf);
+  if(prop==='rows') cfg.rows=Math.max(1,Math.min(20,cfg.rows+delta));
+  if(prop==='cols') cfg.cols=Math.max(1,Math.min(30,cfg.cols+delta));
+  shelfCfg[currentShelf]=cfg; saveCfg(); renderMap();
 }
-
-function adjustShelf(prop, delta) {
-  const cfg = getShelfCfg(currentShelf);
-  if (prop === 'rows') cfg.rows = Math.max(1, Math.min(20, cfg.rows + delta));
-  if (prop === 'cols') cfg.cols = Math.max(1, Math.min(30, cfg.cols + delta));
-  shelfCfg[currentShelf] = cfg;
-  saveCfg();
-  renderMap();
-}
-
 function renderMap() {
-  renderGroupTabs();
-  renderShelfSelector();
-  const cfg = getShelfCfg(currentShelf);
-  document.getElementById('shelfTitle').textContent = currentShelf + ' 货架';
-  document.getElementById('rowsVal').textContent = cfg.rows;
-  document.getElementById('colsVal').textContent = cfg.cols;
-
-  const grid = document.getElementById('shelfGrid');
-  grid.style.gridTemplateColumns = '20px ' + `50px `.repeat(cfg.cols);
-
-  let html = '<div></div>';
-  for (let c = 1; c <= cfg.cols; c++)
-    html += `<div style="text-align:center;font-size:9px;color:#bbb;padding-bottom:3px;font-weight:700">${c}</div>`;
-
-  for (let r = 1; r <= cfg.rows; r++) {
-    html += `<div class="row-label">${r}</div>`;
-    for (let c = 1; c <= cfg.cols; c++) {
-      const pk = `${currentShelf}-${r}-${c}`;
-      const e = db[pk];
-      if (e) {
-        html += `<div class="grid-cell filled" onclick="cellClick('${currentShelf}',${r},${c})"><div class="cell-sku">${e.sku||''}</div><div class="cell-pos">${r}-${c}</div></div>`;
-      } else {
-        html += `<div class="grid-cell" onclick="cellClick('${currentShelf}',${r},${c})"><div class="cell-pos">${r}-${c}</div></div>`;
-      }
+  renderGroupTabs(); renderShelfSelector();
+  const cfg=getShelfCfg(currentShelf);
+  document.getElementById('shelfTitle').textContent=currentShelf+' 货架';
+  document.getElementById('rowsVal').textContent=cfg.rows;
+  document.getElementById('colsVal').textContent=cfg.cols;
+  const grid=document.getElementById('shelfGrid');
+  grid.style.gridTemplateColumns='20px '+`50px `.repeat(cfg.cols);
+  let html='<div></div>';
+  for(let c=1;c<=cfg.cols;c++) html+=`<div style="text-align:center;font-size:9px;color:#bbb;padding-bottom:3px;font-weight:700">${c}</div>`;
+  for(let r=1;r<=cfg.rows;r++){
+    html+=`<div class="row-label">${r}</div>`;
+    for(let c=1;c<=cfg.cols;c++){
+      const pk=`${currentShelf}-${r}-${c}`;
+      const e=db[pk];
+      if(e) html+=`<div class="grid-cell filled" onclick="cellClick('${currentShelf}',${r},${c})"><div class="cell-sku">${e.sku||''}</div><div class="cell-pos">${r}-${c}</div></div>`;
+      else html+=`<div class="grid-cell" onclick="cellClick('${currentShelf}',${r},${c})"><div class="cell-pos">${r}-${c}</div></div>`;
     }
   }
-  grid.innerHTML = html;
+  grid.innerHTML=html;
 }
+function cellClick(shelf,row,col) { currentCell={shelf,row,col}; openScan('map'); }
 
-function cellClick(shelf, row, col) {
-  currentCell = { shelf, row, col };
-  openScan('map');
-}
-
-// ---- SCAN / OCR ----
-let videoStream = null, twk = null, ocrReady = false, usePhotoMode = false, ocrInitPromise = null, lastOcrWords = [], capturedPhoto = null;
-
-const TESS_OPTS = {
-  workerPath: 'https://cdn.jsdelivr.net/npm/tesseract.js@4.1.1/dist/worker.min.js',
-  corePath: 'https://cdn.jsdelivr.net/npm/tesseract.js-core@4.0.4',
-  langPath: 'https://tessdata.projectnaptha.com/4.0.0'
-};
+let videoStream=null,twk=null,ocrReady=false,usePhotoMode=false,ocrInitPromise=null,lastOcrWords=[],capturedPhoto=null;
+const TESS_OPTS={workerPath:'https://cdn.jsdelivr.net/npm/tesseract.js@4.1.1/dist/worker.min.js',corePath:'https://cdn.jsdelivr.net/npm/tesseract.js-core@4.0.4',langPath:'https://tessdata.projectnaptha.com/4.0.0'};
 
 function initOcr() {
-  if (ocrReady && twk) return Promise.resolve();
-  if (ocrInitPromise) return ocrInitPromise;
-  ocrInitPromise = (async () => {
-    if (typeof Tesseract === 'undefined') throw new Error('OCR 库未加载');
-    if (twk) {
-      try { await twk.terminate(); } catch (e) {}
-      twk = null;
-      ocrReady = false;
-    }
-    twk = await Tesseract.createWorker('eng', 1, TESS_OPTS);
-    try {
-      await twk.setParameters({ tessedit_pageseg_mode: '7' });
-    } catch (e) {}
-    ocrReady = true;
-  })().catch(e => {
-    ocrReady = false;
-    ocrInitPromise = null;
-    twk = null;
-    throw e;
-  });
+  if(ocrReady&&twk) return Promise.resolve();
+  if(ocrInitPromise) return ocrInitPromise;
+  ocrInitPromise=(async()=>{
+    if(typeof Tesseract==='undefined') throw new Error('OCR 库未加载');
+    if(twk){try{await twk.terminate();}catch(e){} twk=null; ocrReady=false;}
+    twk=await Tesseract.createWorker('eng',1,TESS_OPTS);
+    try{await twk.setParameters({tessedit_pageseg_mode:'7'});}catch(e){}
+    ocrReady=true;
+  })().catch(e=>{ocrReady=false;ocrInitPromise=null;twk=null;throw e;});
   return ocrInitPromise;
 }
-
-async function resetOcrWorker() {
-  ocrReady = false;
-  ocrInitPromise = null;
-  if (twk) {
-    try { await twk.terminate(); } catch (e) {}
-    twk = null;
-  }
+async function resetOcrWorker(){ocrReady=false;ocrInitPromise=null;if(twk){try{await twk.terminate();}catch(e){} twk=null;}}
+function setScanUI(mode){
+  usePhotoMode=mode==='photo';
+  document.getElementById('videoWrap').style.display=mode==='live'?'':'none';
+  document.getElementById('photoFallback').style.display=mode==='photo'?'flex':'none';
+  document.getElementById('captureBtn').textContent=mode==='photo'?'📷 拍照识别':'📷 识别标签';
 }
-
-function setScanUI(mode) {
-  usePhotoMode = mode === 'photo';
-  document.getElementById('videoWrap').style.display = mode === 'live' ? '' : 'none';
-  document.getElementById('photoFallback').style.display = mode === 'photo' ? 'flex' : 'none';
-  document.getElementById('captureBtn').textContent = mode === 'photo' ? '📷 拍照识别' : '📷 识别标签';
-}
-
-function resetPhotoPreview() {
-  document.getElementById('photoPreview').style.display = 'none';
-  document.getElementById('photoPreview').src = '';
-  document.getElementById('photoPlaceholder').style.display = 'block';
-}
-
-function enablePhotoMode(msg) {
-  setScanUI('photo');
-  resetPhotoPreview();
-  document.getElementById('ocrStatus').textContent = msg || '点击拍照，对准标签后确认';
-}
-
-function openScan(mode) {
-  scanMode = mode;
-  capturedPhoto = null;
+function resetPhotoPreview(){document.getElementById('photoPreview').style.display='none';document.getElementById('photoPreview').src='';document.getElementById('photoPlaceholder').style.display='block';}
+function enablePhotoMode(msg){setScanUI('photo');resetPhotoPreview();document.getElementById('ocrStatus').textContent=msg||'点击拍照，对准标签后确认';}
+function openScan(mode){
+  scanMode=mode; capturedPhoto=null;
   document.getElementById('scanModal').classList.add('open');
-  document.getElementById('wordsList').innerHTML = '';
-  document.getElementById('wordsHint').style.display = 'none';
-  document.getElementById('captureBtn').disabled = false;
+  document.getElementById('wordsList').innerHTML='';
+  document.getElementById('wordsHint').style.display='none';
+  document.getElementById('captureBtn').disabled=false;
   resetPhotoPreview();
-
-  const ci = document.getElementById('currentCellInfo');
-  if (mode === 'map' && currentCell) {
-    ci.style.display = 'block';
-    ci.textContent = `录入：${currentCell.shelf} 第${currentCell.row}层 第${currentCell.col}个`;
-    document.getElementById('modalTitle').textContent = `录入 ${currentCell.shelf}-${currentCell.row}-${currentCell.col}`;
-  } else {
-    ci.style.display = 'none';
-    document.getElementById('modalTitle').textContent = '扫描 SKU 标签';
-  }
-
-  if (window.isSecureContext && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+  const ci=document.getElementById('currentCellInfo');
+  if(mode==='map'&&currentCell){
+    ci.style.display='block';
+    ci.textContent=`录入：${currentCell.shelf} 第${currentCell.row}层 第${currentCell.col}个`;
+    document.getElementById('modalTitle').textContent=`录入 ${currentCell.shelf}-${currentCell.row}-${currentCell.col}`;
+  } else {ci.style.display='none';document.getElementById('modalTitle').textContent='扫描 SKU 标签';}
+  if(window.isSecureContext&&navigator.mediaDevices&&navigator.mediaDevices.getUserMedia){
     setScanUI('live');
-    document.getElementById('ocrStatus').textContent = '对准编号后，点击「识别标签」';
-    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment', width: {ideal:1920}, height: {ideal:1080} } })
-      .then(s => { videoStream = s; document.getElementById('scanVideo').srcObject = s; })
-      .catch(() => enablePhotoMode('无法打开相机，请用拍照模式'));
-  } else {
-    enablePhotoMode('当前环境不支持实时相机，请用拍照模式');
-  }
-
-  initOcr().then(() => {
-    if (document.getElementById('scanModal').classList.contains('open') && !usePhotoMode)
-      document.getElementById('ocrStatus').textContent = '对准编号后，点击「识别标签」';
-  }).catch(() => {
-    if (document.getElementById('scanModal').classList.contains('open'))
-      document.getElementById('ocrStatus').textContent = '识别引擎加载失败，请刷新页面';
+    document.getElementById('ocrStatus').textContent='对准编号后，点击「识别标签」';
+    navigator.mediaDevices.getUserMedia({video:{facingMode:'environment',width:{ideal:1920},height:{ideal:1080}}})
+      .then(s=>{videoStream=s;document.getElementById('scanVideo').srcObject=s;})
+      .catch(()=>enablePhotoMode('无法打开相机，请用拍照模式'));
+  } else {enablePhotoMode('当前环境不支持实时相机，请用拍照模式');}
+  initOcr().then(()=>{
+    if(document.getElementById('scanModal').classList.contains('open')&&!usePhotoMode)
+      document.getElementById('ocrStatus').textContent='对准编号后，点击「识别标签」';
+  }).catch(()=>{
+    if(document.getElementById('scanModal').classList.contains('open'))
+      document.getElementById('ocrStatus').textContent='识别引擎加载失败，请刷新页面';
   });
 }
-
-function closeScan() {
-  if (videoStream) { videoStream.getTracks().forEach(t => t.stop()); videoStream = null; }
-  document.getElementById('scanVideo').srcObject = null;
+function closeScan(){
+  if(videoStream){videoStream.getTracks().forEach(t=>t.stop());videoStream=null;}
+  document.getElementById('scanVideo').srcObject=null;
   document.getElementById('scanModal').classList.remove('open');
 }
-
-function escHtml(s) {
-  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
-}
-
-function normalizeText(s) {
-  return s.trim().replace(/\s+/g, ' ');
-}
-
-function isSkuCode(s) {
-  const t = s.toUpperCase().replace(/\s+/g, '');
-  if (t.length < 4) return false;
-  if (!/^[A-Z0-9][A-Z0-9\-./]{2,}$/.test(t)) return false;
-  if (/[{}[\]|\\<>@#$%^&*+=~`'"«»¢€]/.test(t)) return false;
+function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');}
+function normalizeText(s){return s.trim().replace(/\s+/g,' ');}
+function isSkuCode(s){
+  const t=s.toUpperCase().replace(/\s+/g,'');
+  if(t.length<4) return false;
+  if(!/^[A-Z0-9][A-Z0-9\-./]{2,}$/.test(t)) return false;
+  if(/[{}[\]|\\<>@#$%^&*+=~`'"«»¢€]/.test(t)) return false;
   return true;
 }
-
-function extractWords(data) {
-  const candidates = [];
-  const seen = new Set();
-  const push = (raw) => {
-    const text = normalizeText(raw).toUpperCase().replace(/\s+/g, '');
-    if (!isSkuCode(text) || seen.has(text)) return;
-    seen.add(text);
-    candidates.push(text);
+function extractWords(data){
+  const candidates=[],seen=new Set();
+  const push=(raw)=>{
+    const text=normalizeText(raw).toUpperCase().replace(/\s+/g,'');
+    if(!isSkuCode(text)||seen.has(text)) return;
+    seen.add(text); candidates.push(text);
   };
-
-  let bestLine = '', bestConf = 0;
-  for (const line of (data.lines || [])) {
-    if (line.confidence >= bestConf && normalizeText(line.text).length >= 4) {
-      bestConf = line.confidence;
-      bestLine = line.text;
-    }
+  let bestLine='',bestConf=0;
+  for(const line of(data.lines||[])){
+    if(line.confidence>=bestConf&&normalizeText(line.text).length>=4){bestConf=line.confidence;bestLine=line.text;}
   }
-  if (bestLine) push(bestLine);
-
-  const oneRow = (data.text || '').replace(/\s*\n\s*/g, ' ');
-  if (oneRow) push(oneRow);
-
-  const tokens = [...(data.text || '').match(/[A-Z0-9][A-Z0-9\-./]{3,}/gi) || []]
-    .sort((a, b) => b.length - a.length);
-  for (const t of tokens) {
-    push(t);
-    if (candidates.length >= 2) break;
-  }
-
-  return candidates.slice(0, 2);
+  if(bestLine) push(bestLine);
+  const oneRow=(data.text||'').replace(/\s*\n\s*/g,' ');
+  if(oneRow) push(oneRow);
+  const tokens=[...(data.text||'').match(/[A-Z0-9][A-Z0-9\-./]{3,}/gi)||[]].sort((a,b)=>b.length-a.length);
+  for(const t of tokens){push(t);if(candidates.length>=2) break;}
+  return candidates.slice(0,2);
 }
-
-function cropScanRegionFromVideo(video) {
-  const wrap = document.querySelector('.video-wrap');
-  const box = document.querySelector('.scan-box');
-  const vw = video.videoWidth, vh = video.videoHeight;
-  const dw = video.clientWidth, dh = video.clientHeight;
-  const scale = Math.max(dw / vw, dh / vh);
-  const visibleW = dw / scale, visibleH = dh / scale;
-  const offsetX = (vw - visibleW) / 2, offsetY = (vh - visibleH) / 2;
-  const wrapRect = wrap.getBoundingClientRect();
-  const boxRect = box.getBoundingClientRect();
-  const cropX = offsetX + (boxRect.left - wrapRect.left) / scale;
-  const cropY = offsetY + (boxRect.top - wrapRect.top) / scale;
-  const cropW = boxRect.width / scale;
-  const cropH = boxRect.height / scale;
-  return {
-    cropX: Math.max(0, cropX),
-    cropY: Math.max(0, cropY),
-    cropW: Math.min(cropW, vw),
-    cropH: Math.min(cropH, vh)
-  };
+function cropScanRegionFromVideo(video){
+  const wrap=document.querySelector('.video-wrap'),box=document.querySelector('.scan-box');
+  const vw=video.videoWidth,vh=video.videoHeight,dw=video.clientWidth,dh=video.clientHeight;
+  const scale=Math.max(dw/vw,dh/vh);
+  const visibleW=dw/scale,visibleH=dh/scale;
+  const offsetX=(vw-visibleW)/2,offsetY=(vh-visibleH)/2;
+  const wrapRect=wrap.getBoundingClientRect(),boxRect=box.getBoundingClientRect();
+  const cropX=offsetX+(boxRect.left-wrapRect.left)/scale;
+  const cropY=offsetY+(boxRect.top-wrapRect.top)/scale;
+  const cropW=boxRect.width/scale,cropH=boxRect.height/scale;
+  return{cropX:Math.max(0,cropX),cropY:Math.max(0,cropY),cropW:Math.min(cropW,vw),cropH:Math.min(cropH,vh)};
 }
-
-function cropScanRegionFromImage(img) {
-  const iw = img.width, ih = img.height;
-  const cropW = iw * 0.88;
-  const cropH = Math.max(ih * 0.1, 80);
-  return {
-    cropX: (iw - cropW) / 2,
-    cropY: (ih - cropH) / 2,
-    cropW, cropH
-  };
+function cropScanRegionFromImage(img){
+  const iw=img.width,ih=img.height,cropW=iw*0.88,cropH=Math.max(ih*0.1,80);
+  return{cropX:(iw-cropW)/2,cropY:(ih-cropH)/2,cropW,cropH};
 }
-
-function buildOcrCanvas(source, crop) {
-  const { cropX, cropY, cropW, cropH } = crop;
-  if (!cropW || !cropH) throw new Error('裁剪区域无效');
-  const scale = 5;
-  const out = document.createElement('canvas');
-  out.width = Math.max(320, Math.round(cropW * scale));
-  out.height = Math.max(80, Math.round(cropH * scale));
-  const ctx = out.getContext('2d');
-  ctx.fillStyle = '#fff';
-  ctx.fillRect(0, 0, out.width, out.height);
-  ctx.imageSmoothingEnabled = false;
-  ctx.drawImage(source, cropX, cropY, cropW, cropH, 0, 0, out.width, out.height);
-  const img = ctx.getImageData(0, 0, out.width, out.height);
-  const d = img.data;
-  for (let i = 0; i < d.length; i += 4) {
-    let g = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
-    g = Math.min(255, Math.max(0, (g - 128) * 1.5 + 128));
-    d[i] = d[i + 1] = d[i + 2] = g;
-  }
-  ctx.putImageData(img, 0, 0);
+function buildOcrCanvas(source,crop){
+  const{cropX,cropY,cropW,cropH}=crop;
+  if(!cropW||!cropH) throw new Error('裁剪区域无效');
+  const scale=5,out=document.createElement('canvas');
+  out.width=Math.max(320,Math.round(cropW*scale));
+  out.height=Math.max(80,Math.round(cropH*scale));
+  const ctx=out.getContext('2d');
+  ctx.fillStyle='#fff';ctx.fillRect(0,0,out.width,out.height);
+  ctx.imageSmoothingEnabled=false;
+  ctx.drawImage(source,cropX,cropY,cropW,cropH,0,0,out.width,out.height);
+  const img=ctx.getImageData(0,0,out.width,out.height),d=img.data;
+  for(let i=0;i<d.length;i+=4){let g=0.299*d[i]+0.587*d[i+1]+0.114*d[i+2];g=Math.min(255,Math.max(0,(g-128)*1.5+128));d[i]=d[i+1]=d[i+2]=g;}
+  ctx.putImageData(img,0,0);
   return out;
 }
-
-function captureScanRegion(video) {
-  return buildOcrCanvas(video, cropScanRegionFromVideo(video));
-}
-
-function captureScanRegionFromImage(img) {
-  return buildOcrCanvas(img, cropScanRegionFromImage(img));
-}
-
-async function recognizeImage(processed) {
-  if (!processed || processed.width < 20 || processed.height < 20) {
-    throw new Error('画面无效');
-  }
-  const tries = [
-    async () => {
-      await initOcr();
-      return twk.recognize(processed);
-    },
-    async () => Tesseract.recognize(processed, 'eng', TESS_OPTS),
-    async () => {
-      await resetOcrWorker();
-      return Tesseract.recognize(processed, 'eng');
-    }
+function captureScanRegion(video){return buildOcrCanvas(video,cropScanRegionFromVideo(video));}
+function captureScanRegionFromImage(img){return buildOcrCanvas(img,cropScanRegionFromImage(img));}
+async function recognizeImage(processed){
+  if(!processed||processed.width<20||processed.height<20) throw new Error('画面无效');
+  const tries=[
+    async()=>{await initOcr();return twk.recognize(processed);},
+    async()=>Tesseract.recognize(processed,'eng',TESS_OPTS),
+    async()=>{await resetOcrWorker();return Tesseract.recognize(processed,'eng');}
   ];
-  let lastErr = null;
-  for (const fn of tries) {
-    try {
-      return await fn();
-    } catch (e) {
-      lastErr = e;
-    }
-  }
-  throw lastErr || new Error('识别引擎不可用');
+  let lastErr=null;
+  for(const fn of tries){try{return await fn();}catch(e){lastErr=e;}}
+  throw lastErr||new Error('识别引擎不可用');
 }
-
-async function runOcrFromSource(getCanvas) {
-  document.getElementById('ocrStatus').textContent = '引擎准备中...';
-  document.getElementById('wordsList').innerHTML = '';
-  document.getElementById('wordsHint').style.display = 'none';
-  document.getElementById('captureBtn').disabled = true;
-  try {
-    try { await initOcr(); } catch (e) {}
-    document.getElementById('ocrStatus').textContent = '识别中...';
-    const processed = getCanvas();
-    const { data } = await recognizeImage(processed);
+async function runOcrFromSource(getCanvas){
+  document.getElementById('ocrStatus').textContent='引擎准备中...';
+  document.getElementById('wordsList').innerHTML='';
+  document.getElementById('wordsHint').style.display='none';
+  document.getElementById('captureBtn').disabled=true;
+  try{
+    try{await initOcr();}catch(e){}
+    document.getElementById('ocrStatus').textContent='识别中...';
+    const processed=getCanvas();
+    const{data}=await recognizeImage(processed);
     showOcrResults(extractWords(data));
-  } catch (e) {
-    document.getElementById('ocrStatus').textContent = '识别失败，请对准编号重试';
-  }
-  document.getElementById('captureBtn').disabled = false;
+  }catch(e){document.getElementById('ocrStatus').textContent='识别失败，请对准编号重试';}
+  document.getElementById('captureBtn').disabled=false;
 }
-
-function showOcrResults(words) {
-  lastOcrWords = words;
-  if (words.length === 0) {
-    document.getElementById('ocrStatus').textContent = usePhotoMode ? '未识别到文字，请重新拍照' : '未识别到文字，请靠近重试';
+function showOcrResults(words){
+  lastOcrWords=words;
+  if(words.length===0){
+    document.getElementById('ocrStatus').textContent=usePhotoMode?'未识别到文字，请重新拍照':'未识别到文字，请靠近重试';
   } else {
-    document.getElementById('ocrStatus').textContent = words.length === 1 ? '识别到编号，点击确认：' : '识别到编号，点击选择：';
-    document.getElementById('wordsHint').style.display = 'block';
-    document.getElementById('wordsList').innerHTML = words.map((w, i) =>
-      `<div class="word-chip" onclick="selectWordByIndex(${i})">${escHtml(w)}</div>`
-    ).join('');
+    document.getElementById('ocrStatus').textContent=words.length===1?'识别到编号，点击确认：':'识别到编号，点击选择：';
+    document.getElementById('wordsHint').style.display='block';
+    document.getElementById('wordsList').innerHTML=words.map((w,i)=>`<div class="word-chip" onclick="selectWordByIndex(${i})">${escHtml(w)}</div>`).join('');
   }
 }
-
-function selectWordByIndex(i) {
-  selectWord(lastOcrWords[i]);
-}
-
-async function runOcr(canvas) {
-  await runOcrFromSource(() => captureScanRegionFromImage(canvas));
-}
-
-async function captureFrame() {
-  if (usePhotoMode) {
-    if (!capturedPhoto) {
-      document.getElementById('photoInput').click();
-      return;
-    }
-    await runOcrFromSource(() => captureScanRegionFromImage(capturedPhoto));
+function selectWordByIndex(i){selectWord(lastOcrWords[i]);}
+async function captureFrame(){
+  if(usePhotoMode){
+    if(!capturedPhoto){document.getElementById('photoInput').click();return;}
+    await runOcrFromSource(()=>captureScanRegionFromImage(capturedPhoto));
     return;
   }
-  const video = document.getElementById('scanVideo');
-  if (!video.videoWidth) {
-    showToast('相机未就绪，请稍候');
-    return;
-  }
-  await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
-  await runOcrFromSource(() => captureScanRegion(video));
+  const video=document.getElementById('scanVideo');
+  if(!video.videoWidth){showToast('相机未就绪，请稍候');return;}
+  await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
+  await runOcrFromSource(()=>captureScanRegion(video));
 }
-
-function onPhotoSelected(e) {
-  const file = e.target.files && e.target.files[0];
-  e.target.value = '';
-  if (!file) return;
-  const img = new Image();
-  const url = URL.createObjectURL(file);
-  img.onload = () => {
-    capturedPhoto = img;
-    const canvas = document.getElementById('captureCanvas');
-    canvas.width = img.width;
-    canvas.height = img.height;
-    canvas.getContext('2d').drawImage(img, 0, 0);
+function onPhotoSelected(e){
+  const file=e.target.files&&e.target.files[0];
+  e.target.value='';
+  if(!file) return;
+  const img=new Image(),url=URL.createObjectURL(file);
+  img.onload=()=>{
+    capturedPhoto=img;
+    const canvas=document.getElementById('captureCanvas');
+    canvas.width=img.width;canvas.height=img.height;
+    canvas.getContext('2d').drawImage(img,0,0);
     URL.revokeObjectURL(url);
-    const preview = document.getElementById('photoPreview');
-    preview.src = canvas.toDataURL('image/jpeg', 0.9);
-    preview.style.display = 'block';
-    document.getElementById('photoPlaceholder').style.display = 'none';
-    document.getElementById('ocrStatus').textContent = '照片已备好，点击「识别标签」';
-    document.getElementById('wordsList').innerHTML = '';
-    document.getElementById('wordsHint').style.display = 'none';
+    const preview=document.getElementById('photoPreview');
+    preview.src=canvas.toDataURL('image/jpeg',0.9);
+    preview.style.display='block';
+    document.getElementById('photoPlaceholder').style.display='none';
+    document.getElementById('ocrStatus').textContent='照片已备好，点击「识别标签」';
+    document.getElementById('wordsList').innerHTML='';
+    document.getElementById('wordsHint').style.display='none';
   };
-  img.onerror = () => { URL.revokeObjectURL(url); showToast('图片加载失败'); };
-  img.src = url;
+  img.onerror=()=>{URL.revokeObjectURL(url);showToast('图片加载失败');};
+  img.src=url;
 }
-
-function selectWord(word) {
-  word = normalizeText(word).toUpperCase();
-  if (scanMode === 'search') {
-    document.getElementById('searchInput').value = word;
-    closeScan(); doSearch();
-  } else if (scanMode === 'map' && currentCell) {
-    const pk = `${currentCell.shelf}-${currentCell.row}-${currentCell.col}`;
-    db[pk] = { sku: word, shelf: currentCell.shelf, row: currentCell.row, col: currentCell.col };
-    db[word] = { name: '', shelf: currentCell.shelf, row: currentCell.row, col: currentCell.col };
+function selectWord(word){
+  word=normalizeText(word).toUpperCase();
+  if(scanMode==='search'){document.getElementById('searchInput').value=word;closeScan();doSearch();}
+  else if(scanMode==='map'&&currentCell){
+    const pk=`${currentCell.shelf}-${currentCell.row}-${currentCell.col}`;
+    db[pk]={sku:word,shelf:currentCell.shelf,row:currentCell.row,col:currentCell.col};
+    db[word]={name:'',shelf:currentCell.shelf,row:currentCell.row,col:currentCell.col};
     saveDB();
     showToast(`✅ ${word} → ${pk}`);
     closeScan();
-
-    // Auto advance
-    const cfg = getShelfCfg(currentCell.shelf);
-    let nr = currentCell.row, nc = currentCell.col + 1;
-    if (nc > cfg.cols) { nc = 1; nr++; }
-    if (nr <= cfg.rows) {
-      currentCell = { shelf: currentCell.shelf, row: nr, col: nc };
-      renderMap();
-      setTimeout(() => openScan('map'), 400);
-    } else {
-      currentCell = null; renderMap();
-    }
+    const cfg=getShelfCfg(currentCell.shelf);
+    let nr=currentCell.row,nc=currentCell.col+1;
+    if(nc>cfg.cols){nc=1;nr++;}
+    if(nr<=cfg.rows){currentCell={shelf:currentCell.shelf,row:nr,col:nc};renderMap();setTimeout(()=>openScan('map'),400);}
+    else{currentCell=null;renderMap();}
   }
 }
-
-// ---- LIST ----
-function renderList(filter) {
-  const el = document.getElementById('skuList');
-  const keys = Object.keys(db).filter(k => {
-    if (k.match(/^[A-Z]\d+-\d+-\d+$/)) return false;
-    if (!filter) return true;
-    const f = filter.toUpperCase();
-    return k.includes(f) || (db[k].name||'').toUpperCase().includes(f);
+function renderList(filter){
+  const el=document.getElementById('skuList');
+  const keys=Object.keys(db).filter(k=>{
+    if(k.match(/^[A-Z]\d+-\d+-\d+$/)) return false;
+    if(!filter) return true;
+    const f=filter.toUpperCase();
+    return k.includes(f)||(db[k].name||'').toUpperCase().includes(f);
   }).sort();
-  if (keys.length === 0) {
-    el.innerHTML = '<div class="empty">还没有录入任何产品<br>去「录入」页面点格子开始</div>';
-    return;
-  }
-  el.innerHTML = keys.map(k => {
-    const d = db[k];
-    return `<div class="sku-item">
-      <div>
-        <div class="sku-code">${k}</div>
-        <div class="sku-name-text">${d.name||'（未填名称）'}</div>
-        <div class="sku-loc">📍 ${d.shelf}-${d.row}-${d.col}</div>
-      </div>
-      <button class="btn-del" onclick="deleteSku('${k}')">🗑️</button>
-    </div>`;
-  }).join('');
+  if(keys.length===0){el.innerHTML='<div class="empty">还没有录入任何产品<br>去「录入」页面点格子开始</div>';return;}
+  el.innerHTML=keys.map(k=>{const d=db[k];return`<div class="sku-item"><div><div class="sku-code">${k}</div><div class="sku-name-text">${d.name||'（未填名称）'}</div><div class="sku-loc">📍 ${d.shelf}-${d.row}-${d.col}</div></div><button class="btn-del" onclick="deleteSku('${k}')">🗑️</button></div>`;}).join('');
 }
-
-function deleteSku(sku) {
-  if (!confirm('删除 ' + sku + '？')) return;
-  const d = db[sku];
-  if (d) { delete db[`${d.shelf}-${d.row}-${d.col}`]; }
-  delete db[sku]; saveDB();
+function deleteSku(sku){
+  if(!confirm('删除 '+sku+'？')) return;
+  const d=db[sku];
+  if(d){delete db[`${d.shelf}-${d.row}-${d.col}`];}
+  delete db[sku];saveDB();
   renderList(document.querySelector('.list-search').value);
   showToast('已删除');
 }
-
-// ---- INIT ----
-initCloudData().then(() => { renderMap(); });
+initCloudData().then(()=>{renderMap();});
 updateCount();
 </script>
 </body>
