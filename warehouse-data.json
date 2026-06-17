@@ -83,20 +83,8 @@
       "shelf": "A9",
       "row": 1,
       "col": 1
-    },
-    "A9-1-2": {
-      "sku": "GEM-2404MVILY-63-8",
-      "shelf": "A9",
-      "row": 1,
-      "col": 2
-    },
-    "GEM-2404MVILY-63-8": {
-      "name": "",
-      "shelf": "A9",
-      "row": 1,
-      "col": 2
     }
   },
   "shelfCfg": {},
-  "updatedAt": "2026-06-17T16:42:54.035Z"
+  "updatedAt": "2026-06-17T16:44:11.720Z"
 }
