@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="zh">
+<html lang="zh-Hans">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>仓库找货</title>
+<title>仓库找货 / Warehouse Finder</title>
 <script src='https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/4.1.1/tesseract.min.js'></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -11,7 +11,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#f0f2f5;
 header{background:#1a1a2e;color:white;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
 header h1{font-size:17px;font-weight:700}
 .tab-bar{display:flex;background:white;border-bottom:1px solid #e0e0e0;position:sticky;top:52px;z-index:99}
-.tab{flex:1;padding:11px;text-align:center;font-size:13px;font-weight:600;color:#888;cursor:pointer;border-bottom:3px solid transparent}
+.tab{flex:1;padding:8px 4px;text-align:center;font-size:10px;line-height:1.35;font-weight:600;color:#888;cursor:pointer;border-bottom:3px solid transparent}
 .tab.active{color:#1a1a2e;border-bottom-color:#e63946}
 .page{display:none;padding:14px}
 .page.active{display:block}
@@ -125,7 +125,7 @@ header h1{font-size:17px;font-weight:700}
 .export-title{font-size:14px;font-weight:700;margin-bottom:8px}
 .export-desc{font-size:12px;color:#888;line-height:1.6;margin-bottom:12px}
 .btn-export{width:100%;background:#4caf50;color:white;border:none;border-radius:10px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:8px}
-.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:#1a1a2e;color:white;padding:11px 22px;border-radius:100px;font-size:14px;font-weight:600;z-index:9999;opacity:0;transition:opacity .3s;white-space:nowrap;pointer-events:none}
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:#1a1a2e;color:white;padding:11px 18px;border-radius:14px;font-size:13px;font-weight:600;z-index:9999;opacity:0;transition:opacity .3s;max-width:92vw;text-align:center;line-height:1.4;pointer-events:none}
 .toast.show{opacity:1}
 .sheet{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:150;align-items:flex-end;justify-content:center}
 .sheet.open{display:flex}
@@ -148,38 +148,38 @@ header h1{font-size:17px;font-weight:700}
 </head>
 <body>
 <header>
-  <h1>📦 仓库找货</h1>
+  <h1>📦 仓库找货 / Warehouse</h1>
   <div style="display:flex;align-items:center;gap:8px">
-    <span class="sync-badge" id="syncBadge" onclick="switchTab('sync')" title="云端同步">☁️</span>
+    <span class="sync-badge" id="syncBadge" onclick="switchTab('sync')" title="云端同步 / Cloud Sync">☁️</span>
     <span class="sync-live" id="syncLive"></span>
     <span class="count-badge" id="totalCount">0</span>
   </div>
 </header>
 <div class="tab-bar">
-  <div class="tab active" onclick="switchTab('search')">🔍 查找</div>
-  <div class="tab" onclick="switchTab('map')">🗺️ 录入</div>
-  <div class="tab" onclick="switchTab('orders')">📦 订单</div>
-  <div class="tab" onclick="switchTab('list')">📋 列表</div>
-  <div class="tab" onclick="switchTab('sync')">☁️ 云</div>
+  <div class="tab active" onclick="switchTab('search')">🔍 查找 / Search</div>
+  <div class="tab" onclick="switchTab('map')">🗺️ 录入 / Map</div>
+  <div class="tab" onclick="switchTab('orders')">📦 订单 / Orders</div>
+  <div class="tab" onclick="switchTab('list')">📋 列表 / List</div>
+  <div class="tab" onclick="switchTab('sync')">☁️ 云 / Sync</div>
 </div>
 
 <div class="page active" id="page-search">
   <div class="search-box">
-    <div class="search-label">输入或扫描 SKU</div>
+    <div class="search-label">输入或扫描 SKU / Scan or Enter SKU</div>
     <div class="search-row">
-      <input type="text" class="search-input" id="searchInput" placeholder="如 R-S-AGA-0021-8" oninput="this.value=this.value.toUpperCase()" onkeydown="if(event.key==='Enter')doSearch()">
+      <input type="text" class="search-input" id="searchInput" placeholder="e.g. R-S-AGA-0021-8" oninput="this.value=this.value.toUpperCase()" onkeydown="if(event.key==='Enter')doSearch()">
       <button class="btn-cam" onclick="openScan('search')">📷</button>
     </div>
-    <button class="btn-search" onclick="doSearch()">查找位置</button>
+    <button class="btn-search" onclick="doSearch()">查找位置 / Find Location</button>
   </div>
   <div id="searchResult"></div>
 </div>
 
 <div class="page" id="page-orders">
   <div class="search-box">
-    <div class="search-label">粘贴 Etsy / Amazon 订单</div>
-    <textarea id="orderPaste" class="order-paste" placeholder="支持：&#10;· 表格复制（CSV / Tab，含 Order、SKU、Quantity 列）&#10;· Etsy 订单详情（Order #…、SKU: …、2 x 商品名）&#10;· Amazon 订单（123-4567890-1234567、Seller SKU）&#10;&#10;一单里可有多个产品"></textarea>
-    <button class="btn-search" onclick="parseAndMatchOrders()">匹配库位</button>
+    <div class="search-label">粘贴 Etsy / Amazon 订单 / Paste Orders</div>
+    <textarea id="orderPaste" class="order-paste" placeholder="CSV/Tab table · Etsy Order # + SKU · Amazon order ID + Seller SKU&#10;Multiple items per order OK / 一单可多 SKU"></textarea>
+    <button class="btn-search" onclick="parseAndMatchOrders()">匹配库位 / Match Locations</button>
   </div>
   <div id="orderResult"></div>
 </div>
@@ -190,17 +190,17 @@ header h1{font-size:17px;font-weight:700}
   <div class="shelf-info">
     <div class="shelf-title" id="shelfTitle">A1</div>
     <div class="adjust-row" style="margin-bottom:8px">
-      <span>货架名</span>
-      <input type="text" class="search-input" id="shelfNameInput" style="flex:1;padding:9px 11px;font-size:14px" placeholder="如：样品左区" onchange="saveShelfName(this.value)">
+      <span>货架名 / Name</span>
+      <input type="text" class="search-input" id="shelfNameInput" style="flex:1;padding:9px 11px;font-size:14px" placeholder="e.g. Sample Left" onchange="saveShelfName(this.value)">
     </div>
     <div class="adjust-row" style="margin-bottom:6px">
-      <span>层数</span>
+      <span>层数 / Rows</span>
       <button class="adj-btn" onclick="adjustShelf('rows',-1)">−</button>
       <div class="adj-val" id="rowsVal">9</div>
       <button class="adj-btn" onclick="adjustShelf('rows',1)">+</button>
     </div>
     <div class="adjust-row">
-      <span>每层格数</span>
+      <span>每层格数 / Cols</span>
       <button class="adj-btn" onclick="adjustShelf('cols',-1)">−</button>
       <div class="adj-val" id="colsVal">15</div>
       <button class="adj-btn" onclick="adjustShelf('cols',1)">+</button>
@@ -212,49 +212,49 @@ header h1{font-size:17px;font-weight:700}
 </div>
 
 <div class="page" id="page-list">
-  <input type="text" class="list-search" placeholder="搜索 SKU 或名称..." oninput="renderList(this.value)">
+  <input type="text" class="list-search" placeholder="搜索 SKU 或名称 / Search SKU or name..." oninput="renderList(this.value)">
   <div id="skuList"></div>
 </div>
 
 <div class="page" id="page-sync">
   <div class="export-box">
-    <div class="export-title">📋 本地备份</div>
-    <div class="export-desc">把所有数据复制到剪贴板，粘贴到备忘录保存，防止数据丢失。</div>
-    <button class="btn-export" onclick="exportToClipboard()">📋 复制数据到剪贴板</button>
-    <button class="btn-export" style="background:#2196f3" onclick="importFromClipboard()">📥 从剪贴板恢复数据</button>
+    <div class="export-title">📋 本地备份 / Local Backup</div>
+    <div class="export-desc">复制全部数据到剪贴板，粘贴到备忘录保存。/ Copy all data to clipboard for backup.</div>
+    <button class="btn-export" onclick="exportToClipboard()">📋 复制到剪贴板 / Copy</button>
+    <button class="btn-export" style="background:#2196f3" onclick="importFromClipboard()">📥 从剪贴板恢复 / Restore</button>
   </div>
   <div class="sync-box">
-    <div class="sync-title">GitHub 云端同步</div>
-    <div class="sync-desc">首次使用：在 GitHub → Settings → Developer settings → Personal access tokens 创建 Token，勾选 <strong>repo</strong> 权限，粘贴到下方。</div>
-    <input type="password" class="sync-input" id="ghTokenInput" placeholder="GitHub Token（ghp_...）" autocomplete="off">
-    <button class="btn-search" onclick="saveGhToken()">保存 Token</button>
+    <div class="sync-title">GitHub 云端同步 / Cloud Sync</div>
+    <div class="sync-desc">GitHub → Settings → Developer settings → Personal access tokens，勾选 <strong>repo</strong>，粘贴到下方。/ Create token with <strong>repo</strong> scope.</div>
+    <input type="password" class="sync-input" id="ghTokenInput" placeholder="GitHub Token (ghp_...)" autocomplete="off">
+    <button class="btn-search" onclick="saveGhToken()">保存 Token / Save Token</button>
     <div class="sync-row">
-      <button class="btn-sync secondary" onclick="pullFromCloud()">⬇️ 下载</button>
-      <button class="btn-sync" onclick="pushToCloud()">⬆️ 上传</button>
+      <button class="btn-sync secondary" onclick="pullFromCloud()">⬇️ 下载 / Download</button>
+      <button class="btn-sync" onclick="pushToCloud()">⬆️ 上传 / Upload</button>
     </div>
-    <div class="sync-status" id="syncStatus">未连接</div>
+    <div class="sync-status" id="syncStatus">未连接 / Not connected</div>
   </div>
 </div>
 
 <div class="sheet" id="zoneSheet" onclick="if(event.target===this)closeZoneSheet()">
   <div class="sheet-panel" onclick="event.stopPropagation()">
-    <div class="sheet-title">区 / 货架设置</div>
-    <div class="sheet-sub">每个区可设货架数量，如 A 区 12 个（A1～A12），可添加 E 区等</div>
+    <div class="sheet-title">区 / 货架设置 / Zones</div>
+    <div class="sheet-sub">每区货架数量可设，如 A 区 12 个；可添加 E 区。/ Set shelf count per zone, add zones like E.</div>
     <div id="zoneList"></div>
     <div class="zone-add-row">
-      <input type="text" class="sheet-input" id="newZoneId" placeholder="新区字母，如 E" maxlength="3" autocapitalize="characters" autocomplete="off" oninput="this.value=this.value.toUpperCase().replace(/[^A-Z]/g,'')">
-      <button class="btn-sheet dark" style="flex:0 0 auto;min-width:88px" onclick="addZone()">＋ 添加区</button>
+      <input type="text" class="sheet-input" id="newZoneId" placeholder="New zone e.g. E" maxlength="3" autocapitalize="characters" autocomplete="off" oninput="this.value=this.value.toUpperCase().replace(/[^A-Z]/g,'')">
+      <button class="btn-sheet dark" style="flex:0 0 auto;min-width:100px" onclick="addZone()">＋ 添加区 / Add</button>
     </div>
     <div class="sheet-row" style="margin-top:14px">
-      <button class="btn-sheet light" style="flex:1" onclick="closeZoneSheet()">关闭</button>
+      <button class="btn-sheet light" style="flex:1" onclick="closeZoneSheet()">关闭 / Close</button>
     </div>
   </div>
 </div>
 
 <div class="modal" id="scanModal">
   <div class="modal-header">
-    <div class="modal-title" id="modalTitle">扫描标签</div>
-    <button class="btn-close-modal" onclick="closeScan()">关闭</button>
+    <div class="modal-title" id="modalTitle">扫描标签 / Scan Label</div>
+    <button class="btn-close-modal" onclick="closeScan()">关闭 / Close</button>
   </div>
   <div class="current-cell-info" id="currentCellInfo" style="display:none"></div>
   <div class="video-wrap" id="videoWrap">
@@ -262,20 +262,20 @@ header h1{font-size:17px;font-weight:700}
     <div class="scan-overlay"><div class="scan-box"><div class="scan-line"></div></div></div>
   </div>
   <div class="photo-fallback" id="photoFallback">
-    <img id="photoPreview" alt="预览">
+    <img id="photoPreview" alt="Preview">
     <div class="photo-placeholder" id="photoPlaceholder">
       <div class="icon">📷</div>
-      <div>点击下方按钮拍摄标签</div>
-      <div class="hint">直接打开文件时无法使用实时相机<br>拍照模式可正常使用</div>
+      <div>点击下方按钮拍摄标签 / Tap below to capture</div>
+      <div class="hint">本地文件打开时无法实时相机 / Photo mode works offline<br>拍照模式可正常使用</div>
     </div>
   </div>
   <input type="file" id="photoInput" accept="image/*" capture="environment" hidden onchange="onPhotoSelected(event)">
   <canvas id="captureCanvas"></canvas>
   <div class="modal-bottom">
-    <div class="ocr-status" id="ocrStatus">对准编号后，点击「识别标签」</div>
-    <div class="words-hint" id="wordsHint" style="display:none">👆 点击选择正确的 SKU</div>
+    <div class="ocr-status" id="ocrStatus">对准编号后点击识别 / Align SKU, then scan</div>
+    <div class="words-hint" id="wordsHint" style="display:none">👆 点击选择 SKU / Tap to select</div>
     <div class="words-list" id="wordsList"></div>
-    <button class="btn-capture" id="captureBtn" onclick="captureFrame()">📷 识别标签</button>
+    <button class="btn-capture" id="captureBtn" onclick="captureFrame()">📷 识别标签 / Scan</button>
   </div>
 </div>
 
@@ -283,38 +283,40 @@ header h1{font-size:17px;font-weight:700}
 
 <div class="sheet" id="cellSheet" onclick="if(event.target===this)closeCellSheet()">
   <div class="sheet-panel" onclick="event.stopPropagation()">
-    <div class="sheet-title" id="cellSheetTitle">格子</div>
+    <div class="sheet-title" id="cellSheetTitle">格子 / Cell</div>
     <div class="sheet-sub" id="cellSheetSub"></div>
     <div id="cellSheetFilled">
       <div class="sheet-field">
-        <div class="sheet-label">SKU 编号（可改）</div>
-        <input type="text" class="sheet-input" id="cellSheetSku" placeholder="如 GEM-2408SY-19" autocapitalize="characters" autocomplete="off">
+        <div class="sheet-label">SKU 编号（可改）/ SKU (editable)</div>
+        <input type="text" class="sheet-input" id="cellSheetSku" placeholder="e.g. GEM-2408SY-19" autocapitalize="characters" autocomplete="off">
       </div>
       <div class="sheet-field">
-        <div class="sheet-label">产品名称（可选）</div>
-        <input type="text" class="sheet-input" id="cellSheetName" placeholder="如 Green Jade 4x6mm" autocomplete="off">
+        <div class="sheet-label">产品名称（可选）/ Product name</div>
+        <input type="text" class="sheet-input" id="cellSheetName" placeholder="e.g. Green Jade 4x6mm" autocomplete="off">
       </div>
       <div class="sheet-row">
-        <button class="btn-sheet primary" onclick="saveCellEdit()">💾 保存</button>
-        <button class="btn-sheet dark" onclick="rescanCell()">📷 重新扫描</button>
+        <button class="btn-sheet primary" onclick="saveCellEdit()">💾 保存 / Save</button>
+        <button class="btn-sheet dark" onclick="rescanCell()">📷 重新扫描 / Rescan</button>
       </div>
       <div class="sheet-row">
-        <button class="btn-sheet light" onclick="insertSlotAtCell()">➕ 此处插入空位</button>
-        <button class="btn-sheet danger" onclick="deleteCellShiftLeft()">🗑️ 删除并左移</button>
+        <button class="btn-sheet light" onclick="insertSlotAtCell()">➕ 插入空位 / Insert slot</button>
+        <button class="btn-sheet danger" onclick="deleteCellShiftLeft()">🗑️ 删除并左移 / Delete</button>
       </div>
     </div>
     <div id="cellSheetEmpty" style="display:none">
       <div class="sheet-row">
-        <button class="btn-sheet light" onclick="insertSlotAtCell()">➕ 此处插入空位</button>
+        <button class="btn-sheet light" onclick="insertSlotAtCell()">➕ 插入空位 / Insert slot</button>
       </div>
     </div>
     <div class="sheet-row" style="margin-top:10px">
-      <button class="btn-sheet light" style="flex:1" onclick="closeCellSheet()">关闭</button>
+      <button class="btn-sheet light" style="flex:1" onclick="closeCellSheet()">关闭 / Close</button>
     </div>
   </div>
 </div>
 
 <script>
+function bi(zh, en) { return zh + ' / ' + en; }
+
 let db = JSON.parse(localStorage.getItem('wdb4') || '{}');
 let shelfCfg = JSON.parse(localStorage.getItem('wdb4_cfg') || '{}');
 let ghFileSha = null;
@@ -364,7 +366,7 @@ function setSyncStatus(msg, isErr) {
 function exportToClipboard() {
   const data = JSON.stringify(buildPayload(), null, 2);
   navigator.clipboard.writeText(data).then(() => {
-    showToast('✅ 已复制到剪贴板，请粘贴到备忘录保存');
+    showToast(bi('✅ 已复制到剪贴板，请粘贴到备忘录', 'Copied — paste to Notes'));
   }).catch(() => {
     const ta = document.createElement('textarea');
     ta.value = data;
@@ -372,7 +374,7 @@ function exportToClipboard() {
     ta.select();
     document.execCommand('copy');
     document.body.removeChild(ta);
-    showToast('✅ 已复制，请粘贴到备忘录保存');
+    showToast(bi('✅ 已复制，请粘贴到备忘录', 'Copied — paste to Notes'));
   });
 }
 
@@ -382,24 +384,24 @@ async function importFromClipboard() {
     try {
       text = await navigator.clipboard.readText();
     } catch(e) {
-      text = prompt('请粘贴备份数据：');
+      text = prompt(bi('请粘贴备份数据', 'Paste backup data'));
     }
     if (!text) return;
     const payload = JSON.parse(text);
-    if (!payload.db) { showToast('数据格式不对'); return; }
+    if (!payload.db) { showToast(bi('数据格式不对', 'Invalid format')); return; }
     applyPayload(payload);
     renderMap();
     renderList('');
-    showToast('✅ 数据已恢复');
+    showToast(bi('✅ 数据已恢复', 'Data restored'));
   } catch(e) {
-    showToast('恢复失败，请检查数据格式');
+    showToast(bi('恢复失败，请检查数据格式', 'Restore failed — check format'));
   }
 }
 
 // ---- GITHUB SYNC (FIXED) ----
 async function pushToGitHub() {
   const token = getGhToken();
-  if (!token) throw new Error('请先保存 GitHub Token');
+  if (!token) throw new Error(bi('请先保存 GitHub Token', 'Save GitHub Token first'));
 
   // 每次上传前强制重新获取最新SHA
   const checkRes = await fetch(
@@ -473,10 +475,10 @@ function scheduleSyncPush() {
   syncPushTimer = setTimeout(async () => {
     try {
       await pushToGitHub();
-      setSyncStatus('已自动同步 ✅');
+      setSyncStatus(bi('已自动同步 ✅', 'Auto synced ✅'));
       updateSyncLive();
     } catch (e) {
-      setSyncStatus('自动上传失败: ' + e.message, true);
+      setSyncStatus(bi('自动上传失败: ', 'Auto upload failed: ') + e.message, true);
     }
   }, 1200);
 }
@@ -536,39 +538,39 @@ function persistAll() {
 
 function saveGhToken() {
   const token = document.getElementById('ghTokenInput').value.trim();
-  if (!token) { showToast('请输入 Token'); return; }
+  if (!token) { showToast(bi('请输入 Token', 'Enter Token')); return; }
   localStorage.setItem('wdb4_gh_token', token);
   document.getElementById('ghTokenInput').value = '';
-  showToast('Token 已保存');
+  showToast(bi('Token 已保存', 'Token saved'));
   pushToCloud();
 }
 
 async function pullFromCloud() {
-  setSyncStatus('下载中...');
+  setSyncStatus(bi('下载中...', 'Downloading...'));
   try {
     if (getGhToken()) await loadFromGitHub();
     else {
       const remote = await loadFromPublicRaw();
-      if (!remote) throw new Error('云端暂无数据');
+      if (!remote) throw new Error(bi('云端暂无数据', 'No cloud data'));
       applyPayload(remote);
     }
     renderMap();
     renderList(document.querySelector('.list-search')?.value || '');
-    setSyncStatus('已下载最新数据');
-    showToast('数据已更新');
+    setSyncStatus(bi('已下载最新数据', 'Downloaded latest'));
+    showToast(bi('数据已更新', 'Data updated'));
   } catch (e) {
-    setSyncStatus('下载失败: ' + e.message, true);
+    setSyncStatus(bi('下载失败: ', 'Download failed: ') + e.message, true);
   }
 }
 
 async function pushToCloud() {
-  setSyncStatus('上传中...');
+  setSyncStatus(bi('上传中...', 'Uploading...'));
   try {
     await pushToGitHub();
-    setSyncStatus('已上传到 GitHub ✅');
-    showToast('上传成功');
+    setSyncStatus(bi('已上传到 GitHub ✅', 'Uploaded to GitHub ✅'));
+    showToast(bi('上传成功', 'Upload OK'));
   } catch (e) {
-    setSyncStatus('上传失败: ' + e.message, true);
+    setSyncStatus(bi('上传失败: ', 'Upload failed: ') + e.message, true);
   }
 }
 
@@ -578,7 +580,7 @@ function countSkus(data) {
 
 async function initCloudData() {
   const token = getGhToken();
-  if (token) document.getElementById('ghTokenInput').placeholder = 'Token 已保存（输入可更换）';
+  if (token) document.getElementById('ghTokenInput').placeholder = bi('Token 已保存（输入可更换）', 'Token saved (enter to replace)');
   try {
     const remote = await loadFromPublicRaw();
     const localUpdated = localStorage.getItem('wdb4_updated') || '';
@@ -588,14 +590,14 @@ async function initCloudData() {
     if (remoteCount > 0 && (!localUpdated || !localCount || (remoteUpdated && remoteUpdated > localUpdated))) {
       applyPayload(remote);
       renderMap();
-      setSyncStatus(`已从云端加载 ${remoteCount} 条`);
+      setSyncStatus(bi(`已从云端加载 ${remoteCount} 条`, `Loaded ${remoteCount} from cloud`));
     } else if (localCount > 0) {
-      setSyncStatus(token ? `本机 ${localCount} 条，可点上传` : `本机 ${localCount} 条`);
+      setSyncStatus(token ? bi(`本机 ${localCount} 条，可点上传`, `${localCount} local — tap Upload`) : bi(`本机 ${localCount} 条`, `${localCount} local`));
     } else {
-      setSyncStatus(remoteCount ? '点「下载」获取云端数据' : '暂无数据，开始录入吧');
+      setSyncStatus(remoteCount ? bi('点「下载」获取云端数据', 'Tap Download for cloud data') : bi('暂无数据，开始录入吧', 'No data — start mapping'));
     }
   } catch (e) {
-    setSyncStatus('同步检查失败', true);
+    setSyncStatus(bi('同步检查失败', 'Sync check failed'), true);
   }
 }
 
@@ -669,13 +671,13 @@ function renderZoneList() {
     const used = maxUsedShelfInGroup(g.id);
     return `<div class="zone-row">
       <div class="zone-id">${escHtml(g.id)}</div>
-      <div class="zone-meta">货架数${used ? ` · 已用到 ${g.id}${used}` : ''}</div>
+      <div class="zone-meta">${bi('货架数', 'Shelves')}${used ? ` · ${bi('已用到', 'used')} ${g.id}${used}` : ''}</div>
       <div class="zone-count">
         <button class="adj-btn" onclick="adjustGroupCount('${g.id}',-1)">−</button>
         <div class="adj-val">${g.count}</div>
         <button class="adj-btn" onclick="adjustGroupCount('${g.id}',1)">+</button>
       </div>
-      ${list.length > 1 ? `<button class="adj-btn" style="color:#e63946;border-color:#ffcdd2" onclick="removeZone('${g.id}')" title="删除区">×</button>` : ''}
+      ${list.length > 1 ? `<button class="adj-btn" style="color:#e63946;border-color:#ffcdd2" onclick="removeZone('${g.id}')" title="${bi('删除区', 'Delete zone')}">×</button>` : ''}
     </div>`;
   }).join('');
 }
@@ -687,7 +689,7 @@ function adjustGroupCount(groupId, delta) {
   const used = maxUsedShelfInGroup(groupId);
   const next = Math.max(1, Math.min(30, g.count + delta));
   if (next < used) {
-    showToast(`${groupId} 区已用到 ${groupId}${used}，不能少于 ${used}`);
+    showToast(bi(`${groupId} 区已用到 ${groupId}${used}，不能少于 ${used}`, `Zone ${groupId}: in use through ${groupId}${used}`));
     return;
   }
   g.count = next;
@@ -699,10 +701,10 @@ function adjustGroupCount(groupId, delta) {
 
 function addZone() {
   const id = document.getElementById('newZoneId').value.trim().toUpperCase();
-  if (!id) { showToast('请输入区字母'); return; }
-  if (!/^[A-Z]{1,3}$/.test(id)) { showToast('区名用 1～3 个大写字母'); return; }
+  if (!id) { showToast(bi('请输入区字母', 'Enter zone letter')); return; }
+  if (!/^[A-Z]{1,3}$/.test(id)) { showToast(bi('区名用 1～3 个大写字母', 'Use 1–3 letters A–Z')); return; }
   const groups = getLayout().groups;
-  if (groups.some(x => x.id === id)) { showToast('该区已存在'); return; }
+  if (groups.some(x => x.id === id)) { showToast(bi('该区已存在', 'Zone already exists')); return; }
   groups.push({ id, count: DEFAULT_SHELF_COUNT });
   document.getElementById('newZoneId').value = '';
   saveCfg();
@@ -710,22 +712,22 @@ function addZone() {
   currentShelf = id + '1';
   renderZoneList();
   renderMap();
-  showToast(`已添加 ${id} 区`);
+  showToast(bi(`已添加 ${id} 区`, `Added zone ${id}`));
 }
 
 function removeZone(groupId) {
   if (getLayout().groups.length <= 1) return;
   if (maxUsedShelfInGroup(groupId) > 0) {
-    showToast(`${groupId} 区还有货，不能删除`);
+    showToast(bi(`${groupId} 区还有货，不能删除`, `Zone ${groupId} has stock`));
     return;
   }
-  if (!confirm(`删除 ${groupId} 区？`)) return;
+  if (!confirm(bi(`删除 ${groupId} 区？`, `Delete zone ${groupId}?`))) return;
   shelfCfg.__layout.groups = getLayout().groups.filter(x => x.id !== groupId);
   saveCfg();
   normalizeCurrentSelection();
   renderZoneList();
   renderMap();
-  showToast('已删除');
+  showToast(bi('已删除', 'Deleted'));
 }
 
 function getShelfCfg(key) {
@@ -742,7 +744,7 @@ function saveShelfName(name) {
   shelfCfg[currentShelf] = cfg;
   saveCfg();
   renderMap();
-  showToast('货架名已保存');
+  showToast(bi('货架名已保存', 'Shelf name saved'));
 }
 
 function pk(shelf, row, col) { return `${shelf}-${row}-${col}`; }
@@ -793,7 +795,7 @@ function shiftRowRight(shelf, row, fromCol) {
   const items = getRowItems(shelf, row);
   const toShift = items.filter(it => it.col >= fromCol);
   if (!toShift.length) {
-    showToast('后面没有货可右移，此格已是空位');
+    showToast(bi('后面没有货可右移，此格已是空位', 'No items to shift — slot empty'));
     return false;
   }
   const next = items.map(it => ({
@@ -801,7 +803,7 @@ function shiftRowRight(shelf, row, fromCol) {
     name: it.name,
     col: it.col >= fromCol ? it.col + 1 : it.col
   }));
-  if (next.some(it => it.col > 30)) { showToast('该行已满，无法插入'); return false; }
+  if (next.some(it => it.col > 30)) { showToast(bi('该行已满，无法插入', 'Row full — cannot insert')); return false; }
   writeRowItems(shelf, row, next);
   return true;
 }
@@ -820,18 +822,18 @@ function insertSlotAtCell() {
   closeCellSheet();
   saveDB();
   renderMap();
-  showToast('已插入空位，后面格右移');
+  showToast(bi('已插入空位，后面格右移', 'Slot inserted — shifted right'));
 }
 
 function deleteCellShiftLeft() {
   if (!editingCell) return;
-  if (!confirm('删除此格并左移后面的货？')) return;
+  if (!confirm(bi('删除此格并左移后面的货？', 'Delete and shift left?'))) return;
   const { shelf, row, col } = editingCell;
   shiftRowLeft(shelf, row, col);
   closeCellSheet();
   saveDB();
   renderMap();
-  showToast('已删除并左移');
+  showToast(bi('已删除并左移', 'Deleted & shifted left'));
 }
 
 function saveCellEdit() {
@@ -841,11 +843,11 @@ function saveCellEdit() {
   if (!e) return;
   const newSku = document.getElementById('cellSheetSku').value.trim().toUpperCase();
   const newName = document.getElementById('cellSheetName').value.trim();
-  if (!newSku) { showToast('SKU 不能为空'); return; }
+  if (!newSku) { showToast(bi('SKU 不能为空', 'SKU required')); return; }
   const oldSku = e.sku;
   if (newSku !== oldSku) {
     if (db[newSku] && !(db[newSku].shelf === shelf && db[newSku].row === row && db[newSku].col === col)) {
-      showToast('该 SKU 已在其他位置'); return;
+      showToast(bi('该 SKU 已在其他位置', 'SKU already elsewhere')); return;
     }
     delete db[oldSku];
     setCellEntry(shelf, row, col, newSku, newName);
@@ -857,7 +859,7 @@ function saveCellEdit() {
   closeCellSheet();
   renderMap();
   renderList(document.querySelector('.list-search')?.value || '');
-  showToast('已保存');
+  showToast(bi('已保存', 'Saved'));
 }
 
 function saveCellName() { saveCellEdit(); }
@@ -871,8 +873,8 @@ function openCellSheet(shelf, row, col) {
   editingCell = { shelf, row, col };
   const e = db[pk(shelf, row, col)];
   const label = getShelfLabel(shelf);
-  document.getElementById('cellSheetTitle').textContent = e ? '编辑格子' : '空格子';
-  document.getElementById('cellSheetSub').textContent = `${label} · 第 ${row} 层 · 第 ${col} 格`;
+  document.getElementById('cellSheetTitle').textContent = e ? bi('编辑格子', 'Edit cell') : bi('空格子', 'Empty cell');
+  document.getElementById('cellSheetSub').textContent = `${label} · ${bi(`第 ${row} 层 · 第 ${col} 格`, `Row ${row} · Col ${col}`)}`;
   if (e) {
     document.getElementById('cellSheetFilled').style.display = 'block';
     document.getElementById('cellSheetEmpty').style.display = 'none';
@@ -932,16 +934,16 @@ function doSearch() {
   if (d) {
     el.innerHTML = `<div class="result-card">
       <div class="result-sku">SKU: ${sku}</div>
-      <div class="result-name">${d.name||'（未填名称）'}</div>
+      <div class="result-name">${d.name||bi('（未填名称）', '(no name)')}</div>
       <div class="loc-grid">
-        <div class="loc-item"><div class="loc-label">货架</div><div class="loc-value">${d.shelf}</div></div>
-        <div class="loc-item"><div class="loc-label">层</div><div class="loc-value">${d.row}</div></div>
-        <div class="loc-item"><div class="loc-label">位置</div><div class="loc-value">${d.col}</div></div>
+        <div class="loc-item"><div class="loc-label">${bi('货架', 'Shelf')}</div><div class="loc-value">${d.shelf}</div></div>
+        <div class="loc-item"><div class="loc-label">${bi('层', 'Row')}</div><div class="loc-value">${d.row}</div></div>
+        <div class="loc-item"><div class="loc-label">${bi('位置', 'Col')}</div><div class="loc-value">${d.col}</div></div>
       </div>
       <div class="loc-full">📍 ${getShelfLabel(d.shelf)} · ${d.row}-${d.col}</div>
     </div>`;
   } else {
-    el.innerHTML = `<div class="not-found"><div style="font-size:36px;margin-bottom:8px">🔍</div><div style="color:#888;font-size:14px">找不到 <strong>${sku}</strong><br>请先录入这个产品</div></div>`;
+    el.innerHTML = `<div class="not-found"><div style="font-size:36px;margin-bottom:8px">🔍</div><div style="color:#888;font-size:14px">${bi('找不到', 'Not found')} <strong>${sku}</strong><br>${bi('请先录入这个产品', 'Map this SKU first')}</div></div>`;
   }
 }
 
@@ -966,7 +968,7 @@ function normalizeSkuToken(raw) {
 function groupOrderLines(items) {
   const map = new Map();
   for (const it of items) {
-    const key = it.orderId || '（未识别订单号）';
+    const key = it.orderId || bi('（未识别订单号）', '(no order ID)');
     if (!map.has(key)) map.set(key, { orderId: key, platform: it.platform || '', lines: [] });
     const g = map.get(key);
     if (!g.platform && it.platform) g.platform = it.platform;
@@ -996,7 +998,7 @@ function parseTabularOrders(lines) {
     else if (/^\d{9,10}$/.test(orderId)) linePlatform = 'Etsy';
     if (linePlatform) platform = linePlatform;
     const qty = qtyCol >= 0 ? (parseInt(cols[qtyCol], 10) || 1) : 1;
-    items.push({ orderId: orderId || '（未识别订单号）', sku, qty, platform: linePlatform });
+    items.push({ orderId: orderId || bi('（未识别订单号）', '(no order ID)'), sku, qty, platform: linePlatform });
   }
   return items.length ? { platform, items } : null;
 }
@@ -1040,7 +1042,7 @@ function parseBlockOrders(text) {
         const prevQty = lines[i - 1].match(/^(\d+)\s*x\s+/i);
         if (prevQty) qty = parseInt(prevQty[1], 10) || qty;
       }
-      items.push({ orderId: currentOrder || '（未识别订单号）', sku, qty, platform: currentPlatform });
+      items.push({ orderId: currentOrder || bi('（未识别订单号）', '(no order ID)'), sku, qty, platform: currentPlatform });
       continue;
     }
 
@@ -1074,7 +1076,7 @@ function parseOrdersFromPaste(text) {
   let platform = tabular ? tabular.platform : '';
   if (!platform && items.length) {
     const ps = new Set(items.map(i => i.platform).filter(Boolean));
-    platform = ps.size === 1 ? [...ps][0] : (ps.has('Amazon') && ps.has('Etsy') ? '混合' : ([...ps][0] || '自动识别'));
+    platform = ps.size === 1 ? [...ps][0] : (ps.has('Amazon') && ps.has('Etsy') ? bi('混合', 'Mixed') : ([...ps][0] || bi('自动识别', 'Auto')));
   }
   return { platform, orders: groupOrderLines(items) };
 }
@@ -1084,7 +1086,7 @@ function parseAndMatchOrders() {
   const el = document.getElementById('orderResult');
   const { platform, orders } = parseOrdersFromPaste(text);
   if (!orders.length) {
-    el.innerHTML = '<div class="order-empty">没识别到订单内容<br><span style="font-size:12px">请确认含订单号、SKU；表格需有表头行</span></div>';
+    el.innerHTML = `<div class="order-empty">${bi('没识别到订单内容', 'No orders detected')}<br><span style="font-size:12px">${bi('请确认含订单号、SKU；表格需有表头行', 'Need order ID + SKU; tables need header row')}</span></div>`;
     return;
   }
   let totalLines = 0;
@@ -1096,25 +1098,25 @@ function parseAndMatchOrders() {
       const miss = !loc;
       if (miss) missLines++;
       const locText = loc
-        ? `${getShelfLabel(loc.shelf)} · ${loc.row}层 · ${loc.col}格`
-        : '未录入';
+        ? `${getShelfLabel(loc.shelf)} · ${bi(`${loc.row}层 · ${loc.col}格`, `R${loc.row} C${loc.col}`)}`
+        : bi('未录入', 'Not mapped');
       return `<tr class="${miss ? 'miss' : ''}">
         <td class="sku-cell">${escHtml(line.sku)}</td>
         <td>${line.qty}</td>
         <td class="${miss ? 'loc-miss' : 'loc-ok'}">${escHtml(locText)}</td>
       </tr>`;
     }).join('');
-    const pf = order.platform || platform || '订单';
+    const pf = order.platform || platform || bi('订单', 'Order');
     return `<div class="order-card">
-      <div class="order-head"><span>订单 ${escHtml(order.orderId)}</span><span class="order-platform">${escHtml(pf)}</span></div>
-      <div class="order-summary">${order.lines.length} 个产品</div>
+      <div class="order-head"><span>${bi('订单', 'Order')} ${escHtml(order.orderId)}</span><span class="order-platform">${escHtml(pf)}</span></div>
+      <div class="order-summary">${order.lines.length} ${bi('个产品', 'items')}</div>
       <table class="order-table">
-        <thead><tr><th>SKU</th><th>数量</th><th>库位</th></tr></thead>
+        <thead><tr><th>SKU</th><th>${bi('数量', 'Qty')}</th><th>${bi('库位', 'Location')}</th></tr></thead>
         <tbody>${rows}</tbody>
       </table>
     </div>`;
   }).join('');
-  const summary = `<div class="order-summary" style="margin:0 0 10px 2px">共 ${orders.length} 单 · ${totalLines} 个产品${missLines ? ` · <span style="color:#e63946">${missLines} 个未找到库位</span>` : ' · 全部已匹配'}</div>`;
+  const summary = `<div class="order-summary" style="margin:0 0 10px 2px">${bi(`共 ${orders.length} 单 · ${totalLines} 个产品`, `${orders.length} orders · ${totalLines} items`)}${missLines ? ` · <span style="color:#e63946">${bi(`${missLines} 个未找到库位`, `${missLines} not mapped`)}</span>` : ` · ${bi('全部已匹配', 'All matched')}`}</div>`;
   el.innerHTML = summary + html;
   switchTab('orders');
 }
@@ -1124,8 +1126,8 @@ let currentGroup='A', currentShelf='A1', scanMode='search', currentCell=null;
 function renderGroupTabs() {
   const groups = getLayout().groups;
   document.getElementById('groupTabs').innerHTML = groups.map(g =>
-    `<button class="group-tab ${g.id===currentGroup?'active':''}" onclick="selectGroup('${g.id}')">${g.id} 区</button>`
-  ).join('') + `<button class="group-tab add" onclick="openZoneSheet()" title="区设置">⚙️</button>`;
+    `<button class="group-tab ${g.id===currentGroup?'active':''}" onclick="selectGroup('${g.id}')">${g.id} ${bi('区', 'Zone')}</button>`
+  ).join('') + `<button class="group-tab add" onclick="openZoneSheet()" title="${bi('区设置', 'Zone settings')}">⚙️</button>`;
 }
 function selectGroup(g) { currentGroup=g; currentShelf=g+'1'; renderMap(); }
 function renderShelfSelector() {
@@ -1190,10 +1192,10 @@ function setScanUI(mode){
   usePhotoMode=mode==='photo';
   document.getElementById('videoWrap').style.display=mode==='live'?'':'none';
   document.getElementById('photoFallback').style.display=mode==='photo'?'flex':'none';
-  document.getElementById('captureBtn').textContent=mode==='photo'?'📷 拍照识别':'📷 识别标签';
+  document.getElementById('captureBtn').textContent=mode==='photo'?bi('📷 拍照识别', '📷 Photo scan'):bi('📷 识别标签', '📷 Scan label');
 }
 function resetPhotoPreview(){document.getElementById('photoPreview').style.display='none';document.getElementById('photoPreview').src='';document.getElementById('photoPlaceholder').style.display='block';}
-function enablePhotoMode(msg){setScanUI('photo');resetPhotoPreview();document.getElementById('ocrStatus').textContent=msg||'点击拍照，对准标签后确认';}
+function enablePhotoMode(msg){setScanUI('photo');resetPhotoPreview();document.getElementById('ocrStatus').textContent=msg||bi('点击拍照，对准标签后确认', 'Tap to photo — align label');}
 function openScan(mode){
   scanMode=mode; capturedPhoto=null;
   document.getElementById('scanModal').classList.add('open');
@@ -1204,22 +1206,22 @@ function openScan(mode){
   const ci=document.getElementById('currentCellInfo');
   if(mode==='map'&&currentCell||mode==='map-rescan'&&currentCell){
     ci.style.display='block';
-    ci.textContent=`录入：${getShelfLabel(currentCell.shelf)} 第${currentCell.row}层 第${currentCell.col}个`;
-    document.getElementById('modalTitle').textContent=`录入 ${currentCell.shelf}-${currentCell.row}-${currentCell.col}`;
-  } else {ci.style.display='none';document.getElementById('modalTitle').textContent='扫描 SKU 标签';}
+    ci.textContent=bi(`录入：${getShelfLabel(currentCell.shelf)} 第${currentCell.row}层 第${currentCell.col}个`, `Map: ${getShelfLabel(currentCell.shelf)} R${currentCell.row} C${currentCell.col}`);
+    document.getElementById('modalTitle').textContent=`${bi('录入', 'Map')} ${currentCell.shelf}-${currentCell.row}-${currentCell.col}`;
+  } else {ci.style.display='none';document.getElementById('modalTitle').textContent=bi('扫描 SKU 标签', 'Scan SKU label');}
   if(window.isSecureContext&&navigator.mediaDevices&&navigator.mediaDevices.getUserMedia){
     setScanUI('live');
-    document.getElementById('ocrStatus').textContent='对准编号后，点击「识别标签」';
+    document.getElementById('ocrStatus').textContent=bi('对准编号后，点击「识别标签」', 'Align SKU, then tap Scan');
     navigator.mediaDevices.getUserMedia({video:{facingMode:'environment',width:{ideal:1920},height:{ideal:1080}}})
       .then(s=>{videoStream=s;document.getElementById('scanVideo').srcObject=s;})
-      .catch(()=>enablePhotoMode('无法打开相机，请用拍照模式'));
-  } else {enablePhotoMode('当前环境不支持实时相机，请用拍照模式');}
+      .catch(()=>enablePhotoMode(bi('无法打开相机，请用拍照模式', 'Camera unavailable — use photo mode')));
+  } else {enablePhotoMode(bi('当前环境不支持实时相机，请用拍照模式', 'Live camera unavailable — use photo'));}
   initOcr().then(()=>{
     if(document.getElementById('scanModal').classList.contains('open')&&!usePhotoMode)
-      document.getElementById('ocrStatus').textContent='对准编号后，点击「识别标签」';
+      document.getElementById('ocrStatus').textContent=bi('对准编号后，点击「识别标签」', 'Align SKU, then tap Scan');
   }).catch(()=>{
     if(document.getElementById('scanModal').classList.contains('open'))
-      document.getElementById('ocrStatus').textContent='识别引擎加载失败，请刷新页面';
+      document.getElementById('ocrStatus').textContent=bi('识别引擎加载失败，请刷新页面', 'OCR failed — refresh page');
   });
 }
 function closeScan(){
@@ -1296,28 +1298,28 @@ async function recognizeImage(processed){
   ];
   let lastErr=null;
   for(const fn of tries){try{return await fn();}catch(e){lastErr=e;}}
-  throw lastErr||new Error('识别引擎不可用');
+  throw lastErr||new Error(bi('识别引擎不可用', 'OCR unavailable'));
 }
 async function runOcrFromSource(getCanvas){
-  document.getElementById('ocrStatus').textContent='引擎准备中...';
+  document.getElementById('ocrStatus').textContent=bi('引擎准备中...', 'Preparing OCR...');
   document.getElementById('wordsList').innerHTML='';
   document.getElementById('wordsHint').style.display='none';
   document.getElementById('captureBtn').disabled=true;
   try{
     try{await initOcr();}catch(e){}
-    document.getElementById('ocrStatus').textContent='识别中...';
+    document.getElementById('ocrStatus').textContent=bi('识别中...', 'Scanning...');
     const processed=getCanvas();
     const{data}=await recognizeImage(processed);
     showOcrResults(extractWords(data));
-  }catch(e){document.getElementById('ocrStatus').textContent='识别失败，请对准编号重试';}
+  }catch(e){document.getElementById('ocrStatus').textContent=bi('识别失败，请对准编号重试', 'Failed — align SKU and retry');}
   document.getElementById('captureBtn').disabled=false;
 }
 function showOcrResults(words){
   lastOcrWords=words;
   if(words.length===0){
-    document.getElementById('ocrStatus').textContent=usePhotoMode?'未识别到文字，请重新拍照':'未识别到文字，请靠近重试';
+    document.getElementById('ocrStatus').textContent=usePhotoMode?bi('未识别到文字，请重新拍照', 'No text — retake photo'):bi('未识别到文字，请靠近重试', 'No text — move closer');
   } else {
-    document.getElementById('ocrStatus').textContent=words.length===1?'识别到编号，点击确认：':'识别到编号，点击选择：';
+    document.getElementById('ocrStatus').textContent=words.length===1?bi('识别到编号，点击确认：', 'Found — tap to confirm:'):bi('识别到编号，点击选择：', 'Found — tap to select:');
     document.getElementById('wordsHint').style.display='block';
     document.getElementById('wordsList').innerHTML=words.map((w,i)=>`<div class="word-chip" onclick="selectWordByIndex(${i})">${escHtml(w)}</div>`).join('');
   }
@@ -1330,7 +1332,7 @@ async function captureFrame(){
     return;
   }
   const video=document.getElementById('scanVideo');
-  if(!video.videoWidth){showToast('相机未就绪，请稍候');return;}
+  if(!video.videoWidth){showToast(bi('相机未就绪，请稍候', 'Camera not ready'));return;}
   await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
   await runOcrFromSource(()=>captureScanRegion(video));
 }
@@ -1349,11 +1351,11 @@ function onPhotoSelected(e){
     preview.src=canvas.toDataURL('image/jpeg',0.9);
     preview.style.display='block';
     document.getElementById('photoPlaceholder').style.display='none';
-    document.getElementById('ocrStatus').textContent='照片已备好，点击「识别标签」';
+    document.getElementById('ocrStatus').textContent=bi('照片已备好，点击「识别标签」', 'Photo ready — tap Scan');
     document.getElementById('wordsList').innerHTML='';
     document.getElementById('wordsHint').style.display='none';
   };
-  img.onerror=()=>{URL.revokeObjectURL(url);showToast('图片加载失败');};
+  img.onerror=()=>{URL.revokeObjectURL(url);showToast(bi('图片加载失败', 'Image load failed'));};
   img.src=url;
 }
 function selectWord(word){
@@ -1384,22 +1386,22 @@ function renderList(filter){
     const f=filter.toUpperCase();
     return k.includes(f)||(db[k].name||'').toUpperCase().includes(f);
   }).sort();
-  if(keys.length===0){el.innerHTML='<div class="empty">还没有录入任何产品<br>去「录入」页面点格子开始</div>';return;}
-  el.innerHTML=keys.map((k,i)=>{const d=db[k];return`<div class="sku-item" onclick="openCellSheet('${d.shelf}',${d.row},${d.col})" style="cursor:pointer"><div><div class="sku-code">${escHtml(k)}</div><div class="sku-name-text">${escHtml(d.name||'（点此编辑名称）')}</div><div class="sku-loc">📍 ${getShelfLabel(d.shelf)} · ${d.row}-${d.col}</div></div><button class="btn-del" onclick="event.stopPropagation();deleteSkuAt(${i})" data-sku="${escHtml(k)}">🗑️</button></div>`;}).join('');
+  if(keys.length===0){el.innerHTML=`<div class="empty">${bi('还没有录入任何产品', 'No products yet')}<br>${bi('去「录入」页面点格子开始', 'Go to Map tab and tap a cell')}</div>`;return;}
+  el.innerHTML=keys.map((k,i)=>{const d=db[k];return`<div class="sku-item" onclick="openCellSheet('${d.shelf}',${d.row},${d.col})" style="cursor:pointer"><div><div class="sku-code">${escHtml(k)}</div><div class="sku-name-text">${escHtml(d.name||bi('（点此编辑名称）', '(tap to edit name)'))}</div><div class="sku-loc">📍 ${getShelfLabel(d.shelf)} · ${d.row}-${d.col}</div></div><button class="btn-del" onclick="event.stopPropagation();deleteSkuAt(${i})" data-sku="${escHtml(k)}">🗑️</button></div>`;}).join('');
 }
 function deleteSkuAt(i){
   const keys=Object.keys(db).filter(k=>!k.match(/^[A-Z]\d+-\d+-\d+$/)).sort();
   deleteSku(keys[i]);
 }
 function deleteSku(sku){
-  if(!confirm('删除 '+sku+' 并左移该层后面的格？')) return;
+  if(!confirm(bi('删除 '+sku+' 并左移该层后面的格？', 'Delete '+sku+' and shift left?'))) return;
   const d=db[sku];
   if(d){shiftRowLeft(d.shelf,d.row,d.col);}
   else delete db[sku];
   saveDB();
   renderList(document.querySelector('.list-search').value);
   renderMap();
-  showToast('已删除');
+  showToast(bi('已删除', 'Deleted'));
 }
 initCloudData().then(()=>{renderMap();startAutoSync();updateSyncLive();});
 updateCount();
