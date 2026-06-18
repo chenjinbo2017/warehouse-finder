@@ -1192,6 +1192,20 @@ function parseBlockOrders(text) {
       continue;
     }
 
+    const orderOnly = line.match(/^(?:order|订单)\s*(?:#|number|no\.?|id)?[:\s]*#?([A-Z0-9][A-Z0-9\-]*\d[A-Z0-9\-]*)\s*$/i);
+    if (orderOnly && !/(?:seller\s*)?sku/i.test(line)) {
+      currentOrder = orderOnly[1];
+      if (AMZ_ORDER_RE.test(currentOrder)) {
+        currentOrder = currentOrder.match(AMZ_ORDER_RE)[1];
+        currentPlatform = 'Amazon';
+      } else if (/^\d{9,10}$/.test(currentOrder)) {
+        currentPlatform = 'Etsy';
+      } else {
+        currentPlatform = currentPlatform || '';
+      }
+      continue;
+    }
+
     const skuTagged = line.match(/(?:seller\s*)?sku[:\s#]+([A-Z0-9][A-Z0-9\-./]{3,})/i);
     if (skuTagged) {
       const sku = normalizeSkuToken(skuTagged[1]);
