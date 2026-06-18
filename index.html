@@ -76,8 +76,8 @@ header h1{font-size:22px;font-weight:700;line-height:1.25;letter-spacing:.01em}
 .zone-count{display:flex;align-items:center;gap:8px}
 .zone-add-row{display:flex;gap:10px;margin-top:10px}
 .zone-add-row input{flex:1}
-.shelf-selector{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
-.shelf-btn{background:white;border:2px solid #e8ecf2;border-radius:12px;padding:10px 16px;font-size:17px;font-weight:700;cursor:pointer;color:var(--muted);min-height:50px;box-shadow:var(--shadow-sm);transition:all .18s}
+.shelf-selector{display:flex;gap:8px;flex-wrap:nowrap;overflow-x:auto;margin-bottom:12px;padding-bottom:6px;-webkit-overflow-scrolling:touch;scroll-snap-type:x proximity}
+.shelf-btn{background:white;border:2px solid #e8ecf2;border-radius:12px;padding:10px 16px;font-size:17px;font-weight:700;cursor:pointer;color:var(--muted);min-height:50px;box-shadow:var(--shadow-sm);transition:all .18s;scroll-snap-align:start;flex-shrink:0}
 .shelf-btn.active{background:linear-gradient(135deg,var(--navy),var(--navy-light));color:white;border-color:transparent;box-shadow:0 6px 14px rgba(22,33,62,.2)}
 .shelf-btn.has-data{border-color:#a5d6a7;color:var(--mint)}
 .shelf-btn.active.has-data{background:linear-gradient(135deg,#2e7d32,#43a047);border-color:transparent;color:white}
@@ -471,6 +471,7 @@ function applyPayload(payload) {
   localStorage.setItem('wdb4', JSON.stringify(db));
   localStorage.setItem('wdb4_cfg', JSON.stringify(shelfCfg));
   if (payload.updatedAt) localStorage.setItem('wdb4_updated', payload.updatedAt);
+  ensureGroupCountFitsData();
   updateCount();
 }
 
@@ -873,8 +874,39 @@ function maxUsedShelfInGroup(groupId) {
   return max;
 }
 
-function normalizeCurrentSelection() {
+function ensureGroupCountFitsData() {
   ensureLayout();
+  let changed = false;
+  for (const g of getLayout().groups) {
+    const used = maxUsedShelfInGroup(g.id);
+    if (used > g.count) {
+      g.count = Math.min(30, used);
+      changed = true;
+    }
+  }
+  if (changed) saveCfg();
+}
+
+function shelfHasData(key) {
+  return Object.keys(db).some(k => {
+    if (db[k] && db[k].shelf === key) return true;
+    if (!k.startsWith(key + '-')) return false;
+    return /^-\d+-\d+$/.test(k.slice(key.length));
+  });
+}
+
+function expandGroupCountToShelf(shelfKey, quiet) {
+  const p = parseShelfKey(shelfKey);
+  if (!p) return;
+  const g = getLayout().groups.find(x => x.id === p.group);
+  if (!g || p.num <= g.count) return;
+  g.count = Math.min(30, p.num);
+  saveCfg();
+  if (!quiet) showToast(bi(`已把 ${p.group} 区扩展到 ${g.count} 个货架`, `Expanded zone ${p.group} to ${g.count} shelves`));
+}
+
+function normalizeCurrentSelection() {
+  ensureGroupCountFitsData();
   const groups = getLayout().groups;
   if (!groups.length) {
     shelfCfg.__layout = { groups: [{ id: 'A', count: DEFAULT_SHELF_COUNT }] };
@@ -884,8 +916,9 @@ function normalizeCurrentSelection() {
   const count = getGroupShelfCount(currentGroup);
   const p = parseShelfKey(currentShelf);
   if (!p || p.group !== currentGroup) currentShelf = currentGroup + '1';
-  else if (p.num > count) currentShelf = currentGroup + count;
-  else if (p.num < 1) currentShelf = currentGroup + '1';
+  else if (p.num > count) {
+    expandGroupCountToShelf(currentShelf, true);
+  } else if (p.num < 1) currentShelf = currentGroup + '1';
 }
 
 function openZoneSheet() {
@@ -1539,13 +1572,21 @@ function selectGroup(g) { currentGroup=g; currentShelf=g+'1'; renderMap(); }
 function renderShelfSelector() {
   const count = getGroupShelfCount(currentGroup);
   document.getElementById('shelfSelector').innerHTML = Array.from({length:count},(_,i)=>{
-    const key=currentGroup+(i+1);
-    const hasData=Object.keys(db).some(k=>k.startsWith(key+'-')||(db[k]&&db[k].shelf===key));
+    const key=`${currentGroup}${i+1}`;
+    const hasData=shelfHasData(key);
     const nm=getShelfCfg(key).name;
-    return `<button class="shelf-btn ${key===currentShelf?'active':''} ${hasData?'has-data':''}" onclick="selectShelf('${key}')" title="${nm||''}">${key}${nm?`<span style="display:block;font-size:13px;font-weight:400;opacity:.85">${escHtml(nm.slice(0,6))}</span>`:''}</button>`;
+    return `<button type="button" class="shelf-btn ${key===currentShelf?'active':''} ${hasData?'has-data':''}" onclick="selectShelf('${key}')" title="${nm||''}">${key}${nm?`<span style="display:block;font-size:13px;font-weight:400;opacity:.85">${escHtml(nm.slice(0,6))}</span>`:''}</button>`;
   }).join('');
+  requestAnimationFrame(()=>{
+    const active=document.querySelector('.shelf-btn.active');
+    if(active) active.scrollIntoView({inline:'center',block:'nearest',behavior:'smooth'});
+  });
 }
-function selectShelf(s) { currentShelf=s; renderMap(); }
+function selectShelf(s) {
+  expandGroupCountToShelf(s);
+  currentShelf=s;
+  renderMap();
+}
 function adjustShelf(prop,delta) {
   const cfg=getShelfCfg(currentShelf);
   if(prop==='rows') cfg.rows=Math.max(1,Math.min(20,cfg.rows+delta));
