@@ -172,12 +172,13 @@ header h1{font-size:22px;font-weight:700;line-height:1.25;letter-spacing:.01em}
 .btn-sheet{flex:1;min-width:45%;border-radius:var(--radius-sm);padding:16px;font-size:18px;font-weight:700;cursor:pointer;min-height:52px}
 .btn-sheet.danger{background:#fff5f5;color:var(--coral);border:2px solid #ffcdd2;box-shadow:none}
 .sync-live{font-size:15px;color:#66bb6a;margin-left:4px;font-weight:700}
-.sync-hint{font-size:15px;color:var(--muted);line-height:1.55;margin-bottom:12px;padding:12px 14px;background:#f8fafc;border-radius:12px;border:1px solid var(--line)}
-.sync-hint a{color:var(--navy);font-weight:700}
-.sync-hint ol{margin:8px 0 0 18px;padding:0}
-.sync-hint li{margin-bottom:6px}
-.sync-target{font-size:15px;color:var(--mint);font-weight:700;margin-top:8px}
-.sheet-field{margin-bottom:14px}
+.sync-hint{font-size:15px;color:var(--muted);line-height:1.55;margin-bottom:14px;padding:12px 14px;background:#f8fafc;border-radius:12px;border:1px solid var(--line)}
+.sync-steps{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+.sync-step-link{display:block;padding:12px 14px;background:#fff;border:2px solid #e8ecf2;border-radius:12px;color:var(--navy);font-weight:800;font-size:16px;text-decoration:none;text-align:center;box-shadow:var(--shadow-sm)}
+.sync-step-link:active{transform:scale(.98)}
+.sync-step-note{margin-top:12px;font-size:15px;font-weight:700;color:var(--navy);line-height:1.45}
+.sync-field-hint{font-size:13px;color:var(--muted);font-weight:600;margin-top:4px}
+.sync-target{font-size:15px;color:var(--mint);font-weight:700;margin-top:10px}
 @media (min-width:768px){
   :root{--page-max:720px;--cell-min:56px;--cell-max:84px;--row-label-w:28px}
   body{font-size:19px}
@@ -288,27 +289,31 @@ header h1{font-size:22px;font-weight:700;line-height:1.25;letter-spacing:.01em}
     <button class="btn-export btn-import" onclick="importFromClipboard()">📥 从剪贴板恢复 / Restore</button>
   </div>
   <div class="sync-box">
-    <div class="sync-title">GitHub 云端同步 / Cloud Sync</div>
+    <div class="sync-title">GitHub 同步 / Cloud Sync</div>
     <div class="sync-hint">
-      <strong>用自己的数据（3 步）/ Your own data (3 steps)</strong>
-      <ol>
-        <li>注册 GitHub，<a href="https://github.com/chenjinbo2017/warehouse-finder/fork" target="_blank" rel="noopener">Fork 本仓库 / Fork this repo</a>（点一次 / one click）</li>
-        <li>创建 Token：<a href="https://github.com/settings/tokens" target="_blank" rel="noopener">github.com/settings/tokens</a> · 勾选 <strong>repo</strong></li>
-        <li>填下面用户名 + Token，点保存 → 就是你的仓库数据 / Enter username + token → your cloud</li>
-      </ol>
+      <strong>第一次用？点下面 3 个按钮 / First time? Tap 3 links</strong>
+      <div class="sync-steps">
+        <a class="sync-step-link" href="https://github.com/signup" target="_blank" rel="noopener">① 注册 GitHub / Sign up</a>
+        <a class="sync-step-link" href="https://github.com/chenjinbo2017/warehouse-finder/fork" target="_blank" rel="noopener">② Fork 仓库 / Fork repo</a>
+        <a class="sync-step-link" href="https://github.com/settings/tokens/new?scopes=repo&amp;description=warehouse-finder" target="_blank" rel="noopener">③ 创建 Token（勾 repo）/ Create Token</a>
+      </div>
+      <div class="sync-step-note">④ 回来填下面 3 格 → 点保存 / Fill 3 fields below → Save</div>
       <div class="sync-target" id="cloudTarget"></div>
     </div>
     <div class="sheet-field">
-      <div class="sheet-label">GitHub 用户名 / Username</div>
-      <input type="text" class="sync-input" id="ghOwnerInput" placeholder="e.g. your-github-name" autocapitalize="off" autocomplete="username">
+      <div class="sheet-label">④-1 用户名 / Username</div>
+      <input type="text" class="sync-input" id="ghOwnerInput" placeholder="你的 GitHub 名字 / your GitHub name" autocapitalize="off" autocomplete="username">
+      <div class="sync-field-hint">注册后左上角看到的名字 / Name at top-left after login</div>
     </div>
     <div class="sheet-field">
-      <div class="sheet-label">仓库名 / Repo</div>
-      <input type="text" class="sync-input" id="ghRepoInput" placeholder="warehouse-finder" autocapitalize="off" autocomplete="off">
+      <div class="sheet-label">④-2 仓库 / Repo</div>
+      <input type="text" class="sync-input" id="ghRepoInput" value="warehouse-finder" placeholder="warehouse-finder" autocapitalize="off" autocomplete="off">
+      <div class="sync-field-hint">Fork 后一般不用改 / Keep default after Fork</div>
     </div>
     <div class="sheet-field">
-      <div class="sheet-label">Token</div>
-      <input type="password" class="sync-input" id="ghTokenInput" placeholder="GitHub Token (ghp_...)" autocomplete="off">
+      <div class="sheet-label">④-3 Token</div>
+      <input type="password" class="sync-input" id="ghTokenInput" placeholder="粘贴 Token / Paste token (ghp_...)" autocomplete="off">
+      <div class="sync-field-hint">点上面 ③ 创建后复制粘贴 / Copy from step ③</div>
     </div>
     <button class="btn-search" onclick="saveCloudConfig()">保存并连接 / Save & Connect</button>
     <div class="sync-row">
@@ -442,17 +447,17 @@ function updateCloudUi() {
   const repoEl = document.getElementById('ghRepoInput');
   const targetEl = document.getElementById('cloudTarget');
   if (ownerEl) ownerEl.value = getGhOwner();
-  if (repoEl) repoEl.value = getGhRepo();
+  if (repoEl) repoEl.value = getGhRepo() || 'warehouse-finder';
   if (targetEl) {
     if (isCloudConfigured()) {
-      targetEl.textContent = '☁️ ' + bi('当前云端', 'Cloud') + ': ' + getGhOwner() + '/' + getGhRepo();
+      targetEl.textContent = '☁️ ' + bi('当前仓库', 'Current repo') + ': ' + getGhOwner() + '/' + getGhRepo();
     } else {
-      targetEl.textContent = bi('尚未配置云端仓库', 'Cloud repo not configured yet');
+      targetEl.textContent = bi('还没设置仓库', 'Repo not set yet');
     }
   }
   const tokenEl = document.getElementById('ghTokenInput');
   if (tokenEl && getGhToken()) {
-    tokenEl.placeholder = bi('Token 已保存（输入可更换）', 'Token saved (enter to replace)');
+    tokenEl.placeholder = bi('Token 已保存（可替换）', 'Token saved (replace if needed)');
   }
 }
 
