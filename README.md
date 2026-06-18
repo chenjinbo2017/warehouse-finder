@@ -3,17 +3,42 @@
 [![Live Demo](https://img.shields.io/badge/在线使用-Live_Demo-coral?style=for-the-badge)](https://chenjinbo2017.github.io/warehouse-finder/)
 
 一款面向小型仓库、电商发货场景的 **SKU 库位管理工具**。  
-在手机上扫码录入、在电脑上查单找货，支持两人通过 GitHub 免费云同步。
+在手机上扫码录入、在电脑上查单找货，支持 **多人协作**（有 Token 可编辑，其他人可查看）。
 
 > **在线地址：** https://chenjinbo2017.github.io/warehouse-finder/  
 > 手机浏览器打开即可使用，无需安装 App。
 
 ---
 
+## 谁能看？谁能改？
+
+这是很多人关心的问题，分开说明：
+
+| 角色 | 能做什么 | 需要什么 |
+|------|----------|----------|
+| **任何人** | 打开网页、查 SKU、看库位（读公开数据） | 无需登录、无需 Token |
+| **有 Token 的协作者** | 录入、修改、删除库位，并 **上传到云端** | 在本机 Sync 页保存 **GitHub Token** |
+| **没有 Token 的人** | 只能查、只能在本机浏览器里改（**改不动你们的云端**） | — |
+
+**关于「别人下载后能不能改」——分两种情况：**
+
+1. **改你们这份共享数据**（`chenjinbo2017/warehouse-finder` 里的 `warehouse-data.json`）  
+   → 只有持有 **你们仓库写权限 Token** 的人才能改。路人下载代码 **改不了你们的云端**。
+
+2. **Fork / 克隆后自己用**  
+   → 任何人都可以 Fork 本仓库、部署到自己的 GitHub Pages、录入 **自己的** 仓库数据。  
+   → 那是 **另一套独立数据**，与你们互不影响。
+
+**查看方面：** 因为仓库是公开的，别人可以直接看到 `warehouse-data.json` 里的 SKU 和库位（相当于「公开只读」）。若不想被外人看到，需要改用 **私有仓库** 自行部署。
+
+**协作建议：** 需要录入权限的同事，各自在 Sync 页保存 **同一个 Token**（或各自创建有 repo 权限的 Token）。Token 只给信任的人；谁有 Token，谁就能改云端。
+
+---
+
 ## 适合谁用？
 
-- etsy / Amazon 等小卖家，仓库里 SKU 多、靠货架格子存货
-- 1～2 人协作发货，需要快速查「这个 SKU 在哪一格」
+- Etsy / Amazon 等小卖家，仓库里 SKU 多、靠货架格子存货
+- **多人协作**发货（仓库员录入、办公室查单等）
 - 不想买 WMS 系统，希望 **零成本、打开网页就能用**
 
 ---
@@ -27,7 +52,7 @@
 | **货架地图** | 可视化网格，点击格子查看 / 编辑 / 插入空位 |
 | **多区多货架** | 支持 A/B/C/D 等分区，每区货架数量可自定义（如 A 区 16 个） |
 | **订单匹配** | 粘贴 Etsy / Amazon 订单或简单一行文字，批量匹配库位 |
-| **云同步** | 通过 GitHub 仓库自动备份，两人改完自动同步 |
+| **云同步** | 通过 GitHub 仓库自动备份，多人有 Token 即可协作编辑 |
 | **本地备份** | 一键复制全部数据到剪贴板，可粘贴到备忘录 |
 | **中英双语** | 界面中英文对照，字号偏大，适合仓库现场操作 |
 | **响应式布局** | 手机、平板、电脑自适应，大屏货架网格自动放大 |
@@ -69,15 +94,18 @@ SKU: GEM-2408SY-19 Q: 9 order: 003
 
 也支持 Etsy / Amazon 导出的 **CSV / Tab 表格**（需含订单号、SKU 列），以及多行分块文本。
 
-### 5. 云同步（可选，两人协作）
+### 5. 云同步（可选，多人协作）
 
 进入 **「云 / Sync」** 页：
 
-1. 在 GitHub 创建 [Personal Access Token](https://github.com/settings/tokens)（勾选 **repo** 权限）
-2. 粘贴 Token 并保存
+1. 在 GitHub 创建 [Personal Access Token](https://github.com/settings/tokens)（勾选 **repo** 权限；建议限定本仓库）
+2. 需要 **录入 / 改库位** 的同事，各自粘贴 Token 并保存
 3. 录入后会 **约 1.2 秒自动上传**；每 25 秒自动拉取最新数据
 
-> Token 只保存在本机浏览器，不会上传到别处。请勿把 Token 发给他人。
+> Token 只保存在 **各自手机 / 电脑的浏览器** 里，不会上传到别的服务器。  
+> 只把 Token 发给需要改数据的同事；只查货的人 **不用给 Token**。
+
+**只查不改的人：** 打开链接即可，不用配置 Token。
 
 ---
 
@@ -119,9 +147,10 @@ warehouse-finder/
 
 ## 隐私与安全
 
-- 本演示仓库为 **公开仓库**，`warehouse-data.json` 可被任何人 **读取**（查看 SKU 与库位）
-- **修改** 云端数据需要 GitHub Token，陌生人无法随意篡改
-- 若库位信息敏感，请 Fork 为 **私有仓库** 并自行部署，或仅使用本地备份功能
+- 公开仓库下，`warehouse-data.json` 可被任何人 **在线查看**（SKU、库位）
+- **修改你们的云端数据** 需要 GitHub Token（写权限）；没有 Token 的访客 **不能改你们的共享数据**
+- 别人 **Fork 走代码** 后可以搭建 **自己的另一套系统**，不等于能改你们这份
+- 若库位信息不想被外人看到：改用 **私有仓库** + 自行部署 Pages，或仅团队内部分享链接 + 私有仓库
 
 ---
 
@@ -133,7 +162,7 @@ warehouse-finder/
 - Scan or type a SKU → get shelf / row / col
 - Visual shelf grid for mapping bins
 - Paste Etsy / Amazon orders to batch-match locations
-- Optional GitHub sync for two-person collaboration
+- Optional GitHub sync — **any number of editors** with a token; others can view without one
 - No install, no server, no monthly fee
 
 ---
