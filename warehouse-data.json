@@ -215,6 +215,18 @@
       "shelf": "A1",
       "row": 8,
       "col": 14
+    },
+    "A1-3-1": {
+      "sku": "7.GITHUB.IO/WARE",
+      "shelf": "A1",
+      "row": 3,
+      "col": 1
+    },
+    "7.GITHUB.IO/WARE": {
+      "name": "",
+      "shelf": "A1",
+      "row": 3,
+      "col": 1
     }
   },
   "shelfCfg": {
@@ -244,5 +256,5 @@
       ]
     }
   },
-  "updatedAt": "2026-06-18T07:39:00.566Z"
+  "updatedAt": "2026-06-18T07:39:17.354Z"
 }
