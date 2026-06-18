@@ -106,6 +106,22 @@ header h1{font-size:17px;font-weight:700}
 .btn-export{width:100%;background:#4caf50;color:white;border:none;border-radius:10px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:8px}
 .toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:#1a1a2e;color:white;padding:11px 22px;border-radius:100px;font-size:14px;font-weight:600;z-index:9999;opacity:0;transition:opacity .3s;white-space:nowrap;pointer-events:none}
 .toast.show{opacity:1}
+.sheet{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:150;align-items:flex-end;justify-content:center}
+.sheet.open{display:flex}
+.sheet-panel{background:white;border-radius:16px 16px 0 0;width:100%;max-width:480px;padding:18px 16px 24px;max-height:85vh;overflow-y:auto}
+.sheet-title{font-size:16px;font-weight:700;margin-bottom:4px}
+.sheet-sub{font-size:12px;color:#888;margin-bottom:14px}
+.sheet-field{margin-bottom:12px}
+.sheet-label{font-size:11px;color:#888;margin-bottom:5px}
+.sheet-input{width:100%;border:2px solid #e0e0e0;border-radius:10px;padding:11px;font-size:15px;outline:none}
+.sheet-input:focus{border-color:#1a1a2e}
+.sheet-row{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+.btn-sheet{flex:1;min-width:45%;border:none;border-radius:10px;padding:12px;font-size:14px;font-weight:700;cursor:pointer}
+.btn-sheet.primary{background:#e63946;color:white}
+.btn-sheet.dark{background:#1a1a2e;color:white}
+.btn-sheet.light{background:#f0f2f5;color:#1a1a2e}
+.btn-sheet.danger{background:#fff0f0;color:#e63946;border:1px solid #ffcdd2}
+.sync-live{font-size:11px;color:#4caf50;margin-left:4px}
 </style>
 </head>
 <body>
@@ -113,6 +129,7 @@ header h1{font-size:17px;font-weight:700}
   <h1>📦 仓库找货</h1>
   <div style="display:flex;align-items:center;gap:8px">
     <span class="sync-badge" id="syncBadge" onclick="switchTab('sync')" title="云端同步">☁️</span>
+    <span class="sync-live" id="syncLive"></span>
     <span class="count-badge" id="totalCount">0</span>
   </div>
 </header>
@@ -140,6 +157,10 @@ header h1{font-size:17px;font-weight:700}
   <div class="shelf-selector" id="shelfSelector"></div>
   <div class="shelf-info">
     <div class="shelf-title" id="shelfTitle">A1</div>
+    <div class="adjust-row" style="margin-bottom:8px">
+      <span>货架名</span>
+      <input type="text" class="search-input" id="shelfNameInput" style="flex:1;padding:9px 11px;font-size:14px" placeholder="如：样品左区" onchange="saveShelfName(this.value)">
+    </div>
     <div class="adjust-row" style="margin-bottom:6px">
       <span>层数</span>
       <button class="adj-btn" onclick="adjustShelf('rows',-1)">−</button>
@@ -172,7 +193,7 @@ header h1{font-size:17px;font-weight:700}
   </div>
   <div class="sync-box">
     <div class="sync-title">GitHub 云端同步</div>
-    <div class="sync-desc">其他设备打开网页会自动下载；没看到数据时点 <strong>⬇️ 下载</strong>。</div>
+    <div class="sync-desc"><strong>两人协作：</strong>两台手机都保存同一个 Token，录入后会自动同步（约 25 秒）；也可手动点下载/上传。</div>
     <div class="sync-desc">首次使用：在 GitHub → Settings → Developer settings → Personal access tokens 创建 Token，勾选 <strong>repo</strong> 权限，粘贴到下方。</div>
     <input type="password" class="sync-input" id="ghTokenInput" placeholder="GitHub Token（ghp_...）" autocomplete="off">
     <button class="btn-search" onclick="saveGhToken()">保存 Token</button>
@@ -214,11 +235,47 @@ header h1{font-size:17px;font-weight:700}
 
 <div class="toast" id="toast"></div>
 
+<div class="sheet" id="cellSheet" onclick="if(event.target===this)closeCellSheet()">
+  <div class="sheet-panel">
+    <div class="sheet-title" id="cellSheetTitle">格子</div>
+    <div class="sheet-sub" id="cellSheetSub"></div>
+    <div id="cellSheetFilled">
+      <div class="sheet-field">
+        <div class="sheet-label">SKU 编号</div>
+        <div class="sheet-input" id="cellSheetSku" style="background:#f8f9fa;color:#e63946;font-family:monospace;font-weight:700"></div>
+      </div>
+      <div class="sheet-field">
+        <div class="sheet-label">产品名称（可改）</div>
+        <input type="text" class="sheet-input" id="cellSheetName" placeholder="如：Green Jade 4x6mm">
+      </div>
+      <div class="sheet-row">
+        <button class="btn-sheet primary" onclick="saveCellName()">💾 保存名称</button>
+        <button class="btn-sheet dark" onclick="rescanCell()">📷 重新扫描</button>
+      </div>
+      <div class="sheet-row">
+        <button class="btn-sheet light" onclick="insertSlotAtCell()">➕ 此处插入空位</button>
+        <button class="btn-sheet danger" onclick="deleteCellShiftLeft()">🗑️ 删除并左移</button>
+      </div>
+    </div>
+    <div id="cellSheetEmpty" style="display:none">
+      <div class="sheet-row">
+        <button class="btn-sheet primary" onclick="scanEmptyCell()">📷 扫描录入</button>
+        <button class="btn-sheet light" onclick="insertSlotAtCell()">➕ 此处插入空位</button>
+      </div>
+    </div>
+    <div class="sheet-row" style="margin-top:10px">
+      <button class="btn-sheet light" style="flex:1" onclick="closeCellSheet()">关闭</button>
+    </div>
+  </div>
+</div>
+
 <script>
 let db = JSON.parse(localStorage.getItem('wdb4') || '{}');
 let shelfCfg = JSON.parse(localStorage.getItem('wdb4_cfg') || '{}');
 let ghFileSha = null;
 let syncPushTimer = null;
+let syncPullTimer = null;
+let editingCell = null;
 
 const GH_OWNER = 'chenjinbo2017';
 const GH_REPO = 'warehouse-finder';
@@ -365,11 +422,60 @@ async function loadFromPublicRaw() {
 function scheduleSyncPush() {
   if (!getGhToken()) return;
   clearTimeout(syncPushTimer);
-  syncPushTimer = setTimeout(() => {
-    pushToGitHub()
-      .then(() => setSyncStatus('已自动同步到 GitHub'))
-      .catch(e => setSyncStatus('自动上传失败: ' + e.message, true));
+  syncPushTimer = setTimeout(async () => {
+    try {
+      await pullFromCloudSilent(true);
+      await pushToGitHub();
+      setSyncStatus('已自动同步 ✅');
+      updateSyncLive();
+    } catch (e) {
+      setSyncStatus('自动上传失败: ' + e.message, true);
+    }
   }, 1200);
+}
+
+function updateSyncLive() {
+  const el = document.getElementById('syncLive');
+  if (!el) return;
+  const t = localStorage.getItem('wdb4_updated');
+  if (!t) { el.textContent = ''; return; }
+  const d = new Date(t);
+  el.textContent = '· ' + d.toLocaleTimeString('zh', { hour: '2-digit', minute: '2-digit' });
+}
+
+async function pullFromCloudSilent(forceApply) {
+  const remote = getGhToken() ? await (async () => {
+    try {
+      const token = getGhToken();
+      const res = await fetch(
+        `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_DATA_FILE}?ref=${GH_BRANCH}&t=${Date.now()}`,
+        { headers: { 'Accept': 'application/vnd.github+json', 'Authorization': `Bearer ${token}`, 'X-GitHub-Api-Version': '2022-11-28' } }
+      );
+      if (!res.ok) return null;
+      const data = await res.json();
+      ghFileSha = data.sha;
+      return JSON.parse(fromBase64Utf8(data.content));
+    } catch (e) { return null; }
+  })() : await loadFromPublicRaw();
+  if (!remote || !remote.updatedAt) return false;
+  const localUpdated = localStorage.getItem('wdb4_updated') || '';
+  if (forceApply || !localUpdated || remote.updatedAt > localUpdated) {
+    applyPayload(remote);
+    renderMap();
+    const ls = document.querySelector('.list-search');
+    if (ls) renderList(ls.value || '');
+    updateSyncLive();
+    return true;
+  }
+  return false;
+}
+
+function startAutoSync() {
+  if (syncPullTimer) clearInterval(syncPullTimer);
+  syncPullTimer = setInterval(() => pullFromCloudSilent(false), 25000);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') pullFromCloudSilent(false);
+  });
 }
 
 function persistAll() {
@@ -445,7 +551,153 @@ async function initCloudData() {
   }
 }
 
-function getShelfCfg(key) { return shelfCfg[key] || { rows: 9, cols: 15 }; }
+function getShelfCfg(key) { return shelfCfg[key] || { rows: 9, cols: 15, name: '' }; }
+function getShelfLabel(key) {
+  const n = getShelfCfg(key).name;
+  return n ? `${key} · ${n}` : key;
+}
+function saveShelfName(name) {
+  const cfg = getShelfCfg(currentShelf);
+  cfg.name = name.trim();
+  shelfCfg[currentShelf] = cfg;
+  saveCfg();
+  renderMap();
+  showToast('货架名已保存');
+}
+
+function pk(shelf, row, col) { return `${shelf}-${row}-${col}`; }
+
+function setCellEntry(shelf, row, col, sku, name) {
+  const key = pk(shelf, row, col);
+  db[key] = { sku, shelf, row, col };
+  db[sku] = { name: name || '', shelf, row, col };
+}
+
+function removeCellEntry(shelf, row, col) {
+  const key = pk(shelf, row, col);
+  const e = db[key];
+  if (e && db[e.sku]) delete db[e.sku];
+  delete db[key];
+}
+
+function getRowItems(shelf, row) {
+  const cfg = getShelfCfg(shelf);
+  const items = [];
+  for (let c = 1; c <= cfg.cols; c++) {
+    const e = db[pk(shelf, row, c)];
+    if (e) items.push({ col: c, sku: e.sku, name: (db[e.sku] && db[e.sku].name) || '' });
+  }
+  return items.sort((a, b) => a.col - b.col);
+}
+
+function clearRow(shelf, row) {
+  const cfg = getShelfCfg(shelf);
+  for (let c = 1; c <= cfg.cols; c++) removeCellEntry(shelf, row, c);
+}
+
+function writeRowItems(shelf, row, items) {
+  clearRow(shelf, row);
+  let maxCol = 0;
+  for (const it of items) {
+    setCellEntry(shelf, row, it.col, it.sku, it.name);
+    maxCol = Math.max(maxCol, it.col);
+  }
+  const cfg = getShelfCfg(shelf);
+  if (maxCol > cfg.cols) {
+    cfg.cols = Math.min(30, maxCol);
+    shelfCfg[shelf] = cfg;
+  }
+}
+
+function shiftRowRight(shelf, row, fromCol) {
+  const items = getRowItems(shelf, row);
+  const next = items.map(it => ({
+    sku: it.sku,
+    name: it.name,
+    col: it.col >= fromCol ? it.col + 1 : it.col
+  }));
+  if (next.some(it => it.col > 30)) { showToast('该行已满，无法插入'); return false; }
+  writeRowItems(shelf, row, next);
+  return true;
+}
+
+function shiftRowLeft(shelf, row, fromCol) {
+  const items = getRowItems(shelf, row)
+    .filter(it => it.col !== fromCol)
+    .map(it => ({ ...it, col: it.col > fromCol ? it.col - 1 : it.col }));
+  writeRowItems(shelf, row, items);
+}
+
+function insertSlotAtCell() {
+  if (!editingCell) return;
+  const { shelf, row, col } = editingCell;
+  if (!shiftRowRight(shelf, row, col)) return;
+  closeCellSheet();
+  saveDB();
+  renderMap();
+  showToast('已插入空位，后面格右移');
+}
+
+function deleteCellShiftLeft() {
+  if (!editingCell) return;
+  if (!confirm('删除此格并左移后面的货？')) return;
+  const { shelf, row, col } = editingCell;
+  shiftRowLeft(shelf, row, col);
+  closeCellSheet();
+  saveDB();
+  renderMap();
+  showToast('已删除并左移');
+}
+
+function saveCellName() {
+  if (!editingCell) return;
+  const e = db[pk(editingCell.shelf, editingCell.row, editingCell.col)];
+  if (!e) return;
+  const name = document.getElementById('cellSheetName').value.trim();
+  db[e.sku].name = name;
+  saveDB();
+  closeCellSheet();
+  renderMap();
+  renderList(document.querySelector('.list-search')?.value || '');
+  showToast('名称已保存');
+}
+
+function openCellSheet(shelf, row, col) {
+  editingCell = { shelf, row, col };
+  const e = db[pk(shelf, row, col)];
+  const label = getShelfLabel(shelf);
+  document.getElementById('cellSheetTitle').textContent = e ? '编辑格子' : '空格子';
+  document.getElementById('cellSheetSub').textContent = `${label} · 第 ${row} 层 · 第 ${col} 格`;
+  if (e) {
+    document.getElementById('cellSheetFilled').style.display = 'block';
+    document.getElementById('cellSheetEmpty').style.display = 'none';
+    document.getElementById('cellSheetSku').textContent = e.sku;
+    document.getElementById('cellSheetName').value = (db[e.sku] && db[e.sku].name) || '';
+  } else {
+    document.getElementById('cellSheetFilled').style.display = 'none';
+    document.getElementById('cellSheetEmpty').style.display = 'block';
+  }
+  document.getElementById('cellSheet').classList.add('open');
+}
+
+function closeCellSheet() {
+  document.getElementById('cellSheet').classList.remove('open');
+  editingCell = null;
+}
+
+function scanEmptyCell() {
+  if (!editingCell) return;
+  currentCell = { ...editingCell };
+  closeCellSheet();
+  openScan('map');
+}
+
+function rescanCell() {
+  if (!editingCell) return;
+  currentCell = { ...editingCell };
+  closeCellSheet();
+  openScan('map-rescan');
+}
 function saveDB() { persistAll(); }
 function saveCfg() { persistAll(); }
 
@@ -469,8 +721,8 @@ function switchTab(n) {
       document.getElementById('page-'+t).classList.add('active');
     }
   });
-  if (n === 'map') renderMap();
-  if (n === 'list') renderList('');
+  if (n === 'map') { pullFromCloudSilent(false); renderMap(); }
+  if (n === 'list') { pullFromCloudSilent(false); renderList(''); }
 }
 
 function doSearch() {
@@ -487,7 +739,7 @@ function doSearch() {
         <div class="loc-item"><div class="loc-label">层</div><div class="loc-value">${d.row}</div></div>
         <div class="loc-item"><div class="loc-label">位置</div><div class="loc-value">${d.col}</div></div>
       </div>
-      <div class="loc-full">📍 ${d.shelf}-${d.row}-${d.col}</div>
+      <div class="loc-full">📍 ${getShelfLabel(d.shelf)} · ${d.row}-${d.col}</div>
     </div>`;
   } else {
     el.innerHTML = `<div class="not-found"><div style="font-size:36px;margin-bottom:8px">🔍</div><div style="color:#888;font-size:14px">找不到 <strong>${sku}</strong><br>请先录入这个产品</div></div>`;
@@ -506,7 +758,8 @@ function renderShelfSelector() {
   document.getElementById('shelfSelector').innerHTML = Array.from({length:9},(_,i)=>{
     const key=currentGroup+(i+1);
     const hasData=Object.keys(db).some(k=>k.startsWith(key+'-')||(db[k]&&db[k].shelf===key));
-    return `<button class="shelf-btn ${key===currentShelf?'active':''} ${hasData?'has-data':''}" onclick="selectShelf('${key}')">${key}</button>`;
+    const nm=getShelfCfg(key).name;
+    return `<button class="shelf-btn ${key===currentShelf?'active':''} ${hasData?'has-data':''}" onclick="selectShelf('${key}')" title="${nm||''}">${key}${nm?`<span style="display:block;font-size:9px;font-weight:400;opacity:.85">${escHtml(nm.slice(0,6))}</span>`:''}</button>`;
   }).join('');
 }
 function selectShelf(s) { currentShelf=s; renderMap(); }
@@ -514,12 +767,14 @@ function adjustShelf(prop,delta) {
   const cfg=getShelfCfg(currentShelf);
   if(prop==='rows') cfg.rows=Math.max(1,Math.min(20,cfg.rows+delta));
   if(prop==='cols') cfg.cols=Math.max(1,Math.min(30,cfg.cols+delta));
+  if(!cfg.name) cfg.name='';
   shelfCfg[currentShelf]=cfg; saveCfg(); renderMap();
 }
 function renderMap() {
   renderGroupTabs(); renderShelfSelector();
   const cfg=getShelfCfg(currentShelf);
-  document.getElementById('shelfTitle').textContent=currentShelf+' 货架';
+  document.getElementById('shelfTitle').textContent=getShelfLabel(currentShelf);
+  document.getElementById('shelfNameInput').value=cfg.name||'';
   document.getElementById('rowsVal').textContent=cfg.rows;
   document.getElementById('colsVal').textContent=cfg.cols;
   const grid=document.getElementById('shelfGrid');
@@ -529,15 +784,15 @@ function renderMap() {
   for(let r=1;r<=cfg.rows;r++){
     html+=`<div class="row-label">${r}</div>`;
     for(let c=1;c<=cfg.cols;c++){
-      const pk=`${currentShelf}-${r}-${c}`;
-      const e=db[pk];
-      if(e) html+=`<div class="grid-cell filled" onclick="cellClick('${currentShelf}',${r},${c})"><div class="cell-sku">${e.sku||''}</div><div class="cell-pos">${r}-${c}</div></div>`;
-      else html+=`<div class="grid-cell" onclick="cellClick('${currentShelf}',${r},${c})"><div class="cell-pos">${r}-${c}</div></div>`;
+      const key=pk(currentShelf,r,c);
+      const e=db[key];
+      const nm=e&&e.sku&&db[e.sku]&&db[e.sku].name?`<div style="font-size:6px;color:#81c784;margin-top:1px">${escHtml(db[e.sku].name.slice(0,8))}</div>`:'';
+      if(e) html+=`<div class="grid-cell filled" onclick="openCellSheet('${currentShelf}',${r},${c})"><div class="cell-sku">${escHtml(e.sku||'')}</div>${nm}<div class="cell-pos">${r}-${c}</div></div>`;
+      else html+=`<div class="grid-cell" onclick="openCellSheet('${currentShelf}',${r},${c})"><div class="cell-pos">${r}-${c}</div></div>`;
     }
   }
   grid.innerHTML=html;
 }
-function cellClick(shelf,row,col) { currentCell={shelf,row,col}; openScan('map'); }
 
 let videoStream=null,twk=null,ocrReady=false,usePhotoMode=false,ocrInitPromise=null,lastOcrWords=[],capturedPhoto=null;
 const TESS_OPTS={workerPath:'https://cdn.jsdelivr.net/npm/tesseract.js@4.1.1/dist/worker.min.js',corePath:'https://cdn.jsdelivr.net/npm/tesseract.js-core@4.0.4',langPath:'https://tessdata.projectnaptha.com/4.0.0'};
@@ -571,9 +826,9 @@ function openScan(mode){
   document.getElementById('captureBtn').disabled=false;
   resetPhotoPreview();
   const ci=document.getElementById('currentCellInfo');
-  if(mode==='map'&&currentCell){
+  if(mode==='map'&&currentCell||mode==='map-rescan'&&currentCell){
     ci.style.display='block';
-    ci.textContent=`录入：${currentCell.shelf} 第${currentCell.row}层 第${currentCell.col}个`;
+    ci.textContent=`录入：${getShelfLabel(currentCell.shelf)} 第${currentCell.row}层 第${currentCell.col}个`;
     document.getElementById('modalTitle').textContent=`录入 ${currentCell.shelf}-${currentCell.row}-${currentCell.col}`;
   } else {ci.style.display='none';document.getElementById('modalTitle').textContent='扫描 SKU 标签';}
   if(window.isSecureContext&&navigator.mediaDevices&&navigator.mediaDevices.getUserMedia){
@@ -728,17 +983,20 @@ function onPhotoSelected(e){
 function selectWord(word){
   word=normalizeText(word).toUpperCase();
   if(scanMode==='search'){document.getElementById('searchInput').value=word;closeScan();doSearch();}
-  else if(scanMode==='map'&&currentCell){
-    const pk=`${currentCell.shelf}-${currentCell.row}-${currentCell.col}`;
-    db[pk]={sku:word,shelf:currentCell.shelf,row:currentCell.row,col:currentCell.col};
-    db[word]={name:'',shelf:currentCell.shelf,row:currentCell.row,col:currentCell.col};
+  else if((scanMode==='map'||scanMode==='map-rescan')&&currentCell){
+    const {shelf,row,col}=currentCell;
+    const old=db[pk(shelf,row,col)];
+    if(old&&old.sku!==word) delete db[old.sku];
+    const keepName=old&&old.sku===word&&db[word]?db[word].name:'';
+    setCellEntry(shelf,row,col,word,keepName);
     saveDB();
-    showToast(`✅ ${word} → ${pk}`);
+    showToast(`✅ ${word} → ${pk(shelf,row,col)}`);
     closeScan();
-    const cfg=getShelfCfg(currentCell.shelf);
-    let nr=currentCell.row,nc=currentCell.col+1;
+    if(scanMode==='map-rescan'){renderMap();return;}
+    const cfg=getShelfCfg(shelf);
+    let nr=row,nc=col+1;
     if(nc>cfg.cols){nc=1;nr++;}
-    if(nr<=cfg.rows){currentCell={shelf:currentCell.shelf,row:nr,col:nc};renderMap();setTimeout(()=>openScan('map'),400);}
+    if(nr<=cfg.rows){currentCell={shelf,row:nr,col:nc};renderMap();setTimeout(()=>openScan('map'),400);}
     else{currentCell=null;renderMap();}
   }
 }
@@ -751,17 +1009,23 @@ function renderList(filter){
     return k.includes(f)||(db[k].name||'').toUpperCase().includes(f);
   }).sort();
   if(keys.length===0){el.innerHTML='<div class="empty">还没有录入任何产品<br>去「录入」页面点格子开始</div>';return;}
-  el.innerHTML=keys.map(k=>{const d=db[k];return`<div class="sku-item"><div><div class="sku-code">${k}</div><div class="sku-name-text">${d.name||'（未填名称）'}</div><div class="sku-loc">📍 ${d.shelf}-${d.row}-${d.col}</div></div><button class="btn-del" onclick="deleteSku('${k}')">🗑️</button></div>`;}).join('');
+  el.innerHTML=keys.map((k,i)=>{const d=db[k];return`<div class="sku-item" onclick="openCellSheet('${d.shelf}',${d.row},${d.col})" style="cursor:pointer"><div><div class="sku-code">${escHtml(k)}</div><div class="sku-name-text">${escHtml(d.name||'（点此编辑名称）')}</div><div class="sku-loc">📍 ${getShelfLabel(d.shelf)} · ${d.row}-${d.col}</div></div><button class="btn-del" onclick="event.stopPropagation();deleteSkuAt(${i})" data-sku="${escHtml(k)}">🗑️</button></div>`;}).join('');
+}
+function deleteSkuAt(i){
+  const keys=Object.keys(db).filter(k=>!k.match(/^[A-Z]\d+-\d+-\d+$/)).sort();
+  deleteSku(keys[i]);
 }
 function deleteSku(sku){
-  if(!confirm('删除 '+sku+'？')) return;
+  if(!confirm('删除 '+sku+' 并左移该层后面的格？')) return;
   const d=db[sku];
-  if(d){delete db[`${d.shelf}-${d.row}-${d.col}`];}
-  delete db[sku];saveDB();
+  if(d){shiftRowLeft(d.shelf,d.row,d.col);}
+  else delete db[sku];
+  saveDB();
   renderList(document.querySelector('.list-search').value);
+  renderMap();
   showToast('已删除');
 }
-initCloudData().then(()=>{renderMap();});
+initCloudData().then(()=>{renderMap();startAutoSync();updateSyncLive();});
 updateCount();
 </script>
 </body>
