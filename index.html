@@ -259,7 +259,6 @@ header h1{font-size:17px;font-weight:700}
     </div>
     <div id="cellSheetEmpty" style="display:none">
       <div class="sheet-row">
-        <button class="btn-sheet primary" onclick="scanEmptyCell()">📷 扫描录入</button>
         <button class="btn-sheet light" onclick="insertSlotAtCell()">➕ 此处插入空位</button>
       </div>
     </div>
@@ -662,6 +661,11 @@ function saveCellName() {
   showToast('名称已保存');
 }
 
+function scanCell(shelf, row, col) {
+  currentCell = { shelf, row, col };
+  openScan('map');
+}
+
 function openCellSheet(shelf, row, col) {
   editingCell = { shelf, row, col };
   const e = db[pk(shelf, row, col)];
@@ -683,13 +687,6 @@ function openCellSheet(shelf, row, col) {
 function closeCellSheet() {
   document.getElementById('cellSheet').classList.remove('open');
   editingCell = null;
-}
-
-function scanEmptyCell() {
-  if (!editingCell) return;
-  currentCell = { ...editingCell };
-  closeCellSheet();
-  openScan('map');
 }
 
 function rescanCell() {
@@ -788,7 +785,7 @@ function renderMap() {
       const e=db[key];
       const nm=e&&e.sku&&db[e.sku]&&db[e.sku].name?`<div style="font-size:6px;color:#81c784;margin-top:1px">${escHtml(db[e.sku].name.slice(0,8))}</div>`:'';
       if(e) html+=`<div class="grid-cell filled" onclick="openCellSheet('${currentShelf}',${r},${c})"><div class="cell-sku">${escHtml(e.sku||'')}</div>${nm}<div class="cell-pos">${r}-${c}</div></div>`;
-      else html+=`<div class="grid-cell" onclick="openCellSheet('${currentShelf}',${r},${c})"><div class="cell-pos">${r}-${c}</div></div>`;
+      else html+=`<div class="grid-cell" onclick="scanCell('${currentShelf}',${r},${c})"><div class="cell-pos">${r}-${c}</div></div>`;
     }
   }
   grid.innerHTML=html;
