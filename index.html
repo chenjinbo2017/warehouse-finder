@@ -228,7 +228,7 @@ header h1{font-size:22px;font-weight:800;line-height:1.2;letter-spacing:-.02em}
   <div id="searchResult"></div>
   <div class="search-box orders-box">
     <div class="search-label">粘贴 Etsy / Amazon 订单 / Paste Orders</div>
-    <textarea id="orderPaste" class="order-paste" placeholder="CSV/Tab table · Etsy Order # + SKU · Amazon order ID + Seller SKU&#10;Multiple items per order OK / 一单可多 SKU"></textarea>
+    <textarea id="orderPaste" class="order-paste" placeholder="简单一行: SKU: GEM-2408SY-19 Q: 9 order: 003&#10;或表格 CSV/Tab · Etsy/Amazon 整单粘贴 / Simple line or table paste"></textarea>
     <button class="btn-search" onclick="parseAndMatchOrders()">匹配库位 / Match Locations</button>
   </div>
   <div id="orderResult"></div>
@@ -1009,6 +1009,29 @@ function normalizeSkuToken(raw) {
   return String(raw || '').trim().toUpperCase().replace(/\s+/g, '');
 }
 
+function normalizePasteText(text) {
+  return String(text || '')
+    .replace(/\uFEFF/g, '')
+    .replace(/\r\n/g, '\n')
+    .replace(/[：﹕]/g, ':')
+    .replace(/[，]/g, ',');
+}
+
+function parseQtyFromLine(line) {
+  const m = line.match(/(?:qty|quantity|q|数量)[:\s]*(\d+)|(?:^|\s)(\d+)\s*[x×]\s/i);
+  return m ? (parseInt(m[1] || m[2], 10) || 1) : 1;
+}
+
+function parseOrderFromLine(line) {
+  const amz = line.match(AMZ_ORDER_RE);
+  if (amz) return { orderId: amz[1], platform: 'Amazon' };
+  const etsy = line.match(/order\s*(?:#|number|no\.?|id)?[:\s]*#?(\d{9,10})\b/i);
+  if (etsy) return { orderId: etsy[1], platform: 'Etsy' };
+  const short = line.match(/order\s*(?:#|number|no\.?|id)?[:\s]*#?([A-Z0-9\-]+)/i);
+  if (short) return { orderId: short[1], platform: '' };
+  return null;
+}
+
 function groupOrderLines(items) {
   const map = new Map();
   for (const it of items) {
@@ -1051,7 +1074,7 @@ function parseBlockOrders(text) {
   const items = [];
   let currentOrder = '';
   let currentPlatform = '';
-  const lines = text.replace(/\r\n/g, '\n').split('\n').map(l => l.trim()).filter(Boolean);
+  const lines = normalizePasteText(text).split('\n').map(l => l.trim()).filter(Boolean);
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
@@ -1079,14 +1102,15 @@ function parseBlockOrders(text) {
     if (skuTagged) {
       const sku = normalizeSkuToken(skuTagged[1]);
       if (!isSkuCode(sku)) continue;
-      let qty = 1;
-      const qtySame = line.match(/(?:qty|quantity)[:\s]*(\d+)|^(\d+)\s*x\s/i);
-      if (qtySame) qty = parseInt(qtySame[1] || qtySame[2], 10) || 1;
-      if (i > 0) {
+      let qty = parseQtyFromLine(line);
+      if (qty === 1 && i > 0) {
         const prevQty = lines[i - 1].match(/^(\d+)\s*x\s+/i);
         if (prevQty) qty = parseInt(prevQty[1], 10) || qty;
       }
-      items.push({ orderId: currentOrder || bi('（未识别订单号）', '(no order ID)'), sku, qty, platform: currentPlatform });
+      const orderOnLine = parseOrderFromLine(line);
+      const orderId = orderOnLine ? orderOnLine.orderId : (currentOrder || bi('（未识别订单号）', '(no order ID)'));
+      const platform = orderOnLine ? (orderOnLine.platform || currentPlatform) : currentPlatform;
+      items.push({ orderId, sku, qty, platform });
       continue;
     }
 
@@ -1108,13 +1132,30 @@ function parseBlockOrders(text) {
       }
     }
   }
+  if (!items.length && lines.length <= 5) {
+    for (const line of lines) {
+      const skuOnly = line.match(/\b([A-Z0-9][A-Z0-9\-./]{4,})\b/gi) || [];
+      for (const tok of skuOnly) {
+        const sku = normalizeSkuToken(tok);
+        if (!isSkuCode(sku) || AMZ_ORDER_RE.test(sku)) continue;
+        const orderOnLine = parseOrderFromLine(line);
+        items.push({
+          orderId: orderOnLine ? orderOnLine.orderId : bi('（未识别订单号）', '(no order ID)'),
+          sku,
+          qty: parseQtyFromLine(line),
+          platform: orderOnLine ? orderOnLine.platform : ''
+        });
+        break;
+      }
+    }
+  }
   return items;
 }
 
 function parseOrdersFromPaste(text) {
-  const raw = String(text || '').trim();
+  const raw = normalizePasteText(text).trim();
   if (!raw) return { platform: '', orders: [] };
-  const lines = raw.replace(/\r\n/g, '\n').split('\n').filter(l => l.trim());
+  const lines = raw.split('\n').filter(l => l.trim());
   const tabular = lines.length >= 2 ? parseTabularOrders(lines) : null;
   let items = tabular ? tabular.items : parseBlockOrders(raw);
   let platform = tabular ? tabular.platform : '';
@@ -1130,7 +1171,7 @@ function parseAndMatchOrders() {
   const el = document.getElementById('orderResult');
   const { platform, orders } = parseOrdersFromPaste(text);
   if (!orders.length) {
-    el.innerHTML = `<div class="order-empty">${bi('没识别到订单内容', 'No orders detected')}<br><span style="font-size:16px">${bi('请确认含订单号、SKU；表格需有表头行', 'Need order ID + SKU; tables need header row')}</span></div>`;
+    el.innerHTML = `<div class="order-empty">${bi('没识别到订单内容', 'No orders detected')}<br><span style="font-size:16px">${bi('可试: SKU: GEM-2408SY-19 Q: 9 order: 003 · 或粘贴 Etsy/Amazon 表格', 'Try: SKU: GEM-2408SY-19 Q: 9 order: 003 · or paste Etsy/Amazon table')}</span></div>`;
     return;
   }
   let totalLines = 0;
