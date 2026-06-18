@@ -144,6 +144,13 @@ header h1{font-size:22px;font-weight:700;line-height:1.25;letter-spacing:.01em}
 .order-table .sku-cell{font-family:ui-monospace,monospace;font-weight:800;word-break:break-all;font-size:16px;color:var(--navy)}
 .order-table .loc-ok{color:var(--mint);font-weight:800;font-size:17px}
 .order-table .loc-miss{color:var(--coral);font-weight:800;font-size:17px}
+.pick-mode-bar{display:flex;gap:8px;margin:0 0 14px;flex-wrap:wrap}
+.pick-mode{flex:1;min-width:148px;padding:12px 10px;border:2px solid #e8ecf2;border-radius:12px;background:#fff;font-size:14px;line-height:1.35;font-weight:700;color:var(--muted);cursor:pointer;text-align:center;box-shadow:var(--shadow-sm)}
+.pick-mode small{display:block;font-size:12px;font-weight:600;opacity:.85;margin-top:4px}
+.pick-mode.active{background:linear-gradient(135deg,var(--navy),var(--navy-light));color:#fff;border-color:transparent;box-shadow:0 6px 14px rgba(22,33,62,.2)}
+.pick-mode.active small{opacity:.9}
+.pick-stop-head{font-size:18px;font-weight:800;color:var(--navy);padding:12px 14px;background:linear-gradient(90deg,#eef4ff,#f8fafc);border-radius:12px;margin:14px 0 8px;border-left:4px solid var(--sky)}
+.pick-stop-sub{font-size:14px;color:var(--muted);font-weight:600;margin-top:4px}
 .order-empty,.not-found{line-height:1.55;color:var(--muted);font-size:18px}
 .sync-title,.export-title{font-size:20px;font-weight:800;margin-bottom:10px;color:var(--navy)}
 .sync-desc,.export-desc{font-size:17px;color:var(--muted);line-height:1.55;margin-bottom:14px}
@@ -1255,42 +1262,162 @@ function parseOrdersFromPaste(text) {
 
 function parseAndMatchOrders() {
   const text = document.getElementById('orderPaste').value;
-  const el = document.getElementById('orderResult');
   const { platform, orders } = parseOrdersFromPaste(text);
   if (!orders.length) {
-    el.innerHTML = `<div class="order-empty">${bi('没识别到订单内容', 'No orders detected')}<br><span style="font-size:16px">${bi('可试: SKU: GEM-2408SY-19 Q: 9 order: 003 · 或粘贴 Etsy/Amazon 表格', 'Try: SKU: GEM-2408SY-19 Q: 9 order: 003 · or paste Etsy/Amazon table')}</span></div>`;
+    lastOrderMatch = null;
+    document.getElementById('orderResult').innerHTML = `<div class="order-empty">${bi('没识别到订单内容', 'No orders detected')}<br><span style="font-size:16px">${bi('可试: SKU: GEM-2408SY-19 Q: 9 order: 003 · 或粘贴 Etsy/Amazon 表格', 'Try: SKU: GEM-2408SY-19 Q: 9 order: 003 · or paste Etsy/Amazon table')}</span></div>`;
     return;
   }
+  lastOrderMatch = { platform, orders };
+  renderOrderResults();
+}
+
+let pickMode = localStorage.getItem('wdb4_pick_mode') || 'order';
+let lastOrderMatch = null;
+
+function setPickMode(mode) {
+  pickMode = mode === 'route' ? 'route' : 'order';
+  localStorage.setItem('wdb4_pick_mode', pickMode);
+  if (lastOrderMatch) renderOrderResults();
+}
+
+function parseShelfKey(shelf) {
+  const m = String(shelf || '').match(/^([A-Z]+)(\d+)$/i);
+  if (!m) return { zone: String(shelf || '').toUpperCase(), num: 0 };
+  return { zone: m[1].toUpperCase(), num: parseInt(m[2], 10) || 0 };
+}
+
+function getZoneSortIndex(zoneId) {
+  ensureLayout();
+  const groups = getLayout().groups;
+  const idx = groups.findIndex(g => g.id === zoneId);
+  return idx >= 0 ? idx : 999 + (zoneId || '').charCodeAt(0);
+}
+
+function comparePickLocations(locA, locB) {
+  if (!locA && !locB) return 0;
+  if (!locA) return 1;
+  if (!locB) return -1;
+  const sa = parseShelfKey(locA.shelf), sb = parseShelfKey(locB.shelf);
+  const zd = getZoneSortIndex(sa.zone) - getZoneSortIndex(sb.zone);
+  if (zd) return zd;
+  if (sa.num !== sb.num) return sa.num - sb.num;
+  if (locA.row !== locB.row) return locA.row - locB.row;
+  return locA.col - locB.col;
+}
+
+function locSortKey(loc) {
+  if (!loc) return 'zzz-miss';
+  const s = parseShelfKey(loc.shelf);
+  return `${String(getZoneSortIndex(s.zone)).padStart(4, '0')}-${String(s.num).padStart(4, '0')}-${String(loc.row).padStart(3, '0')}-${String(loc.col).padStart(3, '0')}`;
+}
+
+function formatPickLoc(loc) {
+  if (!loc) return bi('未录入', 'Not mapped');
+  return `${getShelfLabel(loc.shelf)} · ${bi(`${loc.row}层 · ${loc.col}格`, `R${loc.row} C${loc.col}`)}`;
+}
+
+function enrichOrderLines(orders) {
+  return orders.map(order => ({
+    ...order,
+    lines: order.lines.map(line => {
+      const loc = lookupSkuLocation(line.sku);
+      return { ...line, loc, miss: !loc };
+    })
+  }));
+}
+
+function renderPickModeBar() {
+  return `<div class="pick-mode-bar">
+    <button type="button" class="pick-mode ${pickMode === 'order' ? 'active' : ''}" onclick="setPickMode('order')">
+      ${bi('按订单拣货', 'Pick by order')}
+      <small>${bi('每单内按库位排序，少走回头路', 'Lines sorted by bin within each order')}</small>
+    </button>
+    <button type="button" class="pick-mode ${pickMode === 'route' ? 'active' : ''}" onclick="setPickMode('route')">
+      ${bi('按库位路线', 'Pick by route')}
+      <small>${bi('A1→A2→B… 推车分订单篮', 'Walk A1→A2→B… split into order bins')}</small>
+    </button>
+  </div>`;
+}
+
+function renderOrderResults() {
+  const el = document.getElementById('orderResult');
+  if (!lastOrderMatch) return;
+  const { platform, orders } = lastOrderMatch;
+  const enriched = enrichOrderLines(orders);
   let totalLines = 0;
   let missLines = 0;
-  const html = orders.map(order => {
-    const rows = order.lines.map(line => {
-      totalLines++;
-      const loc = lookupSkuLocation(line.sku);
-      const miss = !loc;
-      if (miss) missLines++;
-      const locText = loc
-        ? `${getShelfLabel(loc.shelf)} · ${bi(`${loc.row}层 · ${loc.col}格`, `R${loc.row} C${loc.col}`)}`
-        : bi('未录入', 'Not mapped');
-      return `<tr class="${miss ? 'miss' : ''}">
-        <td class="sku-cell">${escHtml(line.sku)}</td>
-        <td>${line.qty}</td>
-        <td class="${miss ? 'loc-miss' : 'loc-ok'}">${escHtml(locText)}</td>
-      </tr>`;
+  let html = '';
+
+  if (pickMode === 'route') {
+    const flat = [];
+    for (const order of enriched) {
+      for (const line of order.lines) {
+        totalLines++;
+        if (line.miss) missLines++;
+        flat.push({
+          orderId: order.orderId,
+          platform: order.platform,
+          sku: line.sku,
+          qty: line.qty,
+          loc: line.loc,
+          miss: line.miss
+        });
+      }
+    }
+    flat.sort((a, b) => comparePickLocations(a.loc, b.loc) || String(a.orderId).localeCompare(String(b.orderId)) || a.sku.localeCompare(b.sku));
+
+    const stops = [];
+    let stop = null;
+    for (const item of flat) {
+      const key = item.loc ? locSortKey(item.loc) : '__miss__';
+      if (!stop || stop.key !== key) {
+        stop = { key, loc: item.loc, miss: item.miss, items: [] };
+        stops.push(stop);
+      }
+      stop.items.push(item);
+    }
+
+    html = stops.map(stop => {
+      const head = stop.miss
+        ? `<div class="pick-stop-head">⚠️ ${bi('未录入库位', 'Not mapped')}</div>`
+        : `<div class="pick-stop-head">📍 ${escHtml(formatPickLoc(stop.loc))}<div class="pick-stop-sub">${bi('到此格一次，按订单放入篮子', 'Pick once here → sort into order bins')}</div></div>`;
+      const rows = stop.items.map(item => `<tr class="${item.miss ? 'miss' : ''}">
+        <td>${escHtml(item.orderId)}</td>
+        <td class="sku-cell">${escHtml(item.sku)}</td>
+        <td>${item.qty}</td>
+      </tr>`).join('');
+      return `${head}<table class="order-table"><thead><tr><th>${bi('订单', 'Order')}</th><th>SKU</th><th>${bi('数量', 'Qty')}</th></tr></thead><tbody>${rows}</tbody></table>`;
     }).join('');
-    const pf = order.platform || platform || bi('订单', 'Order');
-    return `<div class="order-card">
-      <div class="order-head"><span>${bi('订单', 'Order')} ${escHtml(order.orderId)}</span><span class="order-platform">${escHtml(pf)}</span></div>
-      <div class="order-summary">${order.lines.length} ${bi('个产品', 'items')}</div>
-      <table class="order-table">
-        <thead><tr><th>SKU</th><th>${bi('数量', 'Qty')}</th><th>${bi('库位', 'Location')}</th></tr></thead>
-        <tbody>${rows}</tbody>
-      </table>
-    </div>`;
-  }).join('');
+    html = `<div class="order-card">${html}</div>`;
+  } else {
+    html = enriched.map(order => {
+      const lines = [...order.lines].sort((a, b) => comparePickLocations(a.loc, b.loc) || a.sku.localeCompare(b.sku));
+      const rows = lines.map(line => {
+        totalLines++;
+        if (line.miss) missLines++;
+        const locText = formatPickLoc(line.loc);
+        return `<tr class="${line.miss ? 'miss' : ''}">
+          <td class="sku-cell">${escHtml(line.sku)}</td>
+          <td>${line.qty}</td>
+          <td class="${line.miss ? 'loc-miss' : 'loc-ok'}">${escHtml(locText)}</td>
+        </tr>`;
+      }).join('');
+      const pf = order.platform || platform || bi('订单', 'Order');
+      return `<div class="order-card">
+        <div class="order-head"><span>${bi('订单', 'Order')} ${escHtml(order.orderId)}</span><span class="order-platform">${escHtml(pf)}</span></div>
+        <div class="order-summary">${order.lines.length} ${bi('个产品', 'items')} · ${bi('已按库位排序', 'sorted by location')}</div>
+        <table class="order-table">
+          <thead><tr><th>SKU</th><th>${bi('数量', 'Qty')}</th><th>${bi('库位', 'Location')}</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>`;
+    }).join('');
+  }
+
   const summary = `<div class="order-summary" style="margin:0 0 10px 2px">${bi(`共 ${orders.length} 单 · ${totalLines} 个产品`, `${orders.length} orders · ${totalLines} items`)}${missLines ? ` · <span style="color:#e63946">${bi(`${missLines} 个未找到库位`, `${missLines} not mapped`)}</span>` : ` · ${bi('全部已匹配', 'All matched')}`}</div>`;
-  el.innerHTML = summary + html;
-  document.getElementById('orderResult').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  el.innerHTML = summary + renderPickModeBar() + html;
+  el.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 let currentGroup='A', currentShelf='A1', scanMode='search', currentCell=null;
