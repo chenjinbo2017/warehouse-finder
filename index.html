@@ -307,7 +307,9 @@ const DEFAULT_GROUPS = ['A','B','C','D'];
 const DEFAULT_SHELF_COUNT = 9;
 
 function getGhToken() { return localStorage.getItem('wdb4_gh_token') || ''; }
-function buildPayload() { return { db, shelfCfg, updatedAt: new Date().toISOString() }; }
+function buildPayload() {
+  return { db, shelfCfg, updatedAt: localStorage.getItem('wdb4_updated') || new Date().toISOString() };
+}
 function applyPayload(payload) {
   if (payload.db) db = payload.db;
   if (payload.shelfCfg) shelfCfg = payload.shelfCfg;
@@ -446,7 +448,6 @@ function scheduleSyncPush() {
   clearTimeout(syncPushTimer);
   syncPushTimer = setTimeout(async () => {
     try {
-      await pullFromCloudSilent(true);
       await pushToGitHub();
       setSyncStatus('已自动同步 ✅');
       updateSyncLive();
@@ -501,9 +502,10 @@ function startAutoSync() {
 }
 
 function persistAll() {
+  const updatedAt = new Date().toISOString();
   localStorage.setItem('wdb4', JSON.stringify(db));
   localStorage.setItem('wdb4_cfg', JSON.stringify(shelfCfg));
-  localStorage.setItem('wdb4_updated', new Date().toISOString());
+  localStorage.setItem('wdb4_updated', updatedAt);
   updateCount();
   scheduleSyncPush();
 }
@@ -765,6 +767,11 @@ function writeRowItems(shelf, row, items) {
 
 function shiftRowRight(shelf, row, fromCol) {
   const items = getRowItems(shelf, row);
+  const toShift = items.filter(it => it.col >= fromCol);
+  if (!toShift.length) {
+    showToast('后面没有货可右移，此格已是空位');
+    return false;
+  }
   const next = items.map(it => ({
     sku: it.sku,
     name: it.name,
