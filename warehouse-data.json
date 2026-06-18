@@ -809,6 +809,18 @@
       "shelf": "A31",
       "row": 3,
       "col": 16
+    },
+    "A31-3-17": {
+      "sku": "JD-DPDJ-1",
+      "shelf": "A31",
+      "row": 3,
+      "col": 17
+    },
+    "JD-DPDJ-1": {
+      "name": "",
+      "shelf": "A31",
+      "row": 3,
+      "col": 17
     }
   },
   "shelfCfg": {
@@ -848,5 +860,5 @@
       "name": ""
     }
   },
-  "updatedAt": "2026-06-18T22:28:10.026Z"
+  "updatedAt": "2026-06-18T22:28:48.409Z"
 }
