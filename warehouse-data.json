@@ -227,6 +227,18 @@
       "shelf": "A1",
       "row": 3,
       "col": 1
+    },
+    "A1-3-2": {
+      "sku": "SETNEWLIMIT",
+      "shelf": "A1",
+      "row": 3,
+      "col": 2
+    },
+    "SETNEWLIMIT": {
+      "name": "",
+      "shelf": "A1",
+      "row": 3,
+      "col": 2
     }
   },
   "shelfCfg": {
@@ -256,5 +268,5 @@
       ]
     }
   },
-  "updatedAt": "2026-06-18T07:39:17.354Z"
+  "updatedAt": "2026-06-18T07:39:27.492Z"
 }
