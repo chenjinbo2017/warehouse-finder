@@ -37,7 +37,7 @@ header h1{font-size:22px;font-weight:700;line-height:1.25;letter-spacing:.01em}
 .tab.active{color:white;background:linear-gradient(135deg,var(--navy),var(--navy-light));box-shadow:0 4px 14px rgba(22,33,62,.22)}
 .page{display:none;padding:16px 16px 28px;max-width:var(--page-max);margin:0 auto;width:100%}
 .page.active{display:block}
-#page-map{max-width:min(1200px,100%)}
+#page-map{max-width:min(1200px,100%);padding-bottom:calc(24px + env(safe-area-inset-bottom, 0px))}
 .search-box,.export-box,.sync-box,.shelf-info,.grid-container,.order-card,.order-empty,.not-found,.result-card{background:var(--card);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);margin-bottom:16px;border:1px solid var(--line)}
 .search-box.orders-box{background:linear-gradient(180deg,#fff 0%,#fafcff 100%);border-top:4px solid var(--sky)}
 .search-box.sku-box{border-top:4px solid var(--coral)}
@@ -76,7 +76,7 @@ header h1{font-size:22px;font-weight:700;line-height:1.25;letter-spacing:.01em}
 .zone-count{display:flex;align-items:center;gap:8px}
 .zone-add-row{display:flex;gap:10px;margin-top:10px}
 .zone-add-row input{flex:1}
-.shelf-selector{display:flex;gap:8px;flex-wrap:nowrap;overflow-x:auto;margin-bottom:12px;padding-bottom:6px;-webkit-overflow-scrolling:touch;scroll-snap-type:x proximity}
+.shelf-selector{display:flex;gap:8px;flex-wrap:nowrap;overflow-x:auto;margin-bottom:12px;padding-bottom:6px;-webkit-overflow-scrolling:touch;scroll-snap-type:x proximity;overscroll-behavior-x:contain}
 .shelf-btn{background:white;border:2px solid #e8ecf2;border-radius:12px;padding:10px 16px;font-size:17px;font-weight:700;cursor:pointer;color:var(--muted);min-height:50px;box-shadow:var(--shadow-sm);transition:all .18s;scroll-snap-align:start;flex-shrink:0}
 .shelf-btn.active{background:linear-gradient(135deg,var(--navy),var(--navy-light));color:white;border-color:transparent;box-shadow:0 6px 14px rgba(22,33,62,.2)}
 .shelf-btn.has-data{border-color:#a5d6a7;color:var(--mint)}
@@ -90,7 +90,7 @@ header h1{font-size:22px;font-weight:700;line-height:1.25;letter-spacing:.01em}
 .adjust-row:not(.adjust-row-stack) span{max-width:none}
 .adj-btn{background:#fff;border:2px solid #e8ecf2;border-radius:10px;width:42px;height:42px;font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--navy);box-shadow:var(--shadow-sm)}
 .adj-val{font-size:22px;font-weight:800;min-width:32px;text-align:center;color:var(--navy)}
-.grid-container{padding:16px;overflow-x:auto;width:100%}
+.grid-container{padding:16px 16px 40px;overflow-x:auto;width:100%;margin-bottom:8px}
 .shelf-grid{display:grid;gap:5px;width:100%;--cell-size:58px}
 .row-label{font-size:14px;color:var(--muted);font-weight:800;display:flex;align-items:center;padding-right:4px;min-width:var(--row-label-w)}
 .grid-cell{width:var(--cell-size);height:var(--cell-size);border-radius:12px;border:2px solid #e8ecf2;background:linear-gradient(180deg,#fff,#f6f8fb);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:clamp(10px,calc(var(--cell-size)*0.17),14px);color:#999;text-align:center;padding:3px;transition:transform .15s,box-shadow .15s;overflow:hidden}
@@ -422,6 +422,7 @@ const GH_DATA_FILE = 'warehouse-data.json';
 const DEFAULT_GH_REPO = 'warehouse-finder';
 const DEFAULT_GROUPS = ['A','B','C','D'];
 const DEFAULT_SHELF_COUNT = 9;
+const MAX_SHELF_DIM = 50;
 
 function getGhOwner() { return (localStorage.getItem('wdb4_gh_owner') || '').trim(); }
 function getGhRepo() { return (localStorage.getItem('wdb4_gh_repo') || DEFAULT_GH_REPO).trim(); }
@@ -880,7 +881,7 @@ function ensureGroupCountFitsData() {
   for (const g of getLayout().groups) {
     const used = maxUsedShelfInGroup(g.id);
     if (used > g.count) {
-      g.count = Math.min(30, used);
+      g.count = Math.min(MAX_SHELF_DIM, used);
       changed = true;
     }
   }
@@ -900,7 +901,7 @@ function expandGroupCountToShelf(shelfKey, quiet) {
   if (!p) return;
   const g = getLayout().groups.find(x => x.id === p.group);
   if (!g || p.num <= g.count) return;
-  g.count = Math.min(30, p.num);
+  g.count = Math.min(MAX_SHELF_DIM, p.num);
   saveCfg();
   if (!quiet) showToast(bi(`已把 ${p.group} 区扩展到 ${g.count} 个货架`, `Expanded zone ${p.group} to ${g.count} shelves`));
 }
@@ -952,7 +953,7 @@ function adjustGroupCount(groupId, delta) {
   const g = groups.find(x => x.id === groupId);
   if (!g) return;
   const used = maxUsedShelfInGroup(groupId);
-  const next = Math.max(1, Math.min(30, g.count + delta));
+  const next = Math.max(1, Math.min(MAX_SHELF_DIM, g.count + delta));
   if (next < used) {
     showToast(bi(`${groupId} 区已用到 ${groupId}${used}，不能少于 ${used}`, `Zone ${groupId}: in use through ${groupId}${used}`));
     return;
@@ -1051,7 +1052,7 @@ function writeRowItems(shelf, row, items) {
   }
   const cfg = getShelfCfg(shelf);
   if (maxCol > cfg.cols) {
-    cfg.cols = Math.min(30, maxCol);
+    cfg.cols = Math.min(MAX_SHELF_DIM, maxCol);
     shelfCfg[shelf] = cfg;
   }
 }
@@ -1068,7 +1069,7 @@ function shiftRowRight(shelf, row, fromCol) {
     name: it.name,
     col: it.col >= fromCol ? it.col + 1 : it.col
   }));
-  if (next.some(it => it.col > 30)) { showToast(bi('该行已满，无法插入', 'Row full — cannot insert')); return false; }
+  if (next.some(it => it.col > MAX_SHELF_DIM)) { showToast(bi('该行已满，无法插入', 'Row full — cannot insert')); return false; }
   writeRowItems(shelf, row, next);
   return true;
 }
@@ -1568,8 +1569,15 @@ function renderGroupTabs() {
     `<button class="group-tab ${g.id===currentGroup?'active':''}" onclick="selectGroup('${g.id}')">${g.id} ${bi('区', 'Zone')}</button>`
   ).join('') + `<button class="group-tab add" onclick="openZoneSheet()" title="${bi('区设置', 'Zone settings')}">⚙️</button>`;
 }
-function selectGroup(g) { currentGroup=g; currentShelf=g+'1'; renderMap(); }
-function renderShelfSelector() {
+function selectGroup(g) { currentGroup=g; currentShelf=g+'1'; renderMap({ scrollShelf: true }); }
+function scrollShelfTabsToActive() {
+  const container = document.getElementById('shelfSelector');
+  const active = container?.querySelector('.shelf-btn.active');
+  if (!container || !active) return;
+  const target = active.offsetLeft - (container.clientWidth - active.offsetWidth) / 2;
+  container.scrollTo({ left: Math.max(0, target), behavior: 'smooth' });
+}
+function renderShelfSelector(scrollShelf) {
   const count = getGroupShelfCount(currentGroup);
   document.getElementById('shelfSelector').innerHTML = Array.from({length:count},(_,i)=>{
     const key=`${currentGroup}${i+1}`;
@@ -1577,20 +1585,17 @@ function renderShelfSelector() {
     const nm=getShelfCfg(key).name;
     return `<button type="button" class="shelf-btn ${key===currentShelf?'active':''} ${hasData?'has-data':''}" onclick="selectShelf('${key}')" title="${nm||''}">${key}${nm?`<span style="display:block;font-size:13px;font-weight:400;opacity:.85">${escHtml(nm.slice(0,6))}</span>`:''}</button>`;
   }).join('');
-  requestAnimationFrame(()=>{
-    const active=document.querySelector('.shelf-btn.active');
-    if(active) active.scrollIntoView({inline:'center',block:'nearest',behavior:'smooth'});
-  });
+  if (scrollShelf) requestAnimationFrame(scrollShelfTabsToActive);
 }
 function selectShelf(s) {
   expandGroupCountToShelf(s);
   currentShelf=s;
-  renderMap();
+  renderMap({ scrollShelf: true });
 }
 function adjustShelf(prop,delta) {
   const cfg=getShelfCfg(currentShelf);
-  if(prop==='rows') cfg.rows=Math.max(1,Math.min(20,cfg.rows+delta));
-  if(prop==='cols') cfg.cols=Math.max(1,Math.min(30,cfg.cols+delta));
+  if(prop==='rows') cfg.rows=Math.max(1,Math.min(MAX_SHELF_DIM,cfg.rows+delta));
+  if(prop==='cols') cfg.cols=Math.max(1,Math.min(MAX_SHELF_DIM,cfg.cols+delta));
   if(!cfg.name) cfg.name='';
   shelfCfg[currentShelf]=cfg; saveCfg(); renderMap();
 }
@@ -1606,9 +1611,12 @@ function getGridCellSize(cols) {
   const fit = Math.floor((avail - gap * (cols - 1)) / cols);
   return Math.max(min, Math.min(max, fit));
 }
-function renderMap() {
+function renderMap(options) {
+  const opts = options || {};
+  const scrollY = window.scrollY;
   normalizeCurrentSelection();
-  renderGroupTabs(); renderShelfSelector();
+  renderGroupTabs();
+  renderShelfSelector(!!opts.scrollShelf);
   const cfg=getShelfCfg(currentShelf);
   document.getElementById('shelfTitle').textContent=getShelfLabel(currentShelf);
   document.getElementById('shelfNameInput').value=cfg.name||'';
@@ -1634,6 +1642,11 @@ function renderMap() {
     }
   }
   grid.innerHTML=html;
+  if (!opts.scrollShelf) {
+    requestAnimationFrame(() => {
+      if (Math.abs(window.scrollY - scrollY) > 4) window.scrollTo(0, scrollY);
+    });
+  }
 }
 
 let videoStream=null,twk=null,ocrReady=false,usePhotoMode=false,ocrInitPromise=null,lastOcrWords=[],capturedPhoto=null;
