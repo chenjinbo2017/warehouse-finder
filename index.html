@@ -12,6 +12,7 @@
   --text:#1a1a2e;--muted:#5c6578;--line:rgba(22,33,62,.08);
   --shadow:0 8px 28px rgba(22,33,62,.08);--shadow-sm:0 4px 14px rgba(22,33,62,.06);
   --radius:18px;--radius-sm:14px;
+  --page-max:560px;--cell-min:52px;--cell-max:58px;--cell-size:58px;--row-label-w:24px;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:linear-gradient(165deg,var(--bg1) 0%,var(--bg2) 45%,#f7f9fc 100%);background-attachment:fixed;min-height:100vh;color:var(--text);font-size:18px;line-height:1.45}
@@ -28,8 +29,9 @@ header h1{font-size:22px;font-weight:800;line-height:1.2;letter-spacing:-.02em}
 .tab-track{display:flex;background:rgba(255,255,255,.92);backdrop-filter:blur(12px);border-radius:16px;padding:5px;box-shadow:var(--shadow-sm);border:1px solid rgba(255,255,255,.8)}
 .tab{flex:1;padding:13px 8px;text-align:center;font-size:15px;line-height:1.3;font-weight:700;color:var(--muted);cursor:pointer;border-radius:12px;transition:all .22s ease}
 .tab.active{color:white;background:linear-gradient(135deg,var(--navy),var(--navy-light));box-shadow:0 4px 14px rgba(22,33,62,.22)}
-.page{display:none;padding:16px 16px 28px;max-width:560px;margin:0 auto}
+.page{display:none;padding:16px 16px 28px;max-width:var(--page-max);margin:0 auto;width:100%}
 .page.active{display:block}
+#page-map{max-width:min(1200px,100%)}
 .search-box,.export-box,.sync-box,.shelf-info,.grid-container,.order-card,.order-empty,.not-found,.result-card{background:var(--card);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);margin-bottom:16px;border:1px solid var(--line)}
 .search-box.orders-box{background:linear-gradient(180deg,#fff 0%,#fafcff 100%);border-top:4px solid var(--sky)}
 .search-box.sku-box{border-top:4px solid var(--coral)}
@@ -73,14 +75,8 @@ header h1{font-size:22px;font-weight:800;line-height:1.2;letter-spacing:-.02em}
 .shelf-btn.active{background:linear-gradient(135deg,var(--navy),var(--navy-light));color:white;border-color:transparent;box-shadow:0 6px 14px rgba(22,33,62,.2)}
 .shelf-btn.has-data{border-color:#a5d6a7;color:var(--mint)}
 .shelf-btn.active.has-data{background:linear-gradient(135deg,#2e7d32,#43a047);border-color:transparent;color:white}
-.shelf-info{overflow:hidden;max-width:100%;padding:12px 14px;margin-bottom:10px}
-.shelf-title{font-size:16px;font-weight:800;margin-bottom:6px;color:var(--navy)}
-.shelf-info .adjust-row{font-size:14px;gap:8px;margin-bottom:5px}
-.shelf-info .adjust-row-stack span{font-size:13px;font-weight:600}
-.shelf-info .field-full{padding:10px 12px;font-size:16px}
-.shelf-info .adjust-row:not(.adjust-row-stack) span{min-width:0;font-size:13px;font-weight:600;white-space:nowrap}
-.shelf-info .adj-btn{width:34px;height:34px;font-size:17px;border-radius:8px;box-shadow:none}
-.shelf-info .adj-val{font-size:16px;font-weight:800;min-width:26px}
+.shelf-info{overflow:hidden;max-width:100%;padding:16px 18px;margin-bottom:12px}
+.shelf-title{font-size:18px;font-weight:800;margin-bottom:8px;color:var(--navy)}
 .adjust-row{display:flex;align-items:center;gap:10px;font-size:18px;color:#333;margin-bottom:8px;max-width:100%}
 .adjust-row-stack{flex-direction:column;align-items:stretch}
 .adjust-row-stack span{min-width:0}
@@ -88,15 +84,15 @@ header h1{font-size:22px;font-weight:800;line-height:1.2;letter-spacing:-.02em}
 .adjust-row:not(.adjust-row-stack) span{max-width:none}
 .adj-btn{background:#fff;border:2px solid #e8ecf2;border-radius:10px;width:42px;height:42px;font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--navy);box-shadow:var(--shadow-sm)}
 .adj-val{font-size:22px;font-weight:800;min-width:32px;text-align:center;color:var(--navy)}
-.grid-container{padding:16px;overflow-x:auto}
-.shelf-grid{display:inline-grid;gap:5px}
-.row-label{font-size:14px;color:var(--muted);font-weight:800;display:flex;align-items:center;padding-right:4px;min-width:22px}
-.grid-cell{width:58px;height:58px;border-radius:12px;border:2px solid #e8ecf2;background:linear-gradient(180deg,#fff,#f6f8fb);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:11px;color:#999;text-align:center;padding:3px;transition:transform .15s,box-shadow .15s;overflow:hidden}
+.grid-container{padding:16px;overflow-x:auto;width:100%}
+.shelf-grid{display:grid;gap:5px;width:100%;--cell-size:58px}
+.row-label{font-size:14px;color:var(--muted);font-weight:800;display:flex;align-items:center;padding-right:4px;min-width:var(--row-label-w)}
+.grid-cell{width:var(--cell-size);height:var(--cell-size);border-radius:12px;border:2px solid #e8ecf2;background:linear-gradient(180deg,#fff,#f6f8fb);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:clamp(10px,calc(var(--cell-size)*0.17),14px);color:#999;text-align:center;padding:3px;transition:transform .15s,box-shadow .15s;overflow:hidden}
 .grid-cell:active{transform:scale(.94)}
 .grid-cell.filled{background:linear-gradient(180deg,#edf7ee,#dff0e1);border-color:#81c784;box-shadow:0 3px 10px rgba(46,125,50,.12)}
-.cell-sku{font-size:10px;font-weight:800;line-height:1.2;word-break:break-all;color:var(--mint)}
-.cell-pos{font-size:12px;color:#bbb;font-weight:700}
-.grid-cell.filled .cell-pos{color:#66bb6a;font-size:11px}
+.cell-sku{font-size:clamp(9px,calc(var(--cell-size)*0.15),13px);font-weight:800;line-height:1.2;word-break:break-all;color:var(--mint)}
+.cell-pos{font-size:clamp(10px,calc(var(--cell-size)*0.19),14px);color:#bbb;font-weight:700}
+.grid-cell.filled .cell-pos{color:#66bb6a}
 .modal{display:none;position:fixed;inset:0;background:rgba(10,15,30,.94);z-index:200;flex-direction:column}
 .modal.open{display:flex}
 .modal-header{padding:16px 18px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0}
@@ -163,6 +159,38 @@ header h1{font-size:22px;font-weight:800;line-height:1.2;letter-spacing:-.02em}
 .btn-sheet{flex:1;min-width:45%;border-radius:var(--radius-sm);padding:16px;font-size:18px;font-weight:700;cursor:pointer;min-height:52px}
 .btn-sheet.danger{background:#fff5f5;color:var(--coral);border:2px solid #ffcdd2;box-shadow:none}
 .sync-live{font-size:15px;color:#66bb6a;margin-left:4px;font-weight:700}
+@media (min-width:768px){
+  :root{--page-max:720px;--cell-min:56px;--cell-max:84px;--row-label-w:28px}
+  body{font-size:19px}
+  header{padding:20px 28px 22px}
+  header h1{font-size:26px}
+  .header-sub{font-size:14px}
+  .tab-bar{padding:14px 24px 0;top:92px}
+  .tab-track{max-width:720px;margin:0 auto}
+  .tab{font-size:16px;padding:14px 10px}
+  .page{padding:20px 24px 36px}
+  .search-input,.order-paste,.sync-input,.sheet-input{font-size:22px}
+  .loc-value{font-size:42px}
+  .result-name{font-size:28px}
+  .sheet-panel{max-width:560px;margin:0 auto;border-radius:24px 24px 0 0}
+}
+@media (min-width:1024px){
+  :root{--page-max:840px;--cell-min:60px;--cell-max:96px;--row-label-w:32px}
+  .tab-track{max-width:840px}
+  #page-map{padding:24px 28px 40px}
+  .group-tab,.shelf-btn{font-size:19px}
+  .grid-container{padding:20px}
+}
+@media (max-width:640px){
+  .shelf-info{padding:12px 14px;margin-bottom:10px}
+  .shelf-title{font-size:16px;margin-bottom:6px}
+  .shelf-info .adjust-row{font-size:14px;gap:8px;margin-bottom:5px}
+  .shelf-info .adjust-row-stack span{font-size:13px;font-weight:600}
+  .shelf-info .field-full{padding:10px 12px;font-size:16px}
+  .shelf-info .adjust-row:not(.adjust-row-stack) span{min-width:0;font-size:13px;font-weight:600;white-space:nowrap}
+  .shelf-info .adj-btn{width:34px;height:34px;font-size:17px;border-radius:8px;box-shadow:none}
+  .shelf-info .adj-val{font-size:16px;font-weight:800;min-width:26px}
+}
 </style>
 </head>
 <body>
@@ -1163,6 +1191,18 @@ function adjustShelf(prop,delta) {
   if(!cfg.name) cfg.name='';
   shelfCfg[currentShelf]=cfg; saveCfg(); renderMap();
 }
+function getGridCellSize(cols) {
+  const container = document.querySelector('#page-map .grid-container');
+  const style = getComputedStyle(document.documentElement);
+  const min = parseFloat(style.getPropertyValue('--cell-min')) || 52;
+  const max = parseFloat(style.getPropertyValue('--cell-max')) || 58;
+  const rowLabel = parseFloat(style.getPropertyValue('--row-label-w')) || 24;
+  const gap = 5;
+  if (!container || !cols) return max;
+  const avail = container.clientWidth - rowLabel - 8;
+  const fit = Math.floor((avail - gap * (cols - 1)) / cols);
+  return Math.max(min, Math.min(max, fit));
+}
 function renderMap() {
   normalizeCurrentSelection();
   renderGroupTabs(); renderShelfSelector();
@@ -1172,15 +1212,20 @@ function renderMap() {
   document.getElementById('rowsVal').textContent=cfg.rows;
   document.getElementById('colsVal').textContent=cfg.cols;
   const grid=document.getElementById('shelfGrid');
-  grid.style.gridTemplateColumns='24px '+`58px `.repeat(cfg.cols);
+  const cellSz=getGridCellSize(cfg.cols);
+  const rowLabelW=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--row-label-w'))||24;
+  grid.style.setProperty('--cell-size', cellSz+'px');
+  grid.style.gridTemplateColumns=rowLabelW+'px '+'repeat('+cfg.cols+', '+cellSz+'px)';
+  const colFs=Math.max(11,Math.min(15,Math.round(cellSz*0.22)));
   let html='<div></div>';
-  for(let c=1;c<=cfg.cols;c++) html+=`<div style="text-align:center;font-size:13px;color:#888;padding-bottom:4px;font-weight:700">${c}</div>`;
+  for(let c=1;c<=cfg.cols;c++) html+=`<div style="text-align:center;font-size:${colFs}px;color:#888;padding-bottom:4px;font-weight:700">${c}</div>`;
   for(let r=1;r<=cfg.rows;r++){
     html+=`<div class="row-label">${r}</div>`;
     for(let c=1;c<=cfg.cols;c++){
       const key=pk(currentShelf,r,c);
       const e=db[key];
-      const nm=e&&e.sku&&db[e.sku]&&db[e.sku].name?`<div style="font-size:9px;color:#81c784;margin-top:2px">${escHtml(db[e.sku].name.slice(0,8))}</div>`:'';
+      const nmFs=Math.max(8,Math.min(12,Math.round(cellSz*0.14)));
+      const nm=e&&e.sku&&db[e.sku]&&db[e.sku].name?`<div style="font-size:${nmFs}px;color:#81c784;margin-top:2px">${escHtml(db[e.sku].name.slice(0,8))}</div>`:'';
       if(e) html+=`<div class="grid-cell filled" onclick="openCellSheet('${currentShelf}',${r},${c})"><div class="cell-sku">${escHtml(e.sku||'')}</div>${nm}<div class="cell-pos">${r}-${c}</div></div>`;
       else html+=`<div class="grid-cell" onclick="scanCell('${currentShelf}',${r},${c})"><div class="cell-pos">${r}-${c}</div></div>`;
     }
@@ -1426,6 +1471,13 @@ function selectWord(word){
 }
 initCloudData().then(()=>{renderMap();startAutoSync();updateSyncLive();});
 updateCount();
+let mapResizeTimer;
+window.addEventListener('resize',()=>{
+  clearTimeout(mapResizeTimer);
+  mapResizeTimer=setTimeout(()=>{
+    if(document.getElementById('page-map').classList.contains('active')) renderMap();
+  },150);
+});
 </script>
 </body>
 </html>
