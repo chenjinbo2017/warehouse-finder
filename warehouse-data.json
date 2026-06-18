@@ -359,6 +359,18 @@
       "shelf": "A31",
       "row": 1,
       "col": 10
+    },
+    "A31-1-11": {
+      "sku": "HEM-SDGR",
+      "shelf": "A31",
+      "row": 1,
+      "col": 11
+    },
+    "HEM-SDGR": {
+      "name": "",
+      "shelf": "A31",
+      "row": 1,
+      "col": 11
     }
   },
   "shelfCfg": {
@@ -393,5 +405,5 @@
       "name": ""
     }
   },
-  "updatedAt": "2026-06-18T22:11:39.618Z"
+  "updatedAt": "2026-06-18T22:11:58.862Z"
 }
