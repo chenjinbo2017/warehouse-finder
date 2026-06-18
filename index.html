@@ -11,7 +11,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#f0f2f5;
 header{background:#1a1a2e;color:white;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
 header h1{font-size:17px;font-weight:700}
 .tab-bar{display:flex;background:white;border-bottom:1px solid #e0e0e0;position:sticky;top:52px;z-index:99}
-.tab{flex:1;padding:8px 4px;text-align:center;font-size:10px;line-height:1.35;font-weight:600;color:#888;cursor:pointer;border-bottom:3px solid transparent}
+.tab{flex:1;padding:9px 6px;text-align:center;font-size:11px;line-height:1.35;font-weight:600;color:#888;cursor:pointer;border-bottom:3px solid transparent}
 .tab.active{color:#1a1a2e;border-bottom-color:#e63946}
 .page{display:none;padding:14px}
 .page.active{display:block}
@@ -88,7 +88,6 @@ header h1{font-size:17px;font-weight:700}
 .photo-placeholder .icon{font-size:56px;margin-bottom:12px}
 .photo-placeholder .hint{font-size:13px;line-height:1.5;margin-top:8px;color:rgba(255,255,255,.4)}
 #photoPreview{max-width:100%;max-height:100%;object-fit:contain;border-radius:10px;display:none}
-.list-search{background:white;border-radius:10px;padding:11px 13px;border:2px solid #e0e0e0;font-size:15px;width:100%;outline:none;margin-bottom:10px}
 .order-paste{width:100%;min-height:150px;border:2px solid #e0e0e0;border-radius:10px;padding:12px;font-size:14px;font-family:ui-monospace,monospace;outline:none;resize:vertical;line-height:1.45}
 .order-paste:focus{border-color:#1a1a2e}
 .order-card{background:white;border-radius:14px;padding:14px 16px;margin-bottom:12px;box-shadow:0 2px 10px rgba(0,0,0,.07)}
@@ -103,12 +102,6 @@ header h1{font-size:17px;font-weight:700}
 .order-table .loc-ok{color:#2e7d32;font-weight:600}
 .order-table .loc-miss{color:#e63946}
 .order-empty{background:white;border-radius:14px;padding:24px 16px;text-align:center;color:#888;font-size:14px;box-shadow:0 2px 10px rgba(0,0,0,.07)}
-.sku-item{background:white;border-radius:12px;padding:13px 15px;margin-bottom:7px;box-shadow:0 1px 5px rgba(0,0,0,.06);display:flex;justify-content:space-between;align-items:center}
-.sku-code{font-size:13px;font-weight:700;color:#e63946;font-family:monospace}
-.sku-name-text{font-size:13px;color:#1a1a2e;margin-top:1px}
-.sku-loc{font-size:11px;color:#888;margin-top:2px}
-.btn-del{background:none;border:none;font-size:17px;cursor:pointer;color:#ccc;padding:4px 8px}
-.empty{text-align:center;padding:36px 20px;color:#aaa;font-size:14px}
 .count-badge{background:#e63946;color:white;border-radius:10px;padding:2px 8px;font-size:12px;font-weight:700}
 .sync-badge{font-size:18px;cursor:pointer;padding:4px}
 .sync-box{background:white;border-radius:14px;padding:16px;box-shadow:0 2px 10px rgba(0,0,0,.07);margin-bottom:12px}
@@ -158,8 +151,6 @@ header h1{font-size:17px;font-weight:700}
 <div class="tab-bar">
   <div class="tab active" onclick="switchTab('search')">🔍 查找 / Search</div>
   <div class="tab" onclick="switchTab('map')">🗺️ 录入 / Map</div>
-  <div class="tab" onclick="switchTab('orders')">📦 订单 / Orders</div>
-  <div class="tab" onclick="switchTab('list')">📋 列表 / List</div>
   <div class="tab" onclick="switchTab('sync')">☁️ 云 / Sync</div>
 </div>
 
@@ -173,11 +164,8 @@ header h1{font-size:17px;font-weight:700}
     <button class="btn-search" onclick="doSearch()">查找位置 / Find Location</button>
   </div>
   <div id="searchResult"></div>
-</div>
-
-<div class="page" id="page-orders">
-  <div class="search-box">
-    <div class="search-label">粘贴 Etsy / Amazon 订单 / Paste Orders</div>
+  <div class="search-box" style="margin-top:14px">
+    <div class="search-label">📦 粘贴 Etsy / Amazon 订单 / Paste Orders</div>
     <textarea id="orderPaste" class="order-paste" placeholder="CSV/Tab table · Etsy Order # + SKU · Amazon order ID + Seller SKU&#10;Multiple items per order OK / 一单可多 SKU"></textarea>
     <button class="btn-search" onclick="parseAndMatchOrders()">匹配库位 / Match Locations</button>
   </div>
@@ -209,11 +197,6 @@ header h1{font-size:17px;font-weight:700}
   <div class="grid-container">
     <div class="shelf-grid" id="shelfGrid"></div>
   </div>
-</div>
-
-<div class="page" id="page-list">
-  <input type="text" class="list-search" placeholder="搜索 SKU 或名称 / Search SKU or name..." oninput="renderList(this.value)">
-  <div id="skuList"></div>
 </div>
 
 <div class="page" id="page-sync">
@@ -391,7 +374,6 @@ async function importFromClipboard() {
     if (!payload.db) { showToast(bi('数据格式不对', 'Invalid format')); return; }
     applyPayload(payload);
     renderMap();
-    renderList('');
     showToast(bi('✅ 数据已恢复', 'Data restored'));
   } catch(e) {
     showToast(bi('恢复失败，请检查数据格式', 'Restore failed — check format'));
@@ -511,8 +493,6 @@ async function pullFromCloudSilent(forceApply) {
   if (forceApply || !localUpdated || remote.updatedAt > localUpdated) {
     applyPayload(remote);
     renderMap();
-    const ls = document.querySelector('.list-search');
-    if (ls) renderList(ls.value || '');
     updateSyncLive();
     return true;
   }
@@ -555,7 +535,6 @@ async function pullFromCloud() {
       applyPayload(remote);
     }
     renderMap();
-    renderList(document.querySelector('.list-search')?.value || '');
     setSyncStatus(bi('已下载最新数据', 'Downloaded latest'));
     showToast(bi('数据已更新', 'Data updated'));
   } catch (e) {
@@ -858,7 +837,6 @@ function saveCellEdit() {
   saveDB();
   closeCellSheet();
   renderMap();
-  renderList(document.querySelector('.list-search')?.value || '');
   showToast(bi('已保存', 'Saved'));
 }
 
@@ -916,14 +894,13 @@ function showToast(m) {
 function switchTab(n) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  ['search','map','orders','list','sync'].forEach((t,i) => {
+  ['search','map','sync'].forEach((t,i) => {
     if (t === n) {
       document.querySelectorAll('.tab')[i].classList.add('active');
       document.getElementById('page-'+t).classList.add('active');
     }
   });
   if (n === 'map') { pullFromCloudSilent(false); renderMap(); }
-  if (n === 'list') { pullFromCloudSilent(false); renderList(''); }
 }
 
 function doSearch() {
@@ -1118,7 +1095,7 @@ function parseAndMatchOrders() {
   }).join('');
   const summary = `<div class="order-summary" style="margin:0 0 10px 2px">${bi(`共 ${orders.length} 单 · ${totalLines} 个产品`, `${orders.length} orders · ${totalLines} items`)}${missLines ? ` · <span style="color:#e63946">${bi(`${missLines} 个未找到库位`, `${missLines} not mapped`)}</span>` : ` · ${bi('全部已匹配', 'All matched')}`}</div>`;
   el.innerHTML = summary + html;
-  switchTab('orders');
+  document.getElementById('orderResult').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 let currentGroup='A', currentShelf='A1', scanMode='search', currentCell=null;
@@ -1377,31 +1354,6 @@ function selectWord(word){
     if(nr<=cfg.rows){currentCell={shelf,row:nr,col:nc};renderMap();setTimeout(()=>openScan('map'),400);}
     else{currentCell=null;renderMap();}
   }
-}
-function renderList(filter){
-  const el=document.getElementById('skuList');
-  const keys=Object.keys(db).filter(k=>{
-    if(k.match(/^[A-Z]\d+-\d+-\d+$/)) return false;
-    if(!filter) return true;
-    const f=filter.toUpperCase();
-    return k.includes(f)||(db[k].name||'').toUpperCase().includes(f);
-  }).sort();
-  if(keys.length===0){el.innerHTML=`<div class="empty">${bi('还没有录入任何产品', 'No products yet')}<br>${bi('去「录入」页面点格子开始', 'Go to Map tab and tap a cell')}</div>`;return;}
-  el.innerHTML=keys.map((k,i)=>{const d=db[k];return`<div class="sku-item" onclick="openCellSheet('${d.shelf}',${d.row},${d.col})" style="cursor:pointer"><div><div class="sku-code">${escHtml(k)}</div><div class="sku-name-text">${escHtml(d.name||bi('（点此编辑名称）', '(tap to edit name)'))}</div><div class="sku-loc">📍 ${getShelfLabel(d.shelf)} · ${d.row}-${d.col}</div></div><button class="btn-del" onclick="event.stopPropagation();deleteSkuAt(${i})" data-sku="${escHtml(k)}">🗑️</button></div>`;}).join('');
-}
-function deleteSkuAt(i){
-  const keys=Object.keys(db).filter(k=>!k.match(/^[A-Z]\d+-\d+-\d+$/)).sort();
-  deleteSku(keys[i]);
-}
-function deleteSku(sku){
-  if(!confirm(bi('删除 '+sku+' 并左移该层后面的格？', 'Delete '+sku+' and shift left?'))) return;
-  const d=db[sku];
-  if(d){shiftRowLeft(d.shelf,d.row,d.col);}
-  else delete db[sku];
-  saveDB();
-  renderList(document.querySelector('.list-search').value);
-  renderMap();
-  showToast(bi('已删除', 'Deleted'));
 }
 initCloudData().then(()=>{renderMap();startAutoSync();updateSyncLive();});
 updateCount();
