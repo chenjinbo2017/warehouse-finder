@@ -209,7 +209,7 @@
     "A1": {
       "rows": 9,
       "cols": 15,
-      "name": ""
+      "name": "Round bean"
     },
     "__layout": {
       "groups": [
@@ -232,5 +232,5 @@
       ]
     }
   },
-  "updatedAt": "2026-06-18T07:28:52.348Z"
+  "updatedAt": "2026-06-18T07:29:06.212Z"
 }
