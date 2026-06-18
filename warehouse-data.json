@@ -1,77 +1,5 @@
 {
   "db": {
-    "A1-1-1": {
-      "sku": "GEM-25118Y-39",
-      "shelf": "A1",
-      "row": 1,
-      "col": 1
-    },
-    "GEM-25118Y-39": {
-      "name": "",
-      "shelf": "A1",
-      "row": 1,
-      "col": 1
-    },
-    "A1-1-2": {
-      "sku": "GEM-25085Y-40",
-      "shelf": "A1",
-      "row": 1,
-      "col": 2
-    },
-    "GEM-25085Y-40": {
-      "name": "",
-      "shelf": "A1",
-      "row": 1,
-      "col": 2
-    },
-    "A1-1-3": {
-      "sku": "GEM-2511SY-41",
-      "shelf": "A1",
-      "row": 1,
-      "col": 3
-    },
-    "GEM-2511SY-41": {
-      "name": "",
-      "shelf": "A1",
-      "row": 1,
-      "col": 3
-    },
-    "A1-1-4": {
-      "sku": "GEM-2511SY-42",
-      "shelf": "A1",
-      "row": 1,
-      "col": 4
-    },
-    "GEM-2511SY-42": {
-      "name": "",
-      "shelf": "A1",
-      "row": 1,
-      "col": 4
-    },
-    "A1-1-5": {
-      "sku": "GEM-25115Y-43",
-      "shelf": "A1",
-      "row": 1,
-      "col": 5
-    },
-    "GEM-25115Y-43": {
-      "name": "",
-      "shelf": "A1",
-      "row": 1,
-      "col": 5
-    },
-    "A1-1-6": {
-      "sku": "GEM-2408SY-19",
-      "shelf": "A1",
-      "row": 1,
-      "col": 6
-    },
-    "GEM-2408SY-19": {
-      "name": "",
-      "shelf": "A1",
-      "row": 1,
-      "col": 6
-    },
     "A9-1-1": {
       "sku": "GEM-2404MLY-63-6",
       "shelf": "A9",
@@ -138,19 +66,57 @@
       "row": 1,
       "col": 2
     },
-    "A1-2-1": {
-      "sku": "GEM-2107XC-167-D",
+    "A1-1-1": {
+      "sku": "GEM-25115Y-43",
       "shelf": "A1",
-      "row": 2,
+      "row": 1,
       "col": 1
     },
-    "GEM-2107XC-167-D": {
+    "GEM-25115Y-43": {
       "name": "",
       "shelf": "A1",
-      "row": 2,
+      "row": 1,
       "col": 1
+    },
+    "A1-1-2": {
+      "sku": "GEM-2408SY-19",
+      "shelf": "A1",
+      "row": 1,
+      "col": 2
+    },
+    "GEM-2408SY-19": {
+      "name": "",
+      "shelf": "A1",
+      "row": 1,
+      "col": 2
     }
   },
-  "shelfCfg": {},
-  "updatedAt": "2026-06-17T19:50:04.808Z"
+  "shelfCfg": {
+    "A1": {
+      "rows": 9,
+      "cols": 15,
+      "name": ""
+    },
+    "__layout": {
+      "groups": [
+        {
+          "id": "A",
+          "count": 16
+        },
+        {
+          "id": "B",
+          "count": 9
+        },
+        {
+          "id": "C",
+          "count": 9
+        },
+        {
+          "id": "D",
+          "count": 9
+        }
+      ]
+    }
+  },
+  "updatedAt": "2026-06-18T01:30:31.232Z"
 }
