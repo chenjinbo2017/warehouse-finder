@@ -347,6 +347,18 @@
       "shelf": "A31",
       "row": 1,
       "col": 9
+    },
+    "A31-1-10": {
+      "sku": "HEM-HDC",
+      "shelf": "A31",
+      "row": 1,
+      "col": 10
+    },
+    "HEM-HDC": {
+      "name": "",
+      "shelf": "A31",
+      "row": 1,
+      "col": 10
     }
   },
   "shelfCfg": {
@@ -381,5 +393,5 @@
       "name": ""
     }
   },
-  "updatedAt": "2026-06-18T22:10:35.731Z"
+  "updatedAt": "2026-06-18T22:11:39.618Z"
 }
