@@ -4,6 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>仓库找货 / Warehouse Finder</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/harmonyos-sans-webfont-splitted@1.2.1/dist/HarmonyOS_Sans_SC/Regular.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/harmonyos-sans-webfont-splitted@1.2.1/dist/HarmonyOS_Sans_SC/Medium.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/harmonyos-sans-webfont-splitted@1.2.1/dist/HarmonyOS_Sans_SC/Bold.css">
 <script src='https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/4.1.1/tesseract.min.js'></script>
 <style>
 :root{
@@ -12,15 +16,17 @@
   --text:#1a1a2e;--muted:#5c6578;--line:rgba(22,33,62,.08);
   --shadow:0 8px 28px rgba(22,33,62,.08);--shadow-sm:0 4px 14px rgba(22,33,62,.06);
   --radius:18px;--radius-sm:14px;
+  --font-ui:"HarmonyOS Sans SC","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  --font-mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
   --page-max:560px;--cell-min:52px;--cell-max:58px;--cell-size:58px;--row-label-w:24px;
 }
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:linear-gradient(165deg,var(--bg1) 0%,var(--bg2) 45%,#f7f9fc 100%);background-attachment:fixed;min-height:100vh;color:var(--text);font-size:18px;line-height:1.45}
+body{font-family:var(--font-ui);background:linear-gradient(165deg,var(--bg1) 0%,var(--bg2) 45%,#f7f9fc 100%);background-attachment:fixed;min-height:100vh;color:var(--text);font-size:18px;line-height:1.5;font-weight:400;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}
 header{background:linear-gradient(135deg,var(--navy) 0%,var(--navy-light) 55%,#243b64 100%);color:white;padding:18px 20px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 4px 24px rgba(22,33,62,.25)}
 .header-brand{display:flex;align-items:center;gap:14px}
 .header-icon{width:48px;height:48px;border-radius:14px;background:linear-gradient(145deg,rgba(255,255,255,.18),rgba(255,255,255,.06));display:flex;align-items:center;justify-content:center;font-size:26px;box-shadow:inset 0 1px 0 rgba(255,255,255,.2)}
-header h1{font-size:22px;font-weight:800;line-height:1.2;letter-spacing:-.02em}
-.header-sub{font-size:13px;opacity:.72;margin-top:2px;font-weight:500}
+header h1{font-size:22px;font-weight:700;line-height:1.25;letter-spacing:.01em}
+.header-sub{font-size:13px;opacity:.78;margin-top:3px;font-weight:400;letter-spacing:.02em}
 .header-actions{display:flex;align-items:center;gap:10px}
 .sync-badge{font-size:22px;cursor:pointer;padding:8px 10px;border-radius:12px;background:rgba(255,255,255,.1)}
 .sync-badge:active{background:rgba(255,255,255,.2)}
@@ -35,11 +41,11 @@ header h1{font-size:22px;font-weight:800;line-height:1.2;letter-spacing:-.02em}
 .search-box,.export-box,.sync-box,.shelf-info,.grid-container,.order-card,.order-empty,.not-found,.result-card{background:var(--card);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);margin-bottom:16px;border:1px solid var(--line)}
 .search-box.orders-box{background:linear-gradient(180deg,#fff 0%,#fafcff 100%);border-top:4px solid var(--sky)}
 .search-box.sku-box{border-top:4px solid var(--coral)}
-.search-label{font-size:16px;color:var(--navy);margin-bottom:12px;font-weight:800;display:flex;align-items:center;gap:8px}
+.search-label{font-size:16px;color:var(--navy);margin-bottom:12px;font-weight:700;display:flex;align-items:center;gap:8px;letter-spacing:.01em}
 .search-label::before{content:'';width:4px;height:18px;border-radius:4px;background:linear-gradient(180deg,var(--coral),var(--coral-light));flex-shrink:0}
 .orders-box .search-label::before{background:linear-gradient(180deg,var(--sky),#6dd5fa)}
 .search-row{display:flex;gap:10px}
-.search-input,.order-paste,.sync-input,.sheet-input{border:2px solid #e8ecf2;border-radius:var(--radius-sm);padding:14px 16px;font-size:20px;outline:none;background:#fbfcfe;transition:border-color .2s,box-shadow .2s;max-width:100%}
+.search-input,.order-paste,.sync-input,.sheet-input{border:2px solid #e8ecf2;border-radius:var(--radius-sm);padding:14px 16px;font-size:20px;font-family:var(--font-mono);outline:none;background:#fbfcfe;transition:border-color .2s,box-shadow .2s;max-width:100%}
 .search-row .search-input{flex:1;min-width:0}
 .order-paste,.sync-input,.sheet-input,.field-full{width:100%;box-sizing:border-box}
 .search-input:focus,.order-paste:focus,.sync-input:focus,.sheet-input:focus{border-color:var(--navy);box-shadow:0 0 0 4px rgba(22,33,62,.08);background:#fff}
