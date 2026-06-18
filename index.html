@@ -113,8 +113,9 @@ header h1{font-size:17px;font-weight:700}
 .sheet-sub{font-size:12px;color:#888;margin-bottom:14px}
 .sheet-field{margin-bottom:12px}
 .sheet-label{font-size:11px;color:#888;margin-bottom:5px}
-.sheet-input{width:100%;border:2px solid #e0e0e0;border-radius:10px;padding:11px;font-size:15px;outline:none}
+.sheet-input{width:100%;border:2px solid #e0e0e0;border-radius:10px;padding:11px;font-size:16px;outline:none;-webkit-appearance:none}
 .sheet-input:focus{border-color:#1a1a2e}
+.sheet-panel{touch-action:manipulation}
 .sheet-row{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
 .btn-sheet{flex:1;min-width:45%;border:none;border-radius:10px;padding:12px;font-size:14px;font-weight:700;cursor:pointer}
 .btn-sheet.primary{background:#e63946;color:white}
@@ -193,7 +194,7 @@ header h1{font-size:17px;font-weight:700}
   </div>
   <div class="sync-box">
     <div class="sync-title">GitHub 云端同步</div>
-    <div class="sync-desc"><strong>两人协作：</strong>两台手机都保存同一个 Token，录入后会自动同步（约 25 秒）；也可手动点下载/上传。</div>
+    <div class="sync-desc"><strong>多设备协作：</strong>电脑/手机保存同一个 Token，录入后会自动同步（约 25 秒）；也可手动点下载/上传。</div>
     <div class="sync-desc">首次使用：在 GitHub → Settings → Developer settings → Personal access tokens 创建 Token，勾选 <strong>repo</strong> 权限，粘贴到下方。</div>
     <input type="password" class="sync-input" id="ghTokenInput" placeholder="GitHub Token（ghp_...）" autocomplete="off">
     <button class="btn-search" onclick="saveGhToken()">保存 Token</button>
@@ -236,20 +237,20 @@ header h1{font-size:17px;font-weight:700}
 <div class="toast" id="toast"></div>
 
 <div class="sheet" id="cellSheet" onclick="if(event.target===this)closeCellSheet()">
-  <div class="sheet-panel">
+  <div class="sheet-panel" onclick="event.stopPropagation()">
     <div class="sheet-title" id="cellSheetTitle">格子</div>
     <div class="sheet-sub" id="cellSheetSub"></div>
     <div id="cellSheetFilled">
       <div class="sheet-field">
-        <div class="sheet-label">SKU 编号</div>
-        <div class="sheet-input" id="cellSheetSku" style="background:#f8f9fa;color:#e63946;font-family:monospace;font-weight:700"></div>
+        <div class="sheet-label">SKU 编号（可改）</div>
+        <input type="text" class="sheet-input" id="cellSheetSku" placeholder="如 GEM-2408SY-19" autocapitalize="characters" autocomplete="off">
       </div>
       <div class="sheet-field">
-        <div class="sheet-label">产品名称（可改）</div>
-        <input type="text" class="sheet-input" id="cellSheetName" placeholder="如：Green Jade 4x6mm">
+        <div class="sheet-label">产品名称（可选）</div>
+        <input type="text" class="sheet-input" id="cellSheetName" placeholder="如 Green Jade 4x6mm" autocomplete="off">
       </div>
       <div class="sheet-row">
-        <button class="btn-sheet primary" onclick="saveCellName()">💾 保存名称</button>
+        <button class="btn-sheet primary" onclick="saveCellEdit()">💾 保存</button>
         <button class="btn-sheet dark" onclick="rescanCell()">📷 重新扫描</button>
       </div>
       <div class="sheet-row">
@@ -648,18 +649,33 @@ function deleteCellShiftLeft() {
   showToast('已删除并左移');
 }
 
-function saveCellName() {
+function saveCellEdit() {
   if (!editingCell) return;
-  const e = db[pk(editingCell.shelf, editingCell.row, editingCell.col)];
+  const { shelf, row, col } = editingCell;
+  const e = db[pk(shelf, row, col)];
   if (!e) return;
-  const name = document.getElementById('cellSheetName').value.trim();
-  db[e.sku].name = name;
+  const newSku = document.getElementById('cellSheetSku').value.trim().toUpperCase();
+  const newName = document.getElementById('cellSheetName').value.trim();
+  if (!newSku) { showToast('SKU 不能为空'); return; }
+  const oldSku = e.sku;
+  if (newSku !== oldSku) {
+    if (db[newSku] && !(db[newSku].shelf === shelf && db[newSku].row === row && db[newSku].col === col)) {
+      showToast('该 SKU 已在其他位置'); return;
+    }
+    delete db[oldSku];
+    setCellEntry(shelf, row, col, newSku, newName);
+  } else {
+    if (!db[oldSku]) db[oldSku] = { name: newName, shelf, row, col };
+    else db[oldSku].name = newName;
+  }
   saveDB();
   closeCellSheet();
   renderMap();
   renderList(document.querySelector('.list-search')?.value || '');
-  showToast('名称已保存');
+  showToast('已保存');
 }
+
+function saveCellName() { saveCellEdit(); }
 
 function scanCell(shelf, row, col) {
   currentCell = { shelf, row, col };
@@ -675,8 +691,9 @@ function openCellSheet(shelf, row, col) {
   if (e) {
     document.getElementById('cellSheetFilled').style.display = 'block';
     document.getElementById('cellSheetEmpty').style.display = 'none';
-    document.getElementById('cellSheetSku').textContent = e.sku;
+    document.getElementById('cellSheetSku').value = e.sku || '';
     document.getElementById('cellSheetName').value = (db[e.sku] && db[e.sku].name) || '';
+    setTimeout(() => document.getElementById('cellSheetSku').focus(), 300);
   } else {
     document.getElementById('cellSheetFilled').style.display = 'none';
     document.getElementById('cellSheetEmpty').style.display = 'block';
