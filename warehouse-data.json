@@ -203,6 +203,18 @@
       "shelf": "A1",
       "row": 2,
       "col": 6
+    },
+    "A1-8-14": {
+      "sku": "CHENJINBO2017.GITHUB.IO/Y",
+      "shelf": "A1",
+      "row": 8,
+      "col": 14
+    },
+    "CHENJINBO2017.GITHUB.IO/Y": {
+      "name": "",
+      "shelf": "A1",
+      "row": 8,
+      "col": 14
     }
   },
   "shelfCfg": {
@@ -232,5 +244,5 @@
       ]
     }
   },
-  "updatedAt": "2026-06-18T07:37:50.505Z"
+  "updatedAt": "2026-06-18T07:38:35.301Z"
 }
