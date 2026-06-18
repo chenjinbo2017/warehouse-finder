@@ -395,6 +395,18 @@
       "shelf": "A31",
       "row": 1,
       "col": 13
+    },
+    "A31-1-14": {
+      "sku": "MT-HMT-DSC-2",
+      "shelf": "A31",
+      "row": 1,
+      "col": 14
+    },
+    "MT-HMT-DSC-2": {
+      "name": "",
+      "shelf": "A31",
+      "row": 1,
+      "col": 14
     }
   },
   "shelfCfg": {
@@ -429,5 +441,5 @@
       "name": ""
     }
   },
-  "updatedAt": "2026-06-18T22:12:20.271Z"
+  "updatedAt": "2026-06-18T22:12:30.417Z"
 }
