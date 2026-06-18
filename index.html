@@ -89,6 +89,20 @@ header h1{font-size:17px;font-weight:700}
 .photo-placeholder .hint{font-size:13px;line-height:1.5;margin-top:8px;color:rgba(255,255,255,.4)}
 #photoPreview{max-width:100%;max-height:100%;object-fit:contain;border-radius:10px;display:none}
 .list-search{background:white;border-radius:10px;padding:11px 13px;border:2px solid #e0e0e0;font-size:15px;width:100%;outline:none;margin-bottom:10px}
+.order-paste{width:100%;min-height:150px;border:2px solid #e0e0e0;border-radius:10px;padding:12px;font-size:14px;font-family:ui-monospace,monospace;outline:none;resize:vertical;line-height:1.45}
+.order-paste:focus{border-color:#1a1a2e}
+.order-card{background:white;border-radius:14px;padding:14px 16px;margin-bottom:12px;box-shadow:0 2px 10px rgba(0,0,0,.07)}
+.order-head{font-size:15px;font-weight:700;margin-bottom:4px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.order-platform{font-size:11px;color:#888;font-weight:600;white-space:nowrap}
+.order-summary{font-size:12px;color:#888;margin-bottom:10px}
+.order-table{width:100%;border-collapse:collapse;font-size:12px}
+.order-table th{text-align:left;color:#888;font-weight:600;padding:6px 4px;border-bottom:1px solid #eee}
+.order-table td{padding:8px 4px;border-bottom:1px solid #f5f5f5;vertical-align:top}
+.order-table tr.miss td{background:#fff8f8}
+.order-table .sku-cell{font-family:ui-monospace,monospace;font-weight:700;word-break:break-all}
+.order-table .loc-ok{color:#2e7d32;font-weight:600}
+.order-table .loc-miss{color:#e63946}
+.order-empty{background:white;border-radius:14px;padding:24px 16px;text-align:center;color:#888;font-size:14px;box-shadow:0 2px 10px rgba(0,0,0,.07)}
 .sku-item{background:white;border-radius:12px;padding:13px 15px;margin-bottom:7px;box-shadow:0 1px 5px rgba(0,0,0,.06);display:flex;justify-content:space-between;align-items:center}
 .sku-code{font-size:13px;font-weight:700;color:#e63946;font-family:monospace}
 .sku-name-text{font-size:13px;color:#1a1a2e;margin-top:1px}
@@ -144,6 +158,7 @@ header h1{font-size:17px;font-weight:700}
 <div class="tab-bar">
   <div class="tab active" onclick="switchTab('search')">🔍 查找</div>
   <div class="tab" onclick="switchTab('map')">🗺️ 录入</div>
+  <div class="tab" onclick="switchTab('orders')">📦 订单</div>
   <div class="tab" onclick="switchTab('list')">📋 列表</div>
   <div class="tab" onclick="switchTab('sync')">☁️ 云</div>
 </div>
@@ -158,6 +173,15 @@ header h1{font-size:17px;font-weight:700}
     <button class="btn-search" onclick="doSearch()">查找位置</button>
   </div>
   <div id="searchResult"></div>
+</div>
+
+<div class="page" id="page-orders">
+  <div class="search-box">
+    <div class="search-label">粘贴 Etsy / Amazon 订单</div>
+    <textarea id="orderPaste" class="order-paste" placeholder="支持：&#10;· 表格复制（CSV / Tab，含 Order、SKU、Quantity 列）&#10;· Etsy 订单详情（Order #…、SKU: …、2 x 商品名）&#10;· Amazon 订单（123-4567890-1234567、Seller SKU）&#10;&#10;一单里可有多个产品"></textarea>
+    <button class="btn-search" onclick="parseAndMatchOrders()">匹配库位</button>
+  </div>
+  <div id="orderResult"></div>
 </div>
 
 <div class="page" id="page-map">
@@ -890,7 +914,7 @@ function showToast(m) {
 function switchTab(n) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  ['search','map','list','sync'].forEach((t,i) => {
+  ['search','map','orders','list','sync'].forEach((t,i) => {
     if (t === n) {
       document.querySelectorAll('.tab')[i].classList.add('active');
       document.getElementById('page-'+t).classList.add('active');
@@ -904,7 +928,7 @@ function doSearch() {
   const sku = document.getElementById('searchInput').value.trim().toUpperCase();
   const el = document.getElementById('searchResult');
   if (!sku) return;
-  const d = db[sku];
+  const d = lookupSkuLocation(sku);
   if (d) {
     el.innerHTML = `<div class="result-card">
       <div class="result-sku">SKU: ${sku}</div>
@@ -919,6 +943,180 @@ function doSearch() {
   } else {
     el.innerHTML = `<div class="not-found"><div style="font-size:36px;margin-bottom:8px">🔍</div><div style="color:#888;font-size:14px">找不到 <strong>${sku}</strong><br>请先录入这个产品</div></div>`;
   }
+}
+
+const AMZ_ORDER_RE = /\b(\d{3}-\d{7}-\d{7})\b/;
+const ETSY_ORDER_RE = /\b(\d{9,10})\b/;
+
+function lookupSkuLocation(sku) {
+  const s = String(sku || '').trim().toUpperCase().replace(/\s+/g, '');
+  if (!s) return null;
+  if (db[s] && db[s].shelf) return { ...db[s], sku: s };
+  for (const k of Object.keys(db)) {
+    if (/^[A-Z]+\d+-\d+-\d+$/.test(k)) continue;
+    if (k.toUpperCase() === s && db[k].shelf) return { ...db[k], sku: k };
+  }
+  return null;
+}
+
+function normalizeSkuToken(raw) {
+  return String(raw || '').trim().toUpperCase().replace(/\s+/g, '');
+}
+
+function groupOrderLines(items) {
+  const map = new Map();
+  for (const it of items) {
+    const key = it.orderId || '（未识别订单号）';
+    if (!map.has(key)) map.set(key, { orderId: key, platform: it.platform || '', lines: [] });
+    const g = map.get(key);
+    if (!g.platform && it.platform) g.platform = it.platform;
+    g.lines.push({ sku: it.sku, qty: it.qty });
+  }
+  return Array.from(map.values());
+}
+
+function parseTabularOrders(lines) {
+  const sep = lines[0].includes('\t') ? '\t' : (lines[0].split(',').length > 1 ? ',' : null);
+  if (!sep) return null;
+  const header = lines[0].toLowerCase().split(sep).map(h => h.trim().replace(/^"|"$/g, ''));
+  const orderCol = header.findIndex(h => /^(order(\s*id|\s*#|\s*number)?|amazon-order-id|etsy.receipt.id|receipt id)$/.test(h) || (h.includes('order') && !h.includes('item')));
+  const skuCol = header.findIndex(h => /sku|seller sku|custom sku|型号|款式/.test(h));
+  const qtyCol = header.findIndex(h => /^(qty|quantity|数量|件数)$/.test(h) || h.includes('quantity'));
+  if (skuCol < 0) return null;
+  const items = [];
+  let platform = '';
+  for (let i = 1; i < lines.length; i++) {
+    const cols = lines[i].split(sep).map(c => c.trim().replace(/^"|"$/g, ''));
+    const sku = normalizeSkuToken(cols[skuCol]);
+    if (!isSkuCode(sku)) continue;
+    const orderRaw = orderCol >= 0 ? (cols[orderCol] || '').trim() : '';
+    let orderId = orderRaw.replace(/^#/, '');
+    let linePlatform = '';
+    if (AMZ_ORDER_RE.test(orderRaw)) { linePlatform = 'Amazon'; orderId = orderRaw.match(AMZ_ORDER_RE)[1]; }
+    else if (/^\d{9,10}$/.test(orderId)) linePlatform = 'Etsy';
+    if (linePlatform) platform = linePlatform;
+    const qty = qtyCol >= 0 ? (parseInt(cols[qtyCol], 10) || 1) : 1;
+    items.push({ orderId: orderId || '（未识别订单号）', sku, qty, platform: linePlatform });
+  }
+  return items.length ? { platform, items } : null;
+}
+
+function parseBlockOrders(text) {
+  const items = [];
+  let currentOrder = '';
+  let currentPlatform = '';
+  const lines = text.replace(/\r\n/g, '\n').split('\n').map(l => l.trim()).filter(Boolean);
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+
+    const amzInline = line.match(/(?:order\s*(?:id|#|number)?[:\s]*)?(\d{3}-\d{7}-\d{7})/i);
+    if (amzInline && /order/i.test(line)) {
+      currentOrder = amzInline[1];
+      currentPlatform = 'Amazon';
+      continue;
+    }
+    if (AMZ_ORDER_RE.test(line) && line.length < 30) {
+      currentOrder = line.match(AMZ_ORDER_RE)[1];
+      currentPlatform = 'Amazon';
+      continue;
+    }
+
+    const etsyInline = line.match(/order\s*(?:#|number|no\.?)?[:\s]*#?(\d{9,10})\b/i);
+    if (etsyInline) {
+      currentOrder = etsyInline[1];
+      currentPlatform = 'Etsy';
+      continue;
+    }
+
+    const skuTagged = line.match(/(?:seller\s*)?sku[:\s#]+([A-Z0-9][A-Z0-9\-./]{3,})/i);
+    if (skuTagged) {
+      const sku = normalizeSkuToken(skuTagged[1]);
+      if (!isSkuCode(sku)) continue;
+      let qty = 1;
+      const qtySame = line.match(/(?:qty|quantity)[:\s]*(\d+)|^(\d+)\s*x\s/i);
+      if (qtySame) qty = parseInt(qtySame[1] || qtySame[2], 10) || 1;
+      if (i > 0) {
+        const prevQty = lines[i - 1].match(/^(\d+)\s*x\s+/i);
+        if (prevQty) qty = parseInt(prevQty[1], 10) || qty;
+      }
+      items.push({ orderId: currentOrder || '（未识别订单号）', sku, qty, platform: currentPlatform });
+      continue;
+    }
+
+    if (currentOrder) {
+      const qtySku = line.match(/^(\d+)\s+([A-Z0-9][A-Z0-9\-./]{3,})\b/i);
+      if (qtySku && isSkuCode(normalizeSkuToken(qtySku[2]))) {
+        items.push({ orderId: currentOrder, sku: normalizeSkuToken(qtySku[2]), qty: parseInt(qtySku[1], 10) || 1, platform: currentPlatform });
+        continue;
+      }
+      const tokens = line.match(/[A-Z0-9][A-Z0-9\-./]{4,}/gi) || [];
+      for (const t of tokens) {
+        const sku = normalizeSkuToken(t);
+        if (!isSkuCode(sku) || AMZ_ORDER_RE.test(sku)) continue;
+        let qty = 1;
+        const qm = line.match(/^(\d+)\s+/);
+        if (qm) qty = parseInt(qm[1], 10) || 1;
+        items.push({ orderId: currentOrder, sku, qty, platform: currentPlatform });
+        break;
+      }
+    }
+  }
+  return items;
+}
+
+function parseOrdersFromPaste(text) {
+  const raw = String(text || '').trim();
+  if (!raw) return { platform: '', orders: [] };
+  const lines = raw.replace(/\r\n/g, '\n').split('\n').filter(l => l.trim());
+  const tabular = lines.length >= 2 ? parseTabularOrders(lines) : null;
+  let items = tabular ? tabular.items : parseBlockOrders(raw);
+  let platform = tabular ? tabular.platform : '';
+  if (!platform && items.length) {
+    const ps = new Set(items.map(i => i.platform).filter(Boolean));
+    platform = ps.size === 1 ? [...ps][0] : (ps.has('Amazon') && ps.has('Etsy') ? '混合' : ([...ps][0] || '自动识别'));
+  }
+  return { platform, orders: groupOrderLines(items) };
+}
+
+function parseAndMatchOrders() {
+  const text = document.getElementById('orderPaste').value;
+  const el = document.getElementById('orderResult');
+  const { platform, orders } = parseOrdersFromPaste(text);
+  if (!orders.length) {
+    el.innerHTML = '<div class="order-empty">没识别到订单内容<br><span style="font-size:12px">请确认含订单号、SKU；表格需有表头行</span></div>';
+    return;
+  }
+  let totalLines = 0;
+  let missLines = 0;
+  const html = orders.map(order => {
+    const rows = order.lines.map(line => {
+      totalLines++;
+      const loc = lookupSkuLocation(line.sku);
+      const miss = !loc;
+      if (miss) missLines++;
+      const locText = loc
+        ? `${getShelfLabel(loc.shelf)} · ${loc.row}层 · ${loc.col}格`
+        : '未录入';
+      return `<tr class="${miss ? 'miss' : ''}">
+        <td class="sku-cell">${escHtml(line.sku)}</td>
+        <td>${line.qty}</td>
+        <td class="${miss ? 'loc-miss' : 'loc-ok'}">${escHtml(locText)}</td>
+      </tr>`;
+    }).join('');
+    const pf = order.platform || platform || '订单';
+    return `<div class="order-card">
+      <div class="order-head"><span>订单 ${escHtml(order.orderId)}</span><span class="order-platform">${escHtml(pf)}</span></div>
+      <div class="order-summary">${order.lines.length} 个产品</div>
+      <table class="order-table">
+        <thead><tr><th>SKU</th><th>数量</th><th>库位</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
+  }).join('');
+  const summary = `<div class="order-summary" style="margin:0 0 10px 2px">共 ${orders.length} 单 · ${totalLines} 个产品${missLines ? ` · <span style="color:#e63946">${missLines} 个未找到库位</span>` : ' · 全部已匹配'}</div>`;
+  el.innerHTML = summary + html;
+  switchTab('orders');
 }
 
 let currentGroup='A', currentShelf='A1', scanMode='search', currentCell=null;
