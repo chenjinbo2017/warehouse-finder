@@ -1421,7 +1421,7 @@ function setPickMode(mode) {
   if (lastOrderMatch) renderOrderResults();
 }
 
-function parseShelfKey(shelf) {
+function parseShelfRouteKey(shelf) {
   const m = String(shelf || '').match(/^([A-Z]+)(\d+)$/i);
   if (!m) return { zone: String(shelf || '').toUpperCase(), num: 0 };
   return { zone: m[1].toUpperCase(), num: parseInt(m[2], 10) || 0 };
@@ -1438,7 +1438,7 @@ function comparePickLocations(locA, locB) {
   if (!locA && !locB) return 0;
   if (!locA) return 1;
   if (!locB) return -1;
-  const sa = parseShelfKey(locA.shelf), sb = parseShelfKey(locB.shelf);
+  const sa = parseShelfRouteKey(locA.shelf), sb = parseShelfRouteKey(locB.shelf);
   const zd = getZoneSortIndex(sa.zone) - getZoneSortIndex(sb.zone);
   if (zd) return zd;
   if (sa.num !== sb.num) return sa.num - sb.num;
@@ -1448,7 +1448,7 @@ function comparePickLocations(locA, locB) {
 
 function locSortKey(loc) {
   if (!loc) return 'zzz-miss';
-  const s = parseShelfKey(loc.shelf);
+  const s = parseShelfRouteKey(loc.shelf);
   return `${String(getZoneSortIndex(s.zone)).padStart(4, '0')}-${String(s.num).padStart(4, '0')}-${String(loc.row).padStart(3, '0')}-${String(loc.col).padStart(3, '0')}`;
 }
 
