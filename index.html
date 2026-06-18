@@ -172,6 +172,12 @@ header h1{font-size:22px;font-weight:700;line-height:1.25;letter-spacing:.01em}
 .btn-sheet{flex:1;min-width:45%;border-radius:var(--radius-sm);padding:16px;font-size:18px;font-weight:700;cursor:pointer;min-height:52px}
 .btn-sheet.danger{background:#fff5f5;color:var(--coral);border:2px solid #ffcdd2;box-shadow:none}
 .sync-live{font-size:15px;color:#66bb6a;margin-left:4px;font-weight:700}
+.sync-hint{font-size:15px;color:var(--muted);line-height:1.55;margin-bottom:12px;padding:12px 14px;background:#f8fafc;border-radius:12px;border:1px solid var(--line)}
+.sync-hint a{color:var(--navy);font-weight:700}
+.sync-hint ol{margin:8px 0 0 18px;padding:0}
+.sync-hint li{margin-bottom:6px}
+.sync-target{font-size:15px;color:var(--mint);font-weight:700;margin-top:8px}
+.sheet-field{margin-bottom:14px}
 @media (min-width:768px){
   :root{--page-max:720px;--cell-min:56px;--cell-max:84px;--row-label-w:28px}
   body{font-size:19px}
@@ -283,9 +289,28 @@ header h1{font-size:22px;font-weight:700;line-height:1.25;letter-spacing:.01em}
   </div>
   <div class="sync-box">
     <div class="sync-title">GitHub 云端同步 / Cloud Sync</div>
-    <div class="sync-desc">GitHub → Settings → Developer settings → Personal access tokens，勾选 <strong>repo</strong>，粘贴到下方。/ Create token with <strong>repo</strong> scope.</div>
-    <input type="password" class="sync-input" id="ghTokenInput" placeholder="GitHub Token (ghp_...)" autocomplete="off">
-    <button class="btn-search" onclick="saveGhToken()">保存 Token / Save Token</button>
+    <div class="sync-hint">
+      <strong>用自己的数据（3 步）/ Your own data (3 steps)</strong>
+      <ol>
+        <li>注册 GitHub，<a href="https://github.com/chenjinbo2017/warehouse-finder/fork" target="_blank" rel="noopener">Fork 本仓库 / Fork this repo</a>（点一次 / one click）</li>
+        <li>创建 Token：<a href="https://github.com/settings/tokens" target="_blank" rel="noopener">github.com/settings/tokens</a> · 勾选 <strong>repo</strong></li>
+        <li>填下面用户名 + Token，点保存 → 就是你的仓库数据 / Enter username + token → your cloud</li>
+      </ol>
+      <div class="sync-target" id="cloudTarget"></div>
+    </div>
+    <div class="sheet-field">
+      <div class="sheet-label">GitHub 用户名 / Username</div>
+      <input type="text" class="sync-input" id="ghOwnerInput" placeholder="e.g. your-github-name" autocapitalize="off" autocomplete="username">
+    </div>
+    <div class="sheet-field">
+      <div class="sheet-label">仓库名 / Repo</div>
+      <input type="text" class="sync-input" id="ghRepoInput" placeholder="warehouse-finder" autocapitalize="off" autocomplete="off">
+    </div>
+    <div class="sheet-field">
+      <div class="sheet-label">Token</div>
+      <input type="password" class="sync-input" id="ghTokenInput" placeholder="GitHub Token (ghp_...)" autocomplete="off">
+    </div>
+    <button class="btn-search" onclick="saveCloudConfig()">保存并连接 / Save & Connect</button>
     <div class="sync-row">
       <button class="btn-sync secondary" onclick="pullFromCloud()">⬇️ 下载 / Download</button>
       <button class="btn-sync" onclick="pushToCloud()">⬆️ 上传 / Upload</button>
@@ -387,13 +412,49 @@ let syncPushTimer = null;
 let syncPullTimer = null;
 let editingCell = null;
 
-const GH_OWNER = 'chenjinbo2017';
-const GH_REPO = 'warehouse-finder';
 const GH_BRANCH = 'main';
 const GH_DATA_FILE = 'warehouse-data.json';
-const GH_RAW_URL = `https://raw.githubusercontent.com/${GH_OWNER}/${GH_REPO}/${GH_BRANCH}/${GH_DATA_FILE}`;
+const DEFAULT_GH_REPO = 'warehouse-finder';
 const DEFAULT_GROUPS = ['A','B','C','D'];
 const DEFAULT_SHELF_COUNT = 9;
+
+function getGhOwner() { return (localStorage.getItem('wdb4_gh_owner') || '').trim(); }
+function getGhRepo() { return (localStorage.getItem('wdb4_gh_repo') || DEFAULT_GH_REPO).trim(); }
+function getGhRawUrl() {
+  return `https://raw.githubusercontent.com/${getGhOwner()}/${getGhRepo()}/${GH_BRANCH}/${GH_DATA_FILE}`;
+}
+function isCloudConfigured() { return !!(getGhOwner() && getGhRepo()); }
+
+function ensureCloudConfig() {
+  if (!localStorage.getItem('wdb4_gh_owner')) {
+    if (getGhToken() || localStorage.getItem('wdb4_updated') || Object.keys(db).length) {
+      localStorage.setItem('wdb4_gh_owner', 'chenjinbo2017');
+      localStorage.setItem('wdb4_gh_repo', DEFAULT_GH_REPO);
+    }
+  }
+  if (!localStorage.getItem('wdb4_gh_repo')) {
+    localStorage.setItem('wdb4_gh_repo', DEFAULT_GH_REPO);
+  }
+}
+
+function updateCloudUi() {
+  const ownerEl = document.getElementById('ghOwnerInput');
+  const repoEl = document.getElementById('ghRepoInput');
+  const targetEl = document.getElementById('cloudTarget');
+  if (ownerEl) ownerEl.value = getGhOwner();
+  if (repoEl) repoEl.value = getGhRepo();
+  if (targetEl) {
+    if (isCloudConfigured()) {
+      targetEl.textContent = '☁️ ' + bi('当前云端', 'Cloud') + ': ' + getGhOwner() + '/' + getGhRepo();
+    } else {
+      targetEl.textContent = bi('尚未配置云端仓库', 'Cloud repo not configured yet');
+    }
+  }
+  const tokenEl = document.getElementById('ghTokenInput');
+  if (tokenEl && getGhToken()) {
+    tokenEl.placeholder = bi('Token 已保存（输入可更换）', 'Token saved (enter to replace)');
+  }
+}
 
 function getGhToken() { return localStorage.getItem('wdb4_gh_token') || ''; }
 function buildPayload() {
@@ -469,8 +530,9 @@ function conflictPreferByTime(local, remote, forceRemote) {
 
 async function fetchRemotePayload() {
   const token = getGhToken();
+  if (!token || !isCloudConfigured()) return null;
   const res = await fetch(
-    `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_DATA_FILE}?ref=${GH_BRANCH}&t=${Date.now()}`,
+    `https://api.github.com/repos/${getGhOwner()}/${getGhRepo()}/contents/${GH_DATA_FILE}?ref=${GH_BRANCH}&t=${Date.now()}`,
     { headers: {
       'Accept': 'application/vnd.github+json',
       'Authorization': `Bearer ${token}`,
@@ -540,6 +602,7 @@ async function importFromClipboard() {
 async function pushToGitHub() {
   const token = getGhToken();
   if (!token) throw new Error(bi('请先保存 GitHub Token', 'Save GitHub Token first'));
+  if (!isCloudConfigured()) throw new Error(bi('请先填写 GitHub 用户名', 'Enter GitHub username first'));
 
   let remotePayload = null;
   try {
@@ -560,7 +623,7 @@ async function pushToGitHub() {
   if (ghFileSha) body.sha = ghFileSha;
 
   let res = await fetch(
-    `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_DATA_FILE}`,
+    `https://api.github.com/repos/${getGhOwner()}/${getGhRepo()}/contents/${GH_DATA_FILE}`,
     { method: 'PUT',
       headers: {
         'Accept': 'application/vnd.github+json',
@@ -580,7 +643,7 @@ async function pushToGitHub() {
     body.content = toBase64Utf8(JSON.stringify(retryPayload, null, 2));
     if (ghFileSha) body.sha = ghFileSha;
     res = await fetch(
-      `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_DATA_FILE}`,
+      `https://api.github.com/repos/${getGhOwner()}/${getGhRepo()}/contents/${GH_DATA_FILE}`,
       { method: 'PUT',
         headers: {
           'Accept': 'application/vnd.github+json',
@@ -609,13 +672,14 @@ async function loadFromGitHub(forceRemote) {
 }
 
 async function loadFromPublicRaw() {
-  const res = await fetch(`${GH_RAW_URL}?t=${Date.now()}`);
+  if (!isCloudConfigured()) return null;
+  const res = await fetch(`${getGhRawUrl()}?t=${Date.now()}`);
   if (!res.ok) return null;
   return res.json();
 }
 
 function scheduleSyncPush() {
-  if (!getGhToken()) return;
+  if (!getGhToken() || !isCloudConfigured()) return;
   clearTimeout(syncPushTimer);
   syncPushTimer = setTimeout(async () => {
     try {
@@ -673,14 +737,29 @@ function persistAll() {
   scheduleSyncPush();
 }
 
-function saveGhToken() {
+function saveCloudConfig() {
+  const owner = (document.getElementById('ghOwnerInput').value || '').trim();
+  const repo = (document.getElementById('ghRepoInput').value || '').trim() || DEFAULT_GH_REPO;
   const token = document.getElementById('ghTokenInput').value.trim();
-  if (!token) { showToast(bi('请输入 Token', 'Enter Token')); return; }
-  localStorage.setItem('wdb4_gh_token', token);
+  if (!owner) { showToast(bi('请输入 GitHub 用户名', 'Enter GitHub username')); return; }
+  if (!/^[A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?$/.test(owner)) {
+    showToast(bi('用户名格式不对', 'Invalid username')); return;
+  }
+  const prevKey = getGhOwner() + '/' + getGhRepo();
+  const nextKey = owner + '/' + repo;
+  if (prevKey !== nextKey && getGhOwner() && !confirm(bi('更换仓库会切换到另一套云端数据，本机数据仍保留。继续？', 'Switching repo changes cloud data. Local data kept. Continue?'))) {
+    return;
+  }
+  localStorage.setItem('wdb4_gh_owner', owner);
+  localStorage.setItem('wdb4_gh_repo', repo);
+  if (token) localStorage.setItem('wdb4_gh_token', token);
   document.getElementById('ghTokenInput').value = '';
-  showToast(bi('Token 已保存', 'Token saved'));
-  pushToCloud();
+  ghFileSha = null;
+  updateCloudUi();
+  showToast(bi('已保存，正在连接云端…', 'Saved — connecting…'));
+  pullFromCloud();
 }
+function saveGhToken() { saveCloudConfig(); }
 
 async function pullFromCloud() {
   setSyncStatus(bi('下载中...', 'Downloading...'));
@@ -715,10 +794,18 @@ function countSkus(data) {
 }
 
 async function initCloudData() {
-  const token = getGhToken();
-  if (token) document.getElementById('ghTokenInput').placeholder = bi('Token 已保存（输入可更换）', 'Token saved (enter to replace)');
+  ensureCloudConfig();
+  updateCloudUi();
+  if (!isCloudConfigured()) {
+    setSyncStatus(bi('填写用户名和 Token 使用自己的云端', 'Enter username + token for your cloud'));
+    return;
+  }
   try {
-    const remote = await loadFromPublicRaw();
+    let remote = null;
+    if (getGhToken()) {
+      try { remote = await fetchRemotePayload(); } catch (e) { /* private or empty */ }
+    }
+    if (!remote) remote = await loadFromPublicRaw();
     const localUpdated = localStorage.getItem('wdb4_updated') || '';
     const remoteUpdated = remote && remote.updatedAt;
     const remoteCount = countSkus(remote && remote.db);
@@ -732,9 +819,9 @@ async function initCloudData() {
       renderMap();
       setSyncStatus(bi(`已从云端合并 ${countSkus(db)} 条`, `Merged ${countSkus(db)} from cloud`));
     } else if (localCount > 0) {
-      setSyncStatus(token ? bi(`本机 ${localCount} 条，可点上传`, `${localCount} local — tap Upload`) : bi(`本机 ${localCount} 条`, `${localCount} local`));
+      setSyncStatus(getGhToken() ? bi(`本机 ${localCount} 条，可点上传`, `${localCount} local — tap Upload`) : bi(`本机 ${localCount} 条`, `${localCount} local`));
     } else {
-      setSyncStatus(remoteCount ? bi('点「下载」获取云端数据', 'Tap Download for cloud data') : bi('暂无数据，开始录入吧', 'No data — start mapping'));
+      setSyncStatus(bi('暂无数据，开始录入吧', 'No data — start mapping'));
     }
   } catch (e) {
     setSyncStatus(bi('同步检查失败', 'Sync check failed'), true);
@@ -1062,6 +1149,7 @@ function switchTab(n) {
     }
   });
   if (n === 'map') { pullFromCloudSilent(false); renderMap(); }
+  if (n === 'sync') updateCloudUi();
 }
 
 function doSearch() {
