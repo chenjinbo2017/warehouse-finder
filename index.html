@@ -400,6 +400,82 @@ function applyPayload(payload) {
   if (payload.updatedAt) localStorage.setItem('wdb4_updated', payload.updatedAt);
   updateCount();
 }
+
+function mergeDbUnion(localDb, remoteDb, conflictPrefer) {
+  const merged = { ...(remoteDb || {}) };
+  for (const [key, localVal] of Object.entries(localDb || {})) {
+    if (!(key in merged)) merged[key] = localVal;
+    else if (JSON.stringify(merged[key]) !== JSON.stringify(localVal)) {
+      merged[key] = conflictPrefer === 'local' ? localVal : merged[key];
+    }
+  }
+  return merged;
+}
+
+function mergeLayoutConfig(local, remote, conflictPrefer) {
+  const lg = (local && local.groups) || [];
+  const rg = (remote && remote.groups) || [];
+  const byId = new Map();
+  for (const g of rg) byId.set(g.id, { ...g });
+  for (const g of lg) {
+    if (!byId.has(g.id)) byId.set(g.id, { ...g });
+    else if (byId.get(g.id).count !== g.count) {
+      byId.set(g.id, conflictPrefer === 'local' ? { ...g } : byId.get(g.id));
+    }
+  }
+  const groups = Array.from(byId.values()).sort((a, b) => a.id.localeCompare(b.id));
+  if (groups.length) return { groups };
+  if (remote && remote.groups) return remote;
+  if (local && local.groups) return local;
+  return { groups: [] };
+}
+
+function mergeShelfCfg(localCfg, remoteCfg, conflictPrefer) {
+  const local = localCfg || {};
+  const remote = remoteCfg || {};
+  const merged = { ...remote };
+  for (const key of Object.keys(local)) {
+    if (key === '__layout') continue;
+    if (!(key in merged)) merged[key] = local[key];
+    else if (JSON.stringify(merged[key]) !== JSON.stringify(local[key])) {
+      merged[key] = conflictPrefer === 'local' ? local[key] : merged[key];
+    }
+  }
+  merged.__layout = mergeLayoutConfig(local.__layout, remote.__layout, conflictPrefer);
+  return merged;
+}
+
+function mergePayloads(local, remote, conflictPrefer) {
+  return {
+    db: mergeDbUnion(local.db, remote.db, conflictPrefer),
+    shelfCfg: mergeShelfCfg(local.shelfCfg, remote.shelfCfg, conflictPrefer),
+    updatedAt: new Date().toISOString()
+  };
+}
+
+function conflictPreferByTime(local, remote, forceRemote) {
+  if (forceRemote) return 'remote';
+  const localTs = Date.parse(local.updatedAt || 0);
+  const remoteTs = Date.parse(remote.updatedAt || 0);
+  return remoteTs > localTs ? 'remote' : 'local';
+}
+
+async function fetchRemotePayload() {
+  const token = getGhToken();
+  const res = await fetch(
+    `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_DATA_FILE}?ref=${GH_BRANCH}&t=${Date.now()}`,
+    { headers: {
+      'Accept': 'application/vnd.github+json',
+      'Authorization': `Bearer ${token}`,
+      'X-GitHub-Api-Version': '2022-11-28'
+    }}
+  );
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error('fetch remote ' + res.status);
+  const data = await res.json();
+  ghFileSha = data.sha;
+  return JSON.parse(fromBase64Utf8(data.content));
+}
 function toBase64Utf8(str) {
   const bytes = new TextEncoder().encode(str);
   let bin = '';
@@ -453,34 +529,30 @@ async function importFromClipboard() {
   }
 }
 
-// ---- GITHUB SYNC (FIXED) ----
+// ---- GITHUB SYNC (merge on push/pull) ----
 async function pushToGitHub() {
   const token = getGhToken();
   if (!token) throw new Error(bi('请先保存 GitHub Token', 'Save GitHub Token first'));
 
-  // 每次上传前强制重新获取最新SHA
-  const checkRes = await fetch(
-    `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_DATA_FILE}?ref=${GH_BRANCH}&t=${Date.now()}`,
-    { headers: {
-      'Accept': 'application/vnd.github+json',
-      'Authorization': `Bearer ${token}`,
-      'X-GitHub-Api-Version': '2022-11-28'
-    }}
-  );
-  if (checkRes.ok) {
-    const fileInfo = await checkRes.json();
-    ghFileSha = fileInfo.sha;
-  } else if (checkRes.status === 404) {
+  let remotePayload = null;
+  try {
+    remotePayload = await fetchRemotePayload();
+  } catch (e) {
+    if (!String(e.message).includes('404')) throw e;
     ghFileSha = null;
-  } else {
-    throw new Error('获取文件信息失败 ' + checkRes.status);
   }
 
-  const content = toBase64Utf8(JSON.stringify(buildPayload(), null, 2));
+  const localPayload = buildPayload();
+  const toPush = remotePayload && remotePayload.db
+    ? mergePayloads(localPayload, remotePayload, 'local')
+    : { ...localPayload, updatedAt: new Date().toISOString() };
+  applyPayload(toPush);
+
+  const content = toBase64Utf8(JSON.stringify(toPush, null, 2));
   const body = { message: 'Update warehouse data', branch: GH_BRANCH, content };
   if (ghFileSha) body.sha = ghFileSha;
 
-  const res = await fetch(
+  let res = await fetch(
     `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_DATA_FILE}`,
     { method: 'PUT',
       headers: {
@@ -492,6 +564,27 @@ async function pushToGitHub() {
       body: JSON.stringify(body)
     }
   );
+  if (res.status === 409) {
+    remotePayload = await fetchRemotePayload();
+    const retryPayload = remotePayload && remotePayload.db
+      ? mergePayloads(buildPayload(), remotePayload, 'local')
+      : buildPayload();
+    applyPayload(retryPayload);
+    body.content = toBase64Utf8(JSON.stringify(retryPayload, null, 2));
+    if (ghFileSha) body.sha = ghFileSha;
+    res = await fetch(
+      `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_DATA_FILE}`,
+      { method: 'PUT',
+        headers: {
+          'Accept': 'application/vnd.github+json',
+          'Authorization': `Bearer ${token}`,
+          'X-GitHub-Api-Version': '2022-11-28',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(body)
+      }
+    );
+  }
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
     throw new Error(err.message || `上传失败 ${res.status}`);
@@ -500,22 +593,12 @@ async function pushToGitHub() {
   ghFileSha = data.content.sha;
 }
 
-async function loadFromGitHub() {
-  const token = getGhToken();
-  const res = await fetch(
-    `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_DATA_FILE}?ref=${GH_BRANCH}&t=${Date.now()}`,
-    { headers: {
-      'Accept': 'application/vnd.github+json',
-      'Authorization': `Bearer ${token}`,
-      'X-GitHub-Api-Version': '2022-11-28'
-    }}
-  );
-  if (!res.ok) throw new Error('下载失败 ' + res.status);
-  const data = await res.json();
-  ghFileSha = data.sha;
-  const json = JSON.parse(fromBase64Utf8(data.content));
-  applyPayload(json);
-  return json;
+async function loadFromGitHub(forceRemote) {
+  const remote = await fetchRemotePayload();
+  if (!remote) throw new Error(bi('云端暂无数据', 'No cloud data'));
+  const merged = mergePayloads(buildPayload(), remote, conflictPreferByTime(buildPayload(), remote, forceRemote));
+  applyPayload(merged);
+  return merged;
 }
 
 async function loadFromPublicRaw() {
@@ -530,7 +613,7 @@ function scheduleSyncPush() {
   syncPushTimer = setTimeout(async () => {
     try {
       await pushToGitHub();
-      setSyncStatus(bi('已自动同步 ✅', 'Auto synced ✅'));
+      setSyncStatus(bi('已自动同步（已合并）✅', 'Auto synced (merged) ✅'));
       updateSyncLive();
     } catch (e) {
       setSyncStatus(bi('自动上传失败: ', 'Auto upload failed: ') + e.message, true);
@@ -549,22 +632,16 @@ function updateSyncLive() {
 
 async function pullFromCloudSilent(forceApply) {
   const remote = getGhToken() ? await (async () => {
-    try {
-      const token = getGhToken();
-      const res = await fetch(
-        `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_DATA_FILE}?ref=${GH_BRANCH}&t=${Date.now()}`,
-        { headers: { 'Accept': 'application/vnd.github+json', 'Authorization': `Bearer ${token}`, 'X-GitHub-Api-Version': '2022-11-28' } }
-      );
-      if (!res.ok) return null;
-      const data = await res.json();
-      ghFileSha = data.sha;
-      return JSON.parse(fromBase64Utf8(data.content));
-    } catch (e) { return null; }
+    try { return await fetchRemotePayload(); } catch (e) { return null; }
   })() : await loadFromPublicRaw();
-  if (!remote || !remote.updatedAt) return false;
-  const localUpdated = localStorage.getItem('wdb4_updated') || '';
-  if (forceApply || !localUpdated || remote.updatedAt > localUpdated) {
-    applyPayload(remote);
+  if (!remote || !remote.db) return false;
+  const localPayload = buildPayload();
+  const prefer = conflictPreferByTime(localPayload, remote, forceApply);
+  const merged = mergePayloads(localPayload, remote, prefer);
+  const changed = JSON.stringify(merged.db) !== JSON.stringify(db)
+    || JSON.stringify(merged.shelfCfg) !== JSON.stringify(shelfCfg);
+  if (changed) {
+    applyPayload(merged);
     renderMap();
     updateSyncLive();
     return true;
@@ -601,15 +678,15 @@ function saveGhToken() {
 async function pullFromCloud() {
   setSyncStatus(bi('下载中...', 'Downloading...'));
   try {
-    if (getGhToken()) await loadFromGitHub();
+    if (getGhToken()) await loadFromGitHub(true);
     else {
       const remote = await loadFromPublicRaw();
       if (!remote) throw new Error(bi('云端暂无数据', 'No cloud data'));
-      applyPayload(remote);
+      applyPayload(mergePayloads(buildPayload(), remote, 'remote'));
     }
     renderMap();
-    setSyncStatus(bi('已下载最新数据', 'Downloaded latest'));
-    showToast(bi('数据已更新', 'Data updated'));
+    setSyncStatus(bi('已下载并合并', 'Downloaded & merged'));
+    showToast(bi('数据已合并更新', 'Data merged'));
   } catch (e) {
     setSyncStatus(bi('下载失败: ', 'Download failed: ') + e.message, true);
   }
@@ -639,10 +716,14 @@ async function initCloudData() {
     const remoteUpdated = remote && remote.updatedAt;
     const remoteCount = countSkus(remote && remote.db);
     const localCount = countSkus(db);
-    if (remoteCount > 0 && (!localUpdated || !localCount || (remoteUpdated && remoteUpdated > localUpdated))) {
-      applyPayload(remote);
+    if (remoteCount > 0) {
+      if (localCount > 0) {
+        applyPayload(mergePayloads(buildPayload(), remote, conflictPreferByTime(buildPayload(), remote, false)));
+      } else {
+        applyPayload(remote);
+      }
       renderMap();
-      setSyncStatus(bi(`已从云端加载 ${remoteCount} 条`, `Loaded ${remoteCount} from cloud`));
+      setSyncStatus(bi(`已从云端合并 ${countSkus(db)} 条`, `Merged ${countSkus(db)} from cloud`));
     } else if (localCount > 0) {
       setSyncStatus(token ? bi(`本机 ${localCount} 条，可点上传`, `${localCount} local — tap Upload`) : bi(`本机 ${localCount} 条`, `${localCount} local`));
     } else {
