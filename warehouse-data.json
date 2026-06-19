@@ -7805,6 +7805,18 @@
       "shelf": "A8",
       "row": 8,
       "col": 2
+    },
+    "A8-8-3": {
+      "sku": "JAD-CGRD10",
+      "shelf": "A8",
+      "row": 8,
+      "col": 3
+    },
+    "JAD-CGRD10": {
+      "name": "",
+      "shelf": "A8",
+      "row": 8,
+      "col": 3
     }
   },
   "shelfCfg": {
@@ -7901,5 +7913,5 @@
       "GEM-2404MLY-63-10"
     ]
   },
-  "updatedAt": "2026-06-19T22:16:56.752Z"
+  "updatedAt": "2026-06-19T22:17:01.629Z"
 }
