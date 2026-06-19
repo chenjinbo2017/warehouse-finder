@@ -2453,6 +2453,18 @@
       "shelf": "A32",
       "row": 3,
       "col": 2
+    },
+    "A32-3-3": {
+      "sku": "IRLAP-RNDL-12",
+      "shelf": "A32",
+      "row": 3,
+      "col": 3
+    },
+    "IRLAP-RNDL-12": {
+      "name": "",
+      "shelf": "A32",
+      "row": 3,
+      "col": 3
     }
   },
   "shelfCfg": {
@@ -2534,5 +2546,5 @@
       "GEM-2404MLY-63-10"
     ]
   },
-  "updatedAt": "2026-06-19T17:03:58.722Z"
+  "updatedAt": "2026-06-19T17:04:13.005Z"
 }
