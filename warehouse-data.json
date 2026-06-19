@@ -7685,6 +7685,18 @@
       "shelf": "A8",
       "row": 7,
       "col": 8
+    },
+    "A8-7-9": {
+      "sku": "LBJADE-10M",
+      "shelf": "A8",
+      "row": 7,
+      "col": 9
+    },
+    "LBJADE-10M": {
+      "name": "",
+      "shelf": "A8",
+      "row": 7,
+      "col": 9
     }
   },
   "shelfCfg": {
@@ -7776,5 +7788,5 @@
       "GEM-2404MLY-63-10"
     ]
   },
-  "updatedAt": "2026-06-19T22:14:36.472Z"
+  "updatedAt": "2026-06-19T22:14:42.870Z"
 }
