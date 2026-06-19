@@ -5411,6 +5411,18 @@
       "shelf": "A33",
       "row": 6,
       "col": 15
+    },
+    "A33-6-16": {
+      "sku": "GEM-2025BLTC-13-DBR",
+      "shelf": "A33",
+      "row": 6,
+      "col": 16
+    },
+    "GEM-2025BLTC-13-DBR": {
+      "name": "",
+      "shelf": "A33",
+      "row": 6,
+      "col": 16
     }
   },
   "shelfCfg": {
@@ -5497,5 +5509,5 @@
       "GEM-2404MLY-63-10"
     ]
   },
-  "updatedAt": "2026-06-19T21:28:27.716Z"
+  "updatedAt": "2026-06-19T21:28:45.253Z"
 }
