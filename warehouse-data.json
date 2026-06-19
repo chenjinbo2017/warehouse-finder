@@ -9089,6 +9089,18 @@
       "shelf": "A10",
       "row": 6,
       "col": 13
+    },
+    "A10-7-1": {
+      "sku": "DALMATIA-8M",
+      "shelf": "A10",
+      "row": 7,
+      "col": 1
+    },
+    "DALMATIA-8M": {
+      "name": "",
+      "shelf": "A10",
+      "row": 7,
+      "col": 1
     }
   },
   "shelfCfg": {
@@ -9190,5 +9202,5 @@
       "GEM-2404MLY-63-10"
     ]
   },
-  "updatedAt": "2026-06-19T22:47:27.713Z"
+  "updatedAt": "2026-06-19T22:47:51.677Z"
 }
