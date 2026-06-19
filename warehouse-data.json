@@ -54,18 +54,6 @@
       "row": 8,
       "col": 14
     },
-    "A1-3-1": {
-      "sku": "7.GITHUB.IO/WARE",
-      "shelf": "A1",
-      "row": 3,
-      "col": 1
-    },
-    "7.GITHUB.IO/WARE": {
-      "name": "",
-      "shelf": "A1",
-      "row": 3,
-      "col": 1
-    },
     "A1-3-2": {
       "sku": "SETNEWLIMIT",
       "shelf": "A1",
@@ -2162,7 +2150,8 @@
       "A1-2-5",
       "A1-2-3",
       "A1-2-2",
-      "A1-2-1"
+      "A1-2-1",
+      "A1-3-1"
     ],
     "skus": [
       "GEM-2508SY-27",
@@ -2172,8 +2161,9 @@
       "GEM-2408SY-19",
       "GEM-2411SY-18",
       "GEM-24085Y-18",
-      "IGEM-2408SY-17"
+      "IGEM-2408SY-17",
+      "7.GITHUB.IO/WARE"
     ]
   },
-  "updatedAt": "2026-06-19T00:32:28.102Z"
+  "updatedAt": "2026-06-19T00:32:30.787Z"
 }
