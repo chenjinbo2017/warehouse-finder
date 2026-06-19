@@ -109,6 +109,17 @@ header h1{font-size:22px;font-weight:700;line-height:1.25;letter-spacing:.01em}
 #scanVideo{width:100%;height:100%;object-fit:cover;display:block}
 .scan-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none}
 .scan-box{width:88%;height:80px;border:3px solid var(--coral);border-radius:12px;position:relative;box-shadow:0 0 0 2000px rgba(0,0,0,.45),0 0 20px rgba(230,57,70,.4)}
+.scan-box.snap-flash{animation:snapFlash .35s ease}
+@keyframes snapFlash{0%{box-shadow:0 0 0 2000px rgba(0,0,0,.45),0 0 30px #fff}100%{box-shadow:0 0 0 2000px rgba(0,0,0,.45),0 0 20px rgba(230,57,70,.4)}}
+.scan-frozen-img{display:none;position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:2}
+.video-wrap.frozen #scanVideo{visibility:hidden}
+.video-wrap.frozen .scan-overlay{display:none}
+.video-wrap.frozen .scan-frozen-img{display:block}
+.scan-steps{display:flex;gap:6px;margin-bottom:10px;justify-content:center}
+.scan-step{flex:1;text-align:center;font-size:13px;font-weight:700;color:rgba(255,255,255,.45);padding:8px 4px;border-radius:10px;background:rgba(255,255,255,.08);line-height:1.25}
+.scan-step.active{color:#fff;background:rgba(255,193,7,.35);border:1px solid rgba(255,193,7,.5)}
+.scan-step.done{color:#a5d6a7;background:rgba(67,160,71,.25);border:1px solid rgba(102,187,106,.4)}
+.ocr-status.ocr-busy{color:#ffd54f;font-weight:800;font-size:19px}
 .scan-line{position:absolute;left:0;right:0;height:3px;background:var(--coral);animation:scan 2s linear infinite;box-shadow:0 0 8px var(--coral)}
 @keyframes scan{0%{top:0}100%{top:calc(100% - 3px)}}
 .modal-bottom{padding:12px 16px 22px;flex-shrink:0}
@@ -347,7 +358,8 @@ header h1{font-size:22px;font-weight:700;line-height:1.25;letter-spacing:.01em}
   <div class="current-cell-info" id="currentCellInfo" style="display:none"></div>
   <div class="video-wrap" id="videoWrap">
     <video id="scanVideo" autoplay playsinline muted></video>
-    <div class="scan-overlay"><div class="scan-box"><div class="scan-line"></div></div></div>
+    <img id="scanFrozenImg" class="scan-frozen-img" alt="">
+    <div class="scan-overlay"><div class="scan-box" id="scanBox"><div class="scan-line"></div></div></div>
   </div>
   <div class="photo-fallback" id="photoFallback">
     <img id="photoPreview" alt="Preview">
@@ -360,7 +372,12 @@ header h1{font-size:22px;font-weight:700;line-height:1.25;letter-spacing:.01em}
   <input type="file" id="photoInput" accept="image/*" capture="environment" hidden onchange="onPhotoSelected(event)">
   <canvas id="captureCanvas"></canvas>
   <div class="modal-bottom">
-    <div class="ocr-status" id="ocrStatus">对准编号后点击识别 / Align SKU, then scan</div>
+    <div class="scan-steps" id="scanSteps">
+      <span class="scan-step active" data-step="1">1 对准 / Align</span>
+      <span class="scan-step" data-step="2">2 拍照 / Snap</span>
+      <span class="scan-step" data-step="3">3 识别 / Read</span>
+    </div>
+    <div class="ocr-status" id="ocrStatus">对准红框后点「拍照扫描」/ Align in box, tap Snap</div>
     <div class="words-hint" id="wordsHint" style="display:none">👆 点选填入下方，可修改后确认 / Tap to fill, edit & confirm</div>
     <div class="words-list" id="wordsList"></div>
     <div class="scan-edit" id="scanEdit">
@@ -368,7 +385,7 @@ header h1{font-size:22px;font-weight:700;line-height:1.25;letter-spacing:.01em}
       <input type="text" class="scan-sku-input" id="scanSkuInput" placeholder="GEM-2408SY-19" autocapitalize="characters" autocomplete="off" oninput="this.value=this.value.toUpperCase()" onkeydown="if(event.key==='Enter')confirmScanSku()">
       <button type="button" class="btn-confirm-sku" onclick="confirmScanSku()">✓ 确认录入 / Confirm</button>
     </div>
-    <button class="btn-capture" id="captureBtn" onclick="captureFrame()">📷 识别标签 / Scan</button>
+    <button class="btn-capture" id="captureBtn" onclick="captureFrame()">📷 拍照扫描 / Snap to scan</button>
   </div>
 </div>
 
@@ -1723,7 +1740,7 @@ function renderMap(options) {
   }
 }
 
-let videoStream=null,twk=null,ocrReady=false,usePhotoMode=false,ocrInitPromise=null,lastOcrWords=[],capturedPhoto=null;
+let videoStream=null,twk=null,ocrReady=false,usePhotoMode=false,ocrInitPromise=null,lastOcrWords=[],capturedPhoto=null,frozenOcrCanvas=null,scanSnapped=false;
 const TESS_OPTS={workerPath:'https://cdn.jsdelivr.net/npm/tesseract.js@4.1.1/dist/worker.min.js',corePath:'https://cdn.jsdelivr.net/npm/tesseract.js-core@4.0.4',langPath:'https://tessdata.projectnaptha.com/4.0.0'};
 
 function initOcr() {
@@ -1740,21 +1757,90 @@ function initOcr() {
   return ocrInitPromise;
 }
 async function resetOcrWorker(){ocrReady=false;ocrInitPromise=null;if(twk){try{await twk.terminate();}catch(e){} twk=null;}}
+function setScanStep(step){
+  document.querySelectorAll('.scan-step').forEach(el=>{
+    const n=+el.dataset.step;
+    el.classList.toggle('active',n===step);
+    el.classList.toggle('done',n<step);
+  });
+}
+function setCaptureBtn(text,disabled){
+  const btn=document.getElementById('captureBtn');
+  btn.textContent=text;
+  btn.disabled=!!disabled;
+}
+function pauseVideoStream(){
+  if(videoStream) videoStream.getTracks().forEach(t=>{t.enabled=false;});
+}
+function resumeVideoStream(){
+  if(videoStream) videoStream.getTracks().forEach(t=>{t.enabled=true;});
+}
+function showFrozenPreview(source){
+  let dataUrl='';
+  if(source instanceof HTMLCanvasElement) dataUrl=source.toDataURL('image/jpeg',0.88);
+  else if(source instanceof HTMLImageElement){
+    const c=document.createElement('canvas');
+    c.width=source.naturalWidth||source.width;
+    c.height=source.naturalHeight||source.height;
+    c.getContext('2d').drawImage(source,0,0);
+    dataUrl=c.toDataURL('image/jpeg',0.88);
+  }
+  if(!dataUrl) return;
+  document.getElementById('scanFrozenImg').src=dataUrl;
+  document.getElementById('videoWrap').classList.add('frozen');
+  const box=document.getElementById('scanBox');
+  if(box){box.classList.add('snap-flash');setTimeout(()=>box.classList.remove('snap-flash'),400);}
+}
+function retakeScan(){
+  scanSnapped=false;
+  frozenOcrCanvas=null;
+  document.getElementById('videoWrap').classList.remove('frozen');
+  document.getElementById('scanFrozenImg').src='';
+  document.getElementById('wordsList').innerHTML='';
+  document.getElementById('wordsHint').style.display='none';
+  hideScanEdit();
+  setScanStep(1);
+  const statusEl=document.getElementById('ocrStatus');
+  statusEl.classList.remove('ocr-busy');
+  if(usePhotoMode){
+    capturedPhoto=null;
+    resetPhotoPreview();
+    setCaptureBtn(bi('📷 拍照扫描', '📷 Snap to scan'),false);
+    statusEl.textContent=bi('对准标签后点「拍照扫描」', 'Align label, tap Snap');
+  }else{
+    resumeVideoStream();
+    setCaptureBtn(bi('📷 拍照扫描', '📷 Snap to scan'),false);
+    statusEl.textContent=bi('对准红框后点「拍照扫描」', 'Align in box, tap Snap');
+  }
+}
+function snapVideoFrame(video){
+  const crop=cropScanRegionFromVideo(video);
+  const ocrCanvas=buildOcrCanvas(video,crop);
+  const previewCanvas=document.createElement('canvas');
+  previewCanvas.width=video.videoWidth;
+  previewCanvas.height=video.videoHeight;
+  previewCanvas.getContext('2d').drawImage(video,0,0);
+  return{ocrCanvas,previewCanvas};
+}
 function setScanUI(mode){
   usePhotoMode=mode==='photo';
   document.getElementById('videoWrap').style.display=mode==='live'?'':'none';
   document.getElementById('photoFallback').style.display=mode==='photo'?'flex':'none';
-  document.getElementById('captureBtn').textContent=mode==='photo'?bi('📷 拍照识别', '📷 Photo scan'):bi('📷 识别标签', '📷 Scan label');
+  setCaptureBtn(bi('📷 拍照扫描', '📷 Snap to scan'),false);
 }
 function resetPhotoPreview(){document.getElementById('photoPreview').style.display='none';document.getElementById('photoPreview').src='';document.getElementById('photoPlaceholder').style.display='block';}
-function enablePhotoMode(msg){setScanUI('photo');resetPhotoPreview();document.getElementById('ocrStatus').textContent=msg||bi('点击拍照，对准标签后确认', 'Tap to photo — align label');}
+function enablePhotoMode(msg){setScanUI('photo');resetPhotoPreview();document.getElementById('ocrStatus').textContent=msg||bi('点「拍照扫描」拍摄标签', 'Tap Snap to photograph label');}
 function openScan(mode){
-  scanMode=mode; capturedPhoto=null;
+  scanMode=mode; capturedPhoto=null; scanSnapped=false; frozenOcrCanvas=null;
   document.getElementById('scanModal').classList.add('open');
+  document.getElementById('videoWrap').classList.remove('frozen');
+  document.getElementById('scanFrozenImg').src='';
   document.getElementById('wordsList').innerHTML='';
   document.getElementById('wordsHint').style.display='none';
   hideScanEdit();
-  document.getElementById('captureBtn').disabled=false;
+  setScanStep(1);
+  setCaptureBtn(bi('📷 拍照扫描', '📷 Snap to scan'),false);
+  document.getElementById('ocrStatus').classList.remove('ocr-busy');
   resetPhotoPreview();
   const ci=document.getElementById('currentCellInfo');
   if(mode==='map'&&currentCell||mode==='map-rescan'&&currentCell){
@@ -1764,7 +1850,7 @@ function openScan(mode){
   } else {ci.style.display='none';document.getElementById('modalTitle').textContent=bi('扫描 SKU 标签', 'Scan SKU label');}
   if(window.isSecureContext&&navigator.mediaDevices&&navigator.mediaDevices.getUserMedia){
     setScanUI('live');
-    document.getElementById('ocrStatus').textContent=bi('对准编号后，点击「识别标签」', 'Align SKU, then tap Scan');
+    document.getElementById('ocrStatus').textContent=bi('对准红框，点下方「拍照扫描」', 'Align in red box, tap Snap below');
     navigator.mediaDevices.getUserMedia({video:{facingMode:'environment',width:{ideal:1280},height:{ideal:720}}})
       .then(s=>{
         videoStream=s;
@@ -1774,15 +1860,10 @@ function openScan(mode){
       })
       .catch(()=>enablePhotoMode(bi('无法打开相机，请用拍照模式', 'Camera unavailable — use photo mode')));
   } else {enablePhotoMode(bi('当前环境不支持实时相机，请用拍照模式', 'Live camera unavailable — use photo'));}
-  initOcr().then(()=>{
-    if(document.getElementById('scanModal').classList.contains('open')&&!usePhotoMode)
-      document.getElementById('ocrStatus').textContent=bi('对准编号后，点击「识别标签」', 'Align SKU, then tap Scan');
-  }).catch(()=>{
-    if(document.getElementById('scanModal').classList.contains('open'))
-      document.getElementById('ocrStatus').textContent=bi('识别引擎加载失败，请刷新页面', 'OCR failed — refresh page');
-  });
+  initOcr().catch(()=>{});
 }
 function closeScan(){
+  scanSnapped=false; frozenOcrCanvas=null;
   if(videoStream){videoStream.getTracks().forEach(t=>t.stop());videoStream=null;}
   document.getElementById('scanVideo').srcObject=null;
   document.getElementById('scanModal').classList.remove('open');
@@ -1910,33 +1991,38 @@ function confirmScanSku(){
   if(!isSkuCode(raw)){showToast(bi('SKU 格式不对，请检查', 'Invalid SKU format'));return;}
   selectWord(raw);
 }
-async function runOcrFromSource(getCanvas){
+async function runOcrFromCanvas(processed){
   document.getElementById('wordsList').innerHTML='';
   document.getElementById('wordsHint').style.display='none';
   hideScanEdit();
-  document.getElementById('captureBtn').disabled=true;
+  setCaptureBtn(bi('识别中…', 'Recognizing…'),true);
+  setScanStep(3);
+  const statusEl=document.getElementById('ocrStatus');
+  statusEl.classList.add('ocr-busy');
+  statusEl.textContent=bi('✅ 已拍照，可以放下手机 · 正在识别…', '✅ Snapped — lower phone · reading…');
   try{
-    document.getElementById('ocrStatus').textContent=bi('拍照中...', 'Capturing...');
-    const processed=getCanvas();
-    document.getElementById('ocrStatus').textContent=bi('引擎准备中...', 'Preparing OCR...');
     await initOcr();
-    document.getElementById('ocrStatus').textContent=bi('识别中，请稍候...', 'Scanning, please wait...');
+    statusEl.textContent=bi('✅ 已拍照 · 识别中，请稍候…', '✅ Snapped · reading, please wait…');
     const{data}=await recognizeImage(processed);
+    statusEl.classList.remove('ocr-busy');
     showOcrResults(extractWords(data));
+    setCaptureBtn(bi('📷 重拍', '📷 Retake'),false);
   }catch(e){
     console.warn('OCR failed', e);
+    statusEl.classList.remove('ocr-busy');
     const msg=(e&&e.message==='camera')
-      ? bi('相机画面未就绪，请稍候再点或手动输入', 'Camera not ready — wait or type SKU')
-      : bi('识别失败，请手动输入或重试', 'Failed — type SKU below or retry');
-    document.getElementById('ocrStatus').textContent=msg;
+      ? bi('画面无效，请点「重拍」', 'Bad capture — tap Retake')
+      : bi('识别失败，请重拍或手动输入', 'Failed — retake or type SKU');
+    statusEl.textContent=msg;
     showScanEdit('');
+    setCaptureBtn(bi('📷 重拍', '📷 Retake'),false);
   }
-  document.getElementById('captureBtn').disabled=false;
 }
 function showOcrResults(words){
   lastOcrWords=words;
+  setScanStep(3);
   if(words.length===0){
-    document.getElementById('ocrStatus').textContent=usePhotoMode?bi('未识别到，请手动输入或重拍', 'Not found — type below or retake'):bi('未识别到，请手动输入或重试', 'Not found — type below or retry');
+    document.getElementById('ocrStatus').textContent=usePhotoMode?bi('未识别到，请点「重拍」或手动输入', 'Not found — retake or type below'):bi('未识别到，请点「重拍」或手动输入', 'Not found — retake or type below');
     document.getElementById('wordsHint').style.display='none';
     document.getElementById('wordsList').innerHTML='';
     showScanEdit('');
@@ -1949,28 +2035,53 @@ function showOcrResults(words){
 }
 function selectWordByIndex(i){pickScanCandidate(i);}
 async function captureFrame(){
+  if(scanSnapped){
+    retakeScan();
+    return;
+  }
   if(usePhotoMode){
     if(!capturedPhoto){document.getElementById('photoInput').click();return;}
-    await runOcrFromSource(()=>captureScanRegionFromImage(capturedPhoto));
+    setScanStep(2);
+    showFrozenPreview(capturedPhoto);
+    scanSnapped=true;
+    frozenOcrCanvas=captureScanRegionFromImage(capturedPhoto);
+    await runOcrFromCanvas(frozenOcrCanvas);
     return;
   }
   const video=document.getElementById('scanVideo');
-  document.getElementById('ocrStatus').textContent=bi('等待相机...', 'Waiting for camera...');
-  const ready=await waitForVideoReady(video,4000);
+  const statusEl=document.getElementById('ocrStatus');
+  statusEl.textContent=bi('正在拍照…', 'Snapping…');
+  setCaptureBtn(bi('拍照中…', 'Snapping…'),true);
+  const ready=await waitForVideoReady(video,3000);
   if(!ready){
-    showToast(bi('相机未就绪，请稍候再试', 'Camera not ready — wait a moment'));
-    document.getElementById('ocrStatus').textContent=bi('相机未就绪，请稍候再试', 'Camera not ready — wait');
+    showToast(bi('相机未就绪，请稍候再试', 'Camera not ready — wait'));
+    statusEl.textContent=bi('相机未就绪，请稍候', 'Camera not ready');
+    setCaptureBtn(bi('📷 拍照扫描', '📷 Snap to scan'),false);
     return;
   }
-  await new Promise(r=>setTimeout(r,200));
-  await runOcrFromSource(()=>captureScanRegion(video));
+  try{
+    const{ocrCanvas,previewCanvas}=snapVideoFrame(video);
+    scanSnapped=true;
+    frozenOcrCanvas=ocrCanvas;
+    setScanStep(2);
+    showFrozenPreview(previewCanvas);
+    pauseVideoStream();
+    await runOcrFromCanvas(frozenOcrCanvas);
+  }catch(e){
+    scanSnapped=false;
+    frozenOcrCanvas=null;
+    document.getElementById('videoWrap').classList.remove('frozen');
+    resumeVideoStream();
+    statusEl.textContent=bi('拍照失败，请重试', 'Snap failed — retry');
+    setCaptureBtn(bi('📷 拍照扫描', '📷 Snap to scan'),false);
+  }
 }
 function onPhotoSelected(e){
   const file=e.target.files&&e.target.files[0];
   e.target.value='';
   if(!file) return;
   const img=new Image(),url=URL.createObjectURL(file);
-  img.onload=()=>{
+  img.onload=async()=>{
     capturedPhoto=img;
     const canvas=document.getElementById('captureCanvas');
     canvas.width=img.width;canvas.height=img.height;
@@ -1980,10 +2091,11 @@ function onPhotoSelected(e){
     preview.src=canvas.toDataURL('image/jpeg',0.9);
     preview.style.display='block';
     document.getElementById('photoPlaceholder').style.display='none';
-    document.getElementById('ocrStatus').textContent=bi('照片已备好，点击「识别标签」', 'Photo ready — tap Scan');
-    document.getElementById('wordsList').innerHTML='';
-    document.getElementById('wordsHint').style.display='none';
-    hideScanEdit();
+    setScanStep(2);
+    showFrozenPreview(canvas);
+    scanSnapped=true;
+    frozenOcrCanvas=captureScanRegionFromImage(capturedPhoto);
+    await runOcrFromCanvas(frozenOcrCanvas);
   };
   img.onerror=()=>{URL.revokeObjectURL(url);showToast(bi('图片加载失败', 'Image load failed'));};
   img.src=url;
