@@ -8201,6 +8201,18 @@
       "shelf": "A8",
       "row": 9,
       "col": 16
+    },
+    "A8-6-15": {
+      "sku": "JADBOOO5-6",
+      "shelf": "A8",
+      "row": 6,
+      "col": 15
+    },
+    "JADBOOO5-6": {
+      "name": "",
+      "shelf": "A8",
+      "row": 6,
+      "col": 15
     }
   },
   "shelfCfg": {
@@ -8297,5 +8309,5 @@
       "GEM-2404MLY-63-10"
     ]
   },
-  "updatedAt": "2026-06-19T22:25:54.975Z"
+  "updatedAt": "2026-06-19T22:26:32.377Z"
 }
