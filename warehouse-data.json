@@ -7433,6 +7433,18 @@
       "shelf": "A9",
       "row": 9,
       "col": 2
+    },
+    "A9-9-3": {
+      "sku": "B-GRNJADE-6M",
+      "shelf": "A9",
+      "row": 9,
+      "col": 3
+    },
+    "B-GRNJADE-6M": {
+      "name": "",
+      "shelf": "A9",
+      "row": 9,
+      "col": 3
     }
   },
   "shelfCfg": {
@@ -7524,5 +7536,5 @@
       "GEM-2404MLY-63-10"
     ]
   },
-  "updatedAt": "2026-06-19T22:08:52.097Z"
+  "updatedAt": "2026-06-19T22:08:57.886Z"
 }
