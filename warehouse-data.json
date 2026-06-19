@@ -5147,6 +5147,18 @@
       "shelf": "A33",
       "row": 5,
       "col": 13
+    },
+    "A33-5-14": {
+      "sku": "GHTURQ-RNDL-24",
+      "shelf": "A33",
+      "row": 5,
+      "col": 14
+    },
+    "GHTURQ-RNDL-24": {
+      "name": "",
+      "shelf": "A33",
+      "row": 5,
+      "col": 14
     }
   },
   "shelfCfg": {
@@ -5233,5 +5245,5 @@
       "GEM-2404MLY-63-10"
     ]
   },
-  "updatedAt": "2026-06-19T21:16:33.280Z"
+  "updatedAt": "2026-06-19T21:16:45.458Z"
 }
