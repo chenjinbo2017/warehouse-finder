@@ -10033,12 +10033,12 @@
       "col": 16
     },
     "A34-3-17": {
-      "sku": "LAQ2TTIITS.GEM-AT11519",
+      "sku": "GEM-AT11519",
       "shelf": "A34",
       "row": 3,
       "col": 17
     },
-    "LAQ2TTIITS.GEM-AT11519": {
+    "GEM-AT11519": {
       "name": "",
       "shelf": "A34",
       "row": 3,
@@ -10149,5 +10149,5 @@
       "GEM-2404MLY-63-10"
     ]
   },
-  "updatedAt": "2026-06-19T23:20:51.843Z"
+  "updatedAt": "2026-06-19T23:21:11.990Z"
 }
