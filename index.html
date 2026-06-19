@@ -1725,7 +1725,6 @@ function renderMap(options) {
 
 let videoStream=null,twk=null,ocrReady=false,usePhotoMode=false,ocrInitPromise=null,lastOcrWords=[],capturedPhoto=null;
 const TESS_OPTS={workerPath:'https://cdn.jsdelivr.net/npm/tesseract.js@4.1.1/dist/worker.min.js',corePath:'https://cdn.jsdelivr.net/npm/tesseract.js-core@4.0.4',langPath:'https://tessdata.projectnaptha.com/4.0.0'};
-const OCR_CHAR_WHITELIST='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-./';
 
 function initOcr() {
   if(ocrReady&&twk) return Promise.resolve();
@@ -1734,7 +1733,7 @@ function initOcr() {
     if(typeof Tesseract==='undefined') throw new Error('OCR 库未加载');
     if(twk){try{await twk.terminate();}catch(e){} twk=null; ocrReady=false;}
     twk=await Tesseract.createWorker('eng',1,TESS_OPTS);
-    try{await twk.setParameters({tessedit_pageseg_mode:'7',tessedit_ocr_engine_mode:'1',tessedit_char_whitelist:OCR_CHAR_WHITELIST});}catch(e){}
+    try{await twk.setParameters({tessedit_pageseg_mode:'7'});}catch(e){}
     ocrReady=true;
   })().catch(e=>{ocrReady=false;ocrInitPromise=null;twk=null;throw e;});
   return ocrInitPromise;
@@ -1828,9 +1827,9 @@ function cropScanRegionFromImage(img){
 function buildOcrCanvas(source,crop){
   const{cropX,cropY,cropW,cropH}=crop;
   if(!cropW||!cropH) throw new Error('裁剪区域无效');
-  const scale=2.5,out=document.createElement('canvas');
-  out.width=Math.min(480,Math.max(240,Math.round(cropW*scale)));
-  out.height=Math.min(160,Math.max(64,Math.round(cropH*scale)));
+  const scale=3.5,out=document.createElement('canvas');
+  out.width=Math.min(560,Math.max(280,Math.round(cropW*scale)));
+  out.height=Math.min(200,Math.max(72,Math.round(cropH*scale)));
   const ctx=out.getContext('2d');
   ctx.fillStyle='#fff';ctx.fillRect(0,0,out.width,out.height);
   ctx.imageSmoothingEnabled=false;
@@ -1845,7 +1844,13 @@ function captureScanRegionFromImage(img){return buildOcrCanvas(img,cropScanRegio
 async function recognizeImage(processed){
   if(!processed||processed.width<20||processed.height<20) throw new Error('画面无效');
   await initOcr();
-  return twk.recognize(processed);
+  try{
+    return await twk.recognize(processed);
+  }catch(e){
+    await resetOcrWorker();
+    await initOcr();
+    return twk.recognize(processed);
+  }
 }
 function hideScanEdit(){
   document.getElementById('scanEdit').style.display='none';
@@ -1871,16 +1876,21 @@ function confirmScanSku(){
   selectWord(raw);
 }
 async function runOcrFromSource(getCanvas){
-  document.getElementById('ocrStatus').textContent=bi('识别中...', 'Scanning...');
   document.getElementById('wordsList').innerHTML='';
   document.getElementById('wordsHint').style.display='none';
   hideScanEdit();
   document.getElementById('captureBtn').disabled=true;
   try{
+    if(!ocrReady) document.getElementById('ocrStatus').textContent=bi('引擎准备中...', 'Preparing OCR...');
+    await initOcr();
+    document.getElementById('ocrStatus').textContent=bi('识别中...', 'Scanning...');
     const processed=getCanvas();
     const{data}=await recognizeImage(processed);
     showOcrResults(extractWords(data));
-  }catch(e){document.getElementById('ocrStatus').textContent=bi('识别失败，请对准编号重试', 'Failed — align SKU and retry');}
+  }catch(e){
+    console.warn('OCR failed', e);
+    document.getElementById('ocrStatus').textContent=bi('识别失败，请对准编号重试', 'Failed — align SKU and retry');
+  }
   document.getElementById('captureBtn').disabled=false;
 }
 function showOcrResults(words){
@@ -1952,7 +1962,7 @@ function selectWord(word){
     else{currentCell=null;renderMap();}
   }
 }
-initCloudData().then(()=>{renderMap();startAutoSync();updateSyncLive();initOcr().catch(()=>{});});
+initCloudData().then(()=>{renderMap();startAutoSync();updateSyncLive();});
 updateCount();
 let mapResizeTimer;
 window.addEventListener('resize',()=>{
