@@ -5807,6 +5807,18 @@
       "shelf": "A33",
       "row": 8,
       "col": 9
+    },
+    "A33-8-10": {
+      "sku": "PRMGNTRQ-SRNDL-6",
+      "shelf": "A33",
+      "row": 8,
+      "col": 10
+    },
+    "PRMGNTRQ-SRNDL-6": {
+      "name": "",
+      "shelf": "A33",
+      "row": 8,
+      "col": 10
     }
   },
   "shelfCfg": {
@@ -5893,5 +5905,5 @@
       "GEM-2404MLY-63-10"
     ]
   },
-  "updatedAt": "2026-06-19T21:34:28.187Z"
+  "updatedAt": "2026-06-19T21:34:35.761Z"
 }
