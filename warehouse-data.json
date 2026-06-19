@@ -9155,6 +9155,18 @@
       "shelf": "A10",
       "row": 7,
       "col": 6
+    },
+    "A10-7-7": {
+      "sku": "BLKSS5-IJSPR-3",
+      "shelf": "A10",
+      "row": 7,
+      "col": 7
+    },
+    "BLKSS5-IJSPR-3": {
+      "name": "",
+      "shelf": "A10",
+      "row": 7,
+      "col": 7
     }
   },
   "shelfCfg": {
@@ -9256,5 +9268,5 @@
       "GEM-2404MLY-63-10"
     ]
   },
-  "updatedAt": "2026-06-19T22:48:50.861Z"
+  "updatedAt": "2026-06-19T22:49:14.759Z"
 }
