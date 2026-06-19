@@ -2069,6 +2069,18 @@
       "shelf": "A32",
       "row": 1,
       "col": 4
+    },
+    "A32-1-5": {
+      "sku": "MISP-SRNDL-46",
+      "shelf": "A32",
+      "row": 1,
+      "col": 5
+    },
+    "MISP-SRNDL-46": {
+      "name": "",
+      "shelf": "A32",
+      "row": 1,
+      "col": 5
     }
   },
   "shelfCfg": {
@@ -2150,5 +2162,5 @@
       "GEM-2404MLY-63-10"
     ]
   },
-  "updatedAt": "2026-06-19T16:54:04.011Z"
+  "updatedAt": "2026-06-19T16:54:10.475Z"
 }
