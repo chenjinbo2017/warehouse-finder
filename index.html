@@ -1730,9 +1730,10 @@ function initOcr() {
   if(ocrReady&&twk) return Promise.resolve();
   if(ocrInitPromise) return ocrInitPromise;
   ocrInitPromise=(async()=>{
-    if(typeof Tesseract==='undefined') throw new Error('OCR 库未加载');
+    if(typeof Tesseract==='undefined') throw new Error('ocr-lib');
     if(twk){try{await twk.terminate();}catch(e){} twk=null; ocrReady=false;}
-    twk=await Tesseract.createWorker('eng',1,TESS_OPTS);
+    try{twk=await Tesseract.createWorker('eng',1,TESS_OPTS);}
+    catch(e){twk=await Tesseract.createWorker('eng');}
     try{await twk.setParameters({tessedit_pageseg_mode:'7'});}catch(e){}
     ocrReady=true;
   })().catch(e=>{ocrReady=false;ocrInitPromise=null;twk=null;throw e;});
@@ -1765,7 +1766,12 @@ function openScan(mode){
     setScanUI('live');
     document.getElementById('ocrStatus').textContent=bi('对准编号后，点击「识别标签」', 'Align SKU, then tap Scan');
     navigator.mediaDevices.getUserMedia({video:{facingMode:'environment',width:{ideal:1280},height:{ideal:720}}})
-      .then(s=>{videoStream=s;document.getElementById('scanVideo').srcObject=s;})
+      .then(s=>{
+        videoStream=s;
+        const v=document.getElementById('scanVideo');
+        v.srcObject=s;
+        v.onloadedmetadata=()=>{v.play().catch(()=>{});};
+      })
       .catch(()=>enablePhotoMode(bi('无法打开相机，请用拍照模式', 'Camera unavailable — use photo mode')));
   } else {enablePhotoMode(bi('当前环境不支持实时相机，请用拍照模式', 'Live camera unavailable — use photo'));}
   initOcr().then(()=>{
@@ -1808,17 +1814,33 @@ function extractWords(data){
   for(const t of tokens){push(t);if(candidates.length>=2) break;}
   return candidates.slice(0,2);
 }
-function cropScanRegionFromVideo(video){
-  const wrap=document.querySelector('.video-wrap'),box=document.querySelector('.scan-box');
-  const vw=video.videoWidth,vh=video.videoHeight,dw=video.clientWidth,dh=video.clientHeight;
-  const scale=Math.max(dw/vw,dh/vh);
-  const visibleW=dw/scale,visibleH=dh/scale;
-  const offsetX=(vw-visibleW)/2,offsetY=(vh-visibleH)/2;
-  const wrapRect=wrap.getBoundingClientRect(),boxRect=box.getBoundingClientRect();
-  const cropX=offsetX+(boxRect.left-wrapRect.left)/scale;
-  const cropY=offsetY+(boxRect.top-wrapRect.top)/scale;
-  const cropW=boxRect.width/scale,cropH=boxRect.height/scale;
-  return{cropX:Math.max(0,cropX),cropY:Math.max(0,cropY),cropW:Math.min(cropW,vw),cropH:Math.min(cropH,vh)};
+function centerVideoCrop(vw, vh) {
+  const cropW = vw * 0.88;
+  const cropH = Math.max(vh * 0.12, 80);
+  return { cropX: (vw - cropW) / 2, cropY: (vh - cropH) / 2, cropW, cropH };
+}
+function cropScanRegionFromVideo(video) {
+  const vw = video.videoWidth, vh = video.videoHeight;
+  if (!vw || !vh) throw new Error('camera');
+  const wrap = document.querySelector('.video-wrap');
+  const box = document.querySelector('.scan-box');
+  const dw = video.clientWidth, dh = video.clientHeight;
+  if (!wrap || !box || !dw || !dh) return centerVideoCrop(vw, vh);
+  const scale = Math.max(dw / vw, dh / vh);
+  if (!isFinite(scale) || scale <= 0) return centerVideoCrop(vw, vh);
+  const visibleW = dw / scale, visibleH = dh / scale;
+  const offsetX = (vw - visibleW) / 2, offsetY = (vh - visibleH) / 2;
+  const wrapRect = wrap.getBoundingClientRect(), boxRect = box.getBoundingClientRect();
+  const cropX = offsetX + (boxRect.left - wrapRect.left) / scale;
+  const cropY = offsetY + (boxRect.top - wrapRect.top) / scale;
+  const cropW = boxRect.width / scale, cropH = boxRect.height / scale;
+  if (!cropW || !cropH || cropW < 10 || cropH < 10) return centerVideoCrop(vw, vh);
+  return {
+    cropX: Math.max(0, Math.min(cropX, vw - 10)),
+    cropY: Math.max(0, Math.min(cropY, vh - 10)),
+    cropW: Math.min(cropW, vw),
+    cropH: Math.min(cropH, vh)
+  };
 }
 function cropScanRegionFromImage(img){
   const iw=img.width,ih=img.height,cropW=iw*0.88,cropH=Math.max(ih*0.1,80);
@@ -1826,10 +1848,10 @@ function cropScanRegionFromImage(img){
 }
 function buildOcrCanvas(source,crop){
   const{cropX,cropY,cropW,cropH}=crop;
-  if(!cropW||!cropH) throw new Error('裁剪区域无效');
-  const scale=3.5,out=document.createElement('canvas');
-  out.width=Math.min(560,Math.max(280,Math.round(cropW*scale)));
-  out.height=Math.min(200,Math.max(72,Math.round(cropH*scale)));
+  if(!cropW||!cropH||cropW<8||cropH<8) throw new Error('camera');
+  const scale=4,out=document.createElement('canvas');
+  out.width=Math.max(320,Math.round(cropW*scale));
+  out.height=Math.max(80,Math.round(cropH*scale));
   const ctx=out.getContext('2d');
   ctx.fillStyle='#fff';ctx.fillRect(0,0,out.width,out.height);
   ctx.imageSmoothingEnabled=false;
@@ -1841,16 +1863,29 @@ function buildOcrCanvas(source,crop){
 }
 function captureScanRegion(video){return buildOcrCanvas(video,cropScanRegionFromVideo(video));}
 function captureScanRegionFromImage(img){return buildOcrCanvas(img,cropScanRegionFromImage(img));}
-async function recognizeImage(processed){
-  if(!processed||processed.width<20||processed.height<20) throw new Error('画面无效');
-  await initOcr();
-  try{
-    return await twk.recognize(processed);
-  }catch(e){
-    await resetOcrWorker();
-    await initOcr();
-    return twk.recognize(processed);
+async function waitForVideoReady(video,timeoutMs){
+  const start=Date.now();
+  while(Date.now()-start<timeoutMs){
+    if(video.videoWidth>0&&video.clientWidth>0&&video.readyState>=2){
+      try{if(video.paused) await video.play();}catch(e){}
+      return true;
+    }
+    await new Promise(r=>setTimeout(r,80));
   }
+  return video.videoWidth>0;
+}
+async function recognizeImage(processed){
+  if(!processed||processed.width<20||processed.height<20) throw new Error('camera');
+  const tries=[
+    async()=>{await initOcr();return twk.recognize(processed);},
+    async()=>Tesseract.recognize(processed,'eng',TESS_OPTS),
+    async()=>{await resetOcrWorker();return Tesseract.recognize(processed,'eng',TESS_OPTS);}
+  ];
+  let lastErr=null;
+  for(const fn of tries){
+    try{return await fn();}catch(e){lastErr=e;}
+  }
+  throw lastErr||new Error('ocr');
 }
 function hideScanEdit(){
   document.getElementById('scanEdit').style.display='none';
@@ -1881,15 +1916,20 @@ async function runOcrFromSource(getCanvas){
   hideScanEdit();
   document.getElementById('captureBtn').disabled=true;
   try{
-    if(!ocrReady) document.getElementById('ocrStatus').textContent=bi('引擎准备中...', 'Preparing OCR...');
-    await initOcr();
-    document.getElementById('ocrStatus').textContent=bi('识别中...', 'Scanning...');
+    document.getElementById('ocrStatus').textContent=bi('拍照中...', 'Capturing...');
     const processed=getCanvas();
+    document.getElementById('ocrStatus').textContent=bi('引擎准备中...', 'Preparing OCR...');
+    await initOcr();
+    document.getElementById('ocrStatus').textContent=bi('识别中，请稍候...', 'Scanning, please wait...');
     const{data}=await recognizeImage(processed);
     showOcrResults(extractWords(data));
   }catch(e){
     console.warn('OCR failed', e);
-    document.getElementById('ocrStatus').textContent=bi('识别失败，请对准编号重试', 'Failed — align SKU and retry');
+    const msg=(e&&e.message==='camera')
+      ? bi('相机画面未就绪，请稍候再点或手动输入', 'Camera not ready — wait or type SKU')
+      : bi('识别失败，请手动输入或重试', 'Failed — type SKU below or retry');
+    document.getElementById('ocrStatus').textContent=msg;
+    showScanEdit('');
   }
   document.getElementById('captureBtn').disabled=false;
 }
@@ -1915,8 +1955,14 @@ async function captureFrame(){
     return;
   }
   const video=document.getElementById('scanVideo');
-  if(!video.videoWidth){showToast(bi('相机未就绪，请稍候', 'Camera not ready'));return;}
-  await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
+  document.getElementById('ocrStatus').textContent=bi('等待相机...', 'Waiting for camera...');
+  const ready=await waitForVideoReady(video,4000);
+  if(!ready){
+    showToast(bi('相机未就绪，请稍候再试', 'Camera not ready — wait a moment'));
+    document.getElementById('ocrStatus').textContent=bi('相机未就绪，请稍候再试', 'Camera not ready — wait');
+    return;
+  }
+  await new Promise(r=>setTimeout(r,200));
   await runOcrFromSource(()=>captureScanRegion(video));
 }
 function onPhotoSelected(e){
