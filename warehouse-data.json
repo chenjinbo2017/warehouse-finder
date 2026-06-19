@@ -4787,6 +4787,18 @@
       "shelf": "A33",
       "row": 4,
       "col": 1
+    },
+    "A33-4-2": {
+      "sku": "BGENTRQ-RND66-A",
+      "shelf": "A33",
+      "row": 4,
+      "col": 2
+    },
+    "BGENTRQ-RND66-A": {
+      "name": "",
+      "shelf": "A33",
+      "row": 4,
+      "col": 2
     }
   },
   "shelfCfg": {
@@ -4873,5 +4885,5 @@
       "GEM-2404MLY-63-10"
     ]
   },
-  "updatedAt": "2026-06-19T21:09:45.510Z"
+  "updatedAt": "2026-06-19T21:10:59.444Z"
 }
