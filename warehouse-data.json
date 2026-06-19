@@ -2705,6 +2705,18 @@
       "shelf": "A32",
       "row": 4,
       "col": 5
+    },
+    "A32-4-6": {
+      "sku": "LPDLT-S-RNDLLE-1",
+      "shelf": "A32",
+      "row": 4,
+      "col": 6
+    },
+    "LPDLT-S-RNDLLE-1": {
+      "name": "",
+      "shelf": "A32",
+      "row": 4,
+      "col": 6
     }
   },
   "shelfCfg": {
@@ -2786,5 +2798,5 @@
       "GEM-2404MLY-63-10"
     ]
   },
-  "updatedAt": "2026-06-19T17:08:39.255Z"
+  "updatedAt": "2026-06-19T17:08:49.292Z"
 }
