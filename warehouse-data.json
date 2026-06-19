@@ -8189,6 +8189,18 @@
       "shelf": "A8",
       "row": 9,
       "col": 15
+    },
+    "A8-9-16": {
+      "sku": "MRG-JDE-SR10",
+      "shelf": "A8",
+      "row": 9,
+      "col": 16
+    },
+    "MRG-JDE-SR10": {
+      "name": "",
+      "shelf": "A8",
+      "row": 9,
+      "col": 16
     }
   },
   "shelfCfg": {
@@ -8285,5 +8297,5 @@
       "GEM-2404MLY-63-10"
     ]
   },
-  "updatedAt": "2026-06-19T22:25:45.626Z"
+  "updatedAt": "2026-06-19T22:25:54.975Z"
 }
