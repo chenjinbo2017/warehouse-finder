@@ -6107,6 +6107,18 @@
       "shelf": "A9",
       "row": 1,
       "col": 8
+    },
+    "A9-1-9": {
+      "sku": "GEM-2408SY-22UUN",
+      "shelf": "A9",
+      "row": 1,
+      "col": 9
+    },
+    "GEM-2408SY-22UUN": {
+      "name": "",
+      "shelf": "A9",
+      "row": 1,
+      "col": 9
     }
   },
   "shelfCfg": {
@@ -6198,5 +6210,5 @@
       "GEM-2404MLY-63-10"
     ]
   },
-  "updatedAt": "2026-06-19T21:41:28.161Z"
+  "updatedAt": "2026-06-19T21:41:35.404Z"
 }
