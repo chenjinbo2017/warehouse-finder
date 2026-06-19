@@ -6875,6 +6875,18 @@
       "shelf": "A9",
       "row": 6,
       "col": 3
+    },
+    "A9-6-4": {
+      "sku": "GEM-JAD1911-QH-4",
+      "shelf": "A9",
+      "row": 6,
+      "col": 4
+    },
+    "GEM-JAD1911-QH-4": {
+      "name": "",
+      "shelf": "A9",
+      "row": 6,
+      "col": 4
     }
   },
   "shelfCfg": {
@@ -6966,5 +6978,5 @@
       "GEM-2404MLY-63-10"
     ]
   },
-  "updatedAt": "2026-06-19T21:59:25.608Z"
+  "updatedAt": "2026-06-19T21:59:32.367Z"
 }
