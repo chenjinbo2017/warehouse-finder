@@ -393,7 +393,10 @@ header h1{font-size:22px;font-weight:700;line-height:1.25;letter-spacing:.01em}
       </div>
       <div class="sheet-row">
         <button class="btn-sheet light" onclick="insertSlotAtCell()">➕ 插入空位 / Insert slot</button>
-        <button class="btn-sheet danger" onclick="deleteCellShiftLeft()">🗑️ 删除并左移 / Delete</button>
+        <button class="btn-sheet danger" onclick="clearCellOnly()">🗑️ 仅清空 / Clear</button>
+      </div>
+      <div class="sheet-row">
+        <button class="btn-sheet danger" onclick="deleteCellShiftLeft()" style="flex:1">⬅️ 删除并左移 / Delete & shift</button>
       </div>
     </div>
     <div id="cellSheetEmpty" style="display:none">
@@ -416,6 +419,12 @@ let ghFileSha = null;
 let syncPushTimer = null;
 let syncPullTimer = null;
 let editingCell = null;
+let tombstones = (() => {
+  try {
+    const t = JSON.parse(localStorage.getItem('wdb4_tomb') || '{}');
+    return { cells: t.cells || [], skus: t.skus || [] };
+  } catch (e) { return { cells: [], skus: [] }; }
+})();
 
 const GH_BRANCH = 'main';
 const GH_DATA_FILE = 'warehouse-data.json';
@@ -464,26 +473,75 @@ function updateCloudUi() {
 
 function getGhToken() { return localStorage.getItem('wdb4_gh_token') || ''; }
 function buildPayload() {
-  return { db, shelfCfg, updatedAt: localStorage.getItem('wdb4_updated') || new Date().toISOString() };
+  return { db, shelfCfg, tombstones, updatedAt: localStorage.getItem('wdb4_updated') || new Date().toISOString() };
 }
 function applyPayload(payload) {
   if (payload.db) db = payload.db;
   if (payload.shelfCfg) shelfCfg = payload.shelfCfg;
+  if (payload.tombstones) tombstones = { cells: payload.tombstones.cells || [], skus: payload.tombstones.skus || [] };
   localStorage.setItem('wdb4', JSON.stringify(db));
   localStorage.setItem('wdb4_cfg', JSON.stringify(shelfCfg));
+  localStorage.setItem('wdb4_tomb', JSON.stringify(tombstones));
   if (payload.updatedAt) localStorage.setItem('wdb4_updated', payload.updatedAt);
   ensureGroupCountFitsData();
   updateCount();
 }
 
-function mergeDbUnion(localDb, remoteDb, conflictPrefer) {
-  const merged = { ...(remoteDb || {}) };
-  for (const [key, localVal] of Object.entries(localDb || {})) {
-    if (!(key in merged)) merged[key] = localVal;
-    else if (JSON.stringify(merged[key]) !== JSON.stringify(localVal)) {
-      merged[key] = conflictPrefer === 'local' ? localVal : merged[key];
+function isCellKey(key) { return /^[A-Z]\d+-\d+-\d+$/.test(key); }
+function saveTombstones() { localStorage.setItem('wdb4_tomb', JSON.stringify(tombstones)); }
+function mergeTombstones(a, b) {
+  return {
+    cells: [...new Set([...(a && a.cells) || [], ...(b && b.cells) || []])],
+    skus: [...new Set([...(a && a.skus) || [], ...(b && b.skus) || []])]
+  };
+}
+function recordCellDeletion(shelf, row, col, sku) {
+  const key = pk(shelf, row, col);
+  const cells = new Set(tombstones.cells);
+  const skus = new Set(tombstones.skus);
+  cells.add(key);
+  if (sku) skus.add(sku);
+  tombstones = { cells: [...cells], skus: [...skus] };
+  saveTombstones();
+}
+function applyTombstonesToDb(merged, tombs) {
+  for (const key of (tombs.cells || [])) delete merged[key];
+  for (const sku of (tombs.skus || [])) delete merged[sku];
+}
+function reconcileDbSkus(merged) {
+  const referenced = new Set();
+  for (const [key, val] of Object.entries(merged)) {
+    if (isCellKey(key) && val && val.sku) referenced.add(val.sku);
+  }
+  for (const key of Object.keys(merged)) {
+    if (!isCellKey(key) && !referenced.has(key)) delete merged[key];
+  }
+}
+function mergeDbUnion(localDb, remoteDb, conflictPrefer, localTomb, remoteTomb) {
+  const local = localDb || {};
+  const remote = remoteDb || {};
+  const tombs = mergeTombstones(localTomb, remoteTomb);
+  const tCells = new Set(tombs.cells);
+  const tSkus = new Set(tombs.skus);
+  const winner = conflictPrefer === 'local' ? local : remote;
+  const loser = conflictPrefer === 'local' ? remote : local;
+  const merged = { ...winner };
+  const winnerGroups = new Set();
+  for (const k of Object.keys(winner)) {
+    const m = k.match(/^([A-Z])\d+-\d+-\d+$/);
+    if (m) winnerGroups.add(m[1]);
+  }
+  for (const [key, val] of Object.entries(loser)) {
+    if (tCells.has(key) || (tSkus.has(key) && !isCellKey(key))) continue;
+    if (isCellKey(key)) {
+      const group = key.charAt(0);
+      if (!winnerGroups.has(group) && !(key in merged)) merged[key] = val;
+    } else if (!(key in merged)) {
+      merged[key] = val;
     }
   }
+  applyTombstonesToDb(merged, tombs);
+  reconcileDbSkus(merged);
   return merged;
 }
 
@@ -522,8 +580,9 @@ function mergeShelfCfg(localCfg, remoteCfg, conflictPrefer) {
 
 function mergePayloads(local, remote, conflictPrefer) {
   return {
-    db: mergeDbUnion(local.db, remote.db, conflictPrefer),
+    db: mergeDbUnion(local.db, remote.db, conflictPrefer, local.tombstones, remote.tombstones),
     shelfCfg: mergeShelfCfg(local.shelfCfg, remote.shelfCfg, conflictPrefer),
+    tombstones: mergeTombstones(local.tombstones, remote.tombstones),
     updatedAt: new Date().toISOString()
   };
 }
@@ -717,7 +776,8 @@ async function pullFromCloudSilent(forceApply) {
   const prefer = conflictPreferByTime(localPayload, remote, forceApply);
   const merged = mergePayloads(localPayload, remote, prefer);
   const changed = JSON.stringify(merged.db) !== JSON.stringify(db)
-    || JSON.stringify(merged.shelfCfg) !== JSON.stringify(shelfCfg);
+    || JSON.stringify(merged.shelfCfg) !== JSON.stringify(shelfCfg)
+    || JSON.stringify(merged.tombstones) !== JSON.stringify(tombstones);
   if (changed) {
     applyPayload(merged);
     renderMap();
@@ -1021,9 +1081,10 @@ function setCellEntry(shelf, row, col, sku, name) {
   db[sku] = { name: name || '', shelf, row, col };
 }
 
-function removeCellEntry(shelf, row, col) {
+function removeCellEntry(shelf, row, col, trackDelete) {
   const key = pk(shelf, row, col);
   const e = db[key];
+  if (trackDelete && e) recordCellDeletion(shelf, row, col, e.sku);
   if (e && db[e.sku]) delete db[e.sku];
   delete db[key];
 }
@@ -1075,6 +1136,8 @@ function shiftRowRight(shelf, row, fromCol) {
 }
 
 function shiftRowLeft(shelf, row, fromCol) {
+  const e = db[pk(shelf, row, fromCol)];
+  if (e) recordCellDeletion(shelf, row, fromCol, e.sku);
   const items = getRowItems(shelf, row)
     .filter(it => it.col !== fromCol)
     .map(it => ({ ...it, col: it.col > fromCol ? it.col - 1 : it.col }));
@@ -1089,6 +1152,17 @@ function insertSlotAtCell() {
   saveDB();
   renderMap();
   showToast(bi('已插入空位，后面格右移', 'Slot inserted — shifted right'));
+}
+
+function clearCellOnly() {
+  if (!editingCell) return;
+  if (!confirm(bi('清空此格？（不会移动后面的货）', 'Clear this cell? (won\'t shift others)'))) return;
+  const { shelf, row, col } = editingCell;
+  removeCellEntry(shelf, row, col, true);
+  closeCellSheet();
+  saveDB();
+  renderMap();
+  showToast(bi('已清空', 'Cleared'));
 }
 
 function deleteCellShiftLeft() {
@@ -1651,6 +1725,7 @@ function renderMap(options) {
 
 let videoStream=null,twk=null,ocrReady=false,usePhotoMode=false,ocrInitPromise=null,lastOcrWords=[],capturedPhoto=null;
 const TESS_OPTS={workerPath:'https://cdn.jsdelivr.net/npm/tesseract.js@4.1.1/dist/worker.min.js',corePath:'https://cdn.jsdelivr.net/npm/tesseract.js-core@4.0.4',langPath:'https://tessdata.projectnaptha.com/4.0.0'};
+const OCR_CHAR_WHITELIST='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-./';
 
 function initOcr() {
   if(ocrReady&&twk) return Promise.resolve();
@@ -1659,7 +1734,7 @@ function initOcr() {
     if(typeof Tesseract==='undefined') throw new Error('OCR 库未加载');
     if(twk){try{await twk.terminate();}catch(e){} twk=null; ocrReady=false;}
     twk=await Tesseract.createWorker('eng',1,TESS_OPTS);
-    try{await twk.setParameters({tessedit_pageseg_mode:'7'});}catch(e){}
+    try{await twk.setParameters({tessedit_pageseg_mode:'7',tessedit_ocr_engine_mode:'1',tessedit_char_whitelist:OCR_CHAR_WHITELIST});}catch(e){}
     ocrReady=true;
   })().catch(e=>{ocrReady=false;ocrInitPromise=null;twk=null;throw e;});
   return ocrInitPromise;
@@ -1690,7 +1765,7 @@ function openScan(mode){
   if(window.isSecureContext&&navigator.mediaDevices&&navigator.mediaDevices.getUserMedia){
     setScanUI('live');
     document.getElementById('ocrStatus').textContent=bi('对准编号后，点击「识别标签」', 'Align SKU, then tap Scan');
-    navigator.mediaDevices.getUserMedia({video:{facingMode:'environment',width:{ideal:1920},height:{ideal:1080}}})
+    navigator.mediaDevices.getUserMedia({video:{facingMode:'environment',width:{ideal:1280},height:{ideal:720}}})
       .then(s=>{videoStream=s;document.getElementById('scanVideo').srcObject=s;})
       .catch(()=>enablePhotoMode(bi('无法打开相机，请用拍照模式', 'Camera unavailable — use photo mode')));
   } else {enablePhotoMode(bi('当前环境不支持实时相机，请用拍照模式', 'Live camera unavailable — use photo'));}
@@ -1753,9 +1828,9 @@ function cropScanRegionFromImage(img){
 function buildOcrCanvas(source,crop){
   const{cropX,cropY,cropW,cropH}=crop;
   if(!cropW||!cropH) throw new Error('裁剪区域无效');
-  const scale=5,out=document.createElement('canvas');
-  out.width=Math.max(320,Math.round(cropW*scale));
-  out.height=Math.max(80,Math.round(cropH*scale));
+  const scale=2.5,out=document.createElement('canvas');
+  out.width=Math.min(480,Math.max(240,Math.round(cropW*scale)));
+  out.height=Math.min(160,Math.max(64,Math.round(cropH*scale)));
   const ctx=out.getContext('2d');
   ctx.fillStyle='#fff';ctx.fillRect(0,0,out.width,out.height);
   ctx.imageSmoothingEnabled=false;
@@ -1769,14 +1844,8 @@ function captureScanRegion(video){return buildOcrCanvas(video,cropScanRegionFrom
 function captureScanRegionFromImage(img){return buildOcrCanvas(img,cropScanRegionFromImage(img));}
 async function recognizeImage(processed){
   if(!processed||processed.width<20||processed.height<20) throw new Error('画面无效');
-  const tries=[
-    async()=>{await initOcr();return twk.recognize(processed);},
-    async()=>Tesseract.recognize(processed,'eng',TESS_OPTS),
-    async()=>{await resetOcrWorker();return Tesseract.recognize(processed,'eng');}
-  ];
-  let lastErr=null;
-  for(const fn of tries){try{return await fn();}catch(e){lastErr=e;}}
-  throw lastErr||new Error(bi('识别引擎不可用', 'OCR unavailable'));
+  await initOcr();
+  return twk.recognize(processed);
 }
 function hideScanEdit(){
   document.getElementById('scanEdit').style.display='none';
@@ -1802,14 +1871,12 @@ function confirmScanSku(){
   selectWord(raw);
 }
 async function runOcrFromSource(getCanvas){
-  document.getElementById('ocrStatus').textContent=bi('引擎准备中...', 'Preparing OCR...');
+  document.getElementById('ocrStatus').textContent=bi('识别中...', 'Scanning...');
   document.getElementById('wordsList').innerHTML='';
   document.getElementById('wordsHint').style.display='none';
   hideScanEdit();
   document.getElementById('captureBtn').disabled=true;
   try{
-    try{await initOcr();}catch(e){}
-    document.getElementById('ocrStatus').textContent=bi('识别中...', 'Scanning...');
     const processed=getCanvas();
     const{data}=await recognizeImage(processed);
     showOcrResults(extractWords(data));
@@ -1885,7 +1952,7 @@ function selectWord(word){
     else{currentCell=null;renderMap();}
   }
 }
-initCloudData().then(()=>{renderMap();startAutoSync();updateSyncLive();});
+initCloudData().then(()=>{renderMap();startAutoSync();updateSyncLive();initOcr().catch(()=>{});});
 updateCount();
 let mapResizeTimer;
 window.addEventListener('resize',()=>{
