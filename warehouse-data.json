@@ -9323,6 +9323,18 @@
       "shelf": "A10",
       "row": 9,
       "col": 8
+    },
+    "A10-9-9": {
+      "sku": "K2JSPR-SR-8M",
+      "shelf": "A10",
+      "row": 9,
+      "col": 9
+    },
+    "K2JSPR-SR-8M": {
+      "name": "",
+      "shelf": "A10",
+      "row": 9,
+      "col": 9
     }
   },
   "shelfCfg": {
@@ -9424,5 +9436,5 @@
       "GEM-2404MLY-63-10"
     ]
   },
-  "updatedAt": "2026-06-19T22:52:10.332Z"
+  "updatedAt": "2026-06-19T22:52:33.772Z"
 }
