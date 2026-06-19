@@ -5987,6 +5987,18 @@
       "shelf": "A33",
       "row": 9,
       "col": 6
+    },
+    "A33-9-7": {
+      "sku": "WHTURQ-RNL-6M",
+      "shelf": "A33",
+      "row": 9,
+      "col": 7
+    },
+    "WHTURQ-RNL-6M": {
+      "name": "",
+      "shelf": "A33",
+      "row": 9,
+      "col": 7
     }
   },
   "shelfCfg": {
@@ -6073,5 +6085,5 @@
       "GEM-2404MLY-63-10"
     ]
   },
-  "updatedAt": "2026-06-19T21:37:21.345Z"
+  "updatedAt": "2026-06-19T21:37:37.623Z"
 }
