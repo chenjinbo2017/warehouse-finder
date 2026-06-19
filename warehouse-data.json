@@ -5171,6 +5171,18 @@
       "shelf": "A33",
       "row": 5,
       "col": 15
+    },
+    "A33-5-16": {
+      "sku": "OTURQ-RNDL-24",
+      "shelf": "A33",
+      "row": 5,
+      "col": 16
+    },
+    "OTURQ-RNDL-24": {
+      "name": "",
+      "shelf": "A33",
+      "row": 5,
+      "col": 16
     }
   },
   "shelfCfg": {
@@ -5257,5 +5269,5 @@
       "GEM-2404MLY-63-10"
     ]
   },
-  "updatedAt": "2026-06-19T21:16:55.072Z"
+  "updatedAt": "2026-06-19T21:17:11.245Z"
 }
