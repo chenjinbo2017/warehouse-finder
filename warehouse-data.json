@@ -5603,6 +5603,18 @@
       "shelf": "A33",
       "row": 7,
       "col": 13
+    },
+    "A33-7-14": {
+      "sku": "BMGNTRQ-SRNDL-4",
+      "shelf": "A33",
+      "row": 7,
+      "col": 14
+    },
+    "BMGNTRQ-SRNDL-4": {
+      "name": "",
+      "shelf": "A33",
+      "row": 7,
+      "col": 14
     }
   },
   "shelfCfg": {
@@ -5689,5 +5701,5 @@
       "GEM-2404MLY-63-10"
     ]
   },
-  "updatedAt": "2026-06-19T21:31:08.369Z"
+  "updatedAt": "2026-06-19T21:31:18.955Z"
 }
