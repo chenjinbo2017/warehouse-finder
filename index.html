@@ -259,7 +259,7 @@ header h1{font-size:22px;font-weight:700;line-height:1.25;letter-spacing:.01em}
   <div id="searchResult"></div>
   <div class="search-box orders-box">
     <div class="search-label">粘贴 Etsy / Amazon 订单 / Paste Orders</div>
-    <textarea id="orderPaste" class="order-paste" placeholder="简单一行: SKU: GEM-2408SY-19 Q: 9 order: 003&#10;或表格 CSV/Tab · Etsy/Amazon 整单粘贴 / Simple line or table paste"></textarea>
+    <textarea id="orderPaste" class="order-paste" placeholder="整段复制即可，描述价格会自动忽略&#10;#10001 · SKU GEM-2408SY-19 · Quantity 9（有空格无空格都行）"></textarea>
     <button class="btn-search" onclick="parseAndMatchOrders()">匹配库位 / Match Locations</button>
   </div>
   <div id="orderResult"></div>
@@ -1330,8 +1330,83 @@ function normalizePasteText(text) {
 }
 
 function parseQtyFromLine(line) {
-  const m = line.match(/(?:qty|quantity|q|数量)[:\s]*(\d+)|(?:^|\s)(\d+)\s*[x×]\s/i);
-  return m ? (parseInt(m[1] || m[2], 10) || 1) : 1;
+  const m = line.match(/(?:qty|quantity|q|数量)[:\s]*(\d+)|(?:qty|quantity)(\d+)|(?:^|\s)(\d+)\s*[x×]\s/i);
+  return m ? (parseInt(m[1] || m[2] || m[3], 10) || 1) : 1;
+}
+
+function looksLikeCompanyOrderFormat(text) {
+  return /#[A-Z0-9\-]+|SKU\s*[A-Z0-9][A-Z0-9\-./]*\s*Quantity\s*\d+/i.test(text);
+}
+
+function extractHashOrder(line) {
+  if (!/#/.test(line)) return null;
+  const amz = line.match(/#(\d{3}-\d{7}-\d{7})/);
+  if (amz) return amz[1];
+  const inline = line.match(/#([A-Z0-9][A-Z0-9\-]*?)(?=SKU\b)/i);
+  if (inline && inline[1].length >= 2) return inline[1];
+  const m = line.match(/#([A-Z0-9][A-Z0-9\-]{2,})(?=\s|[,.]|$)/i);
+  if (m) return m[1];
+  const tail = line.match(/#([A-Z0-9][A-Z0-9\-]{2,})$/i);
+  return tail ? tail[1] : null;
+}
+
+function parseSkuQuantityChunks(text) {
+  const items = [];
+  const re = /SKU\s*([A-Z0-9][A-Z0-9\-./]+?)\s*Quantity\s*(\d+)/gi;
+  let m;
+  while ((m = re.exec(text)) !== null) {
+    const sku = normalizeSkuToken(m[1]);
+    if (isSkuCode(sku)) items.push({ sku, qty: parseInt(m[2], 10) || 1 });
+  }
+  return items;
+}
+
+function parseCompanyFormat(text) {
+  const items = [];
+  let currentOrder = '';
+  let pendingSku = '';
+  const lines = normalizePasteText(text).split('\n').map(l => l.trim()).filter(Boolean);
+
+  for (const line of lines) {
+    const orderId = extractHashOrder(line);
+    if (orderId) currentOrder = orderId;
+
+    const chunks = parseSkuQuantityChunks(line);
+    if (chunks.length) {
+      pendingSku = '';
+      const oid = currentOrder || bi('（未识别订单号）', '(no order ID)');
+      const platform = AMZ_ORDER_RE.test(currentOrder) ? 'Amazon' : '';
+      for (const c of chunks) items.push({ orderId: oid, sku: c.sku, qty: c.qty, platform });
+      continue;
+    }
+
+    const skuOnly = line.match(/^SKU\s*([A-Z0-9][A-Z0-9\-./]{3,})\s*$/i);
+    if (skuOnly && isSkuCode(normalizeSkuToken(skuOnly[1]))) {
+      pendingSku = normalizeSkuToken(skuOnly[1]);
+      continue;
+    }
+    const qtyOnly = line.match(/^Quantity\s*(\d+)\s*$/i);
+    if (qtyOnly && pendingSku) {
+      const oid = currentOrder || bi('（未识别订单号）', '(no order ID)');
+      items.push({ orderId: oid, sku: pendingSku, qty: parseInt(qtyOnly[1], 10) || 1, platform: AMZ_ORDER_RE.test(currentOrder) ? 'Amazon' : '' });
+      pendingSku = '';
+    }
+  }
+
+  if (!items.length) {
+    const flat = normalizePasteText(text).replace(/[\r\n]+/g, ' ');
+    const orderId = extractHashOrder(flat);
+    if (orderId) currentOrder = orderId;
+    for (const c of parseSkuQuantityChunks(flat)) {
+      items.push({
+        orderId: currentOrder || bi('（未识别订单号）', '(no order ID)'),
+        sku: c.sku,
+        qty: c.qty,
+        platform: AMZ_ORDER_RE.test(currentOrder) ? 'Amazon' : ''
+      });
+    }
+  }
+  return items;
 }
 
 function parseOrderFromLine(line) {
@@ -1482,6 +1557,12 @@ function parseOrdersFromPaste(text) {
   const raw = normalizePasteText(text).trim();
   if (!raw) return { platform: '', orders: [] };
   const lines = raw.split('\n').filter(l => l.trim());
+  if (looksLikeCompanyOrderFormat(raw) || /SKU\s*[A-Z0-9][A-Z0-9\-./]*\s*Quantity\s*\d+/i.test(raw)) {
+    const companyItems = parseCompanyFormat(raw);
+    if (companyItems.length) {
+      return { platform: '', orders: groupOrderLines(companyItems) };
+    }
+  }
   const tabular = lines.length >= 2 ? parseTabularOrders(lines) : null;
   let items = tabular ? tabular.items : parseBlockOrders(raw);
   let platform = tabular ? tabular.platform : '';
@@ -1497,7 +1578,7 @@ function parseAndMatchOrders() {
   const { platform, orders } = parseOrdersFromPaste(text);
   if (!orders.length) {
     lastOrderMatch = null;
-    document.getElementById('orderResult').innerHTML = `<div class="order-empty">${bi('没识别到订单内容', 'No orders detected')}<br><span style="font-size:16px">${bi('可试: SKU: GEM-2408SY-19 Q: 9 order: 003 · 或粘贴 Etsy/Amazon 表格', 'Try: SKU: GEM-2408SY-19 Q: 9 order: 003 · or paste Etsy/Amazon table')}</span></div>`;
+    document.getElementById('orderResult').innerHTML = `<div class="order-empty">${bi('没识别到订单内容', 'No orders detected')}<br><span style="font-size:16px">${bi('需要 #订单号 和 SKU…Quantity…（有空格无空格均可）', 'Need #order + SKU…Quantity… (spaces optional)')}</span></div>`;
     return;
   }
   lastOrderMatch = { platform, orders };
