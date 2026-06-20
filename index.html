@@ -66,6 +66,9 @@ header h1{font-size:22px;font-weight:700;line-height:1.25;letter-spacing:.01em}
 .loc-label{font-size:14px;color:var(--muted);margin-bottom:8px;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
 .loc-value{font-size:34px;font-weight:900;color:var(--coral);line-height:1}
 .loc-full{margin-top:16px;text-align:center;font-size:18px;color:var(--navy);font-weight:700;padding:12px;background:#f8fafc;border-radius:12px}
+.search-picks{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+.search-pick{width:100%;text-align:left;padding:14px 16px;border:2px solid #e8ecf2;border-radius:12px;background:#fff;font-size:16px;font-weight:700;color:var(--navy);cursor:pointer;font-family:var(--font-mono);line-height:1.35}
+.search-pick:active{background:#f8fafc;border-color:var(--coral)}
 .group-tabs{display:flex;gap:8px;margin-bottom:12px;overflow-x:auto;padding-bottom:4px}
 .group-tab{background:white;border:2px solid #e8ecf2;border-radius:999px;padding:10px 20px;font-size:18px;font-weight:800;cursor:pointer;color:var(--muted);white-space:nowrap;flex-shrink:0;box-shadow:var(--shadow-sm);transition:all .2s}
 .group-tab.active{background:linear-gradient(135deg,var(--coral),var(--coral-light));color:white;border-color:transparent;box-shadow:0 6px 16px rgba(230,57,70,.28)}
@@ -251,7 +254,7 @@ header h1{font-size:22px;font-weight:700;line-height:1.25;letter-spacing:.01em}
   <div class="search-box sku-box">
     <div class="search-label">输入或扫描 SKU / Scan or Enter SKU</div>
     <div class="search-row">
-      <input type="text" class="search-input" id="searchInput" placeholder="e.g. R-S-AGA-0021-8" oninput="this.value=this.value.toUpperCase()" onkeydown="if(event.key==='Enter')doSearch()">
+      <input type="text" class="search-input" id="searchInput" placeholder="全称或片段，如 4550 8" oninput="this.value=this.value.toUpperCase()" onkeydown="if(event.key==='Enter')doSearch()">
       <button class="btn-cam" onclick="openScan('search')">📷</button>
     </div>
     <button class="btn-search" onclick="doSearch()">查找位置 / Find Location</button>
@@ -1327,28 +1330,76 @@ function switchTab(n) {
     }
   });
   if (n === 'map') { pullFromCloudSilent(false); renderMap(); }
+  if (n === 'search') cancelMapScanAdvance();
   if (n === 'sync') updateCloudUi();
 }
 
 function doSearch() {
-  const sku = document.getElementById('searchInput').value.trim().toUpperCase();
+  const query = document.getElementById('searchInput').value.trim().toUpperCase();
   const el = document.getElementById('searchResult');
-  if (!sku) return;
-  const d = lookupSkuLocation(sku);
-  if (d) {
-    el.innerHTML = `<div class="result-card">
-      <div class="result-sku">SKU: ${sku}</div>
-      <div class="result-name">${d.name||bi('（未填名称）', '(no name)')}</div>
-      <div class="loc-grid">
-        <div class="loc-item"><div class="loc-label">${bi('货架', 'Shelf')}</div><div class="loc-value">${d.shelf}</div></div>
-        <div class="loc-item"><div class="loc-label">${bi('层', 'Row')}</div><div class="loc-value">${d.row}</div></div>
-        <div class="loc-item"><div class="loc-label">${bi('位置', 'Col')}</div><div class="loc-value">${d.col}</div></div>
-      </div>
-      <div class="loc-full">📍 ${getShelfLabel(d.shelf)} · ${d.row}-${d.col}</div>
-    </div>`;
-  } else {
-    el.innerHTML = `<div class="not-found"><div style="font-size:48px;margin-bottom:12px">🔍</div><div style="color:#555">${bi('找不到', 'Not found')} <strong>${sku}</strong><br>${bi('请先录入这个产品', 'Map this SKU first')}</div></div>`;
+  if (!query) return;
+  const matches = searchSkuPartial(query);
+  if (!matches.length) {
+    lastSearchMatches = [];
+    el.innerHTML = `<div class="not-found"><div style="font-size:48px;margin-bottom:12px">🔍</div><div style="color:#555">${bi('找不到', 'Not found')} <strong>${escHtml(query)}</strong><br>${bi('可试片段搜索，如 4550 8', 'Try partial search, e.g. 4550 8')}</div></div>`;
+    return;
   }
+  if (matches.length === 1) {
+    lastSearchMatches = [];
+    el.innerHTML = renderSearchResultCard(matches[0]);
+    return;
+  }
+  lastSearchMatches = matches;
+  el.innerHTML = `<div class="result-card" style="padding:18px">
+    <div class="result-sku">${bi(`找到 ${matches.length} 个，点选一个`, `${matches.length} matches — tap one`)}</div>
+    <div class="search-picks">${matches.map((m, i) =>
+      `<button type="button" class="search-pick" onclick="pickSearchResult(${i})">${escHtml(m.sku)}<br><span style="font-size:14px;color:var(--muted);font-weight:600">📍 ${escHtml(getShelfLabel(m.shelf))} · ${m.row}-${m.col}</span></button>`
+    ).join('')}</div>
+  </div>`;
+}
+function pickSearchResult(i) {
+  const m = lastSearchMatches[i];
+  if (!m) return;
+  document.getElementById('searchInput').value = m.sku;
+  document.getElementById('searchResult').innerHTML = renderSearchResultCard(m);
+}
+function renderSearchResultCard(d) {
+  return `<div class="result-card">
+    <div class="result-sku">SKU: ${escHtml(d.sku)}</div>
+    <div class="result-name">${d.name ? escHtml(d.name) : bi('（未填名称）', '(no name)')}</div>
+    <div class="loc-grid">
+      <div class="loc-item"><div class="loc-label">${bi('货架', 'Shelf')}</div><div class="loc-value">${escHtml(d.shelf)}</div></div>
+      <div class="loc-item"><div class="loc-label">${bi('层', 'Row')}</div><div class="loc-value">${d.row}</div></div>
+      <div class="loc-item"><div class="loc-label">${bi('位置', 'Col')}</div><div class="loc-value">${d.col}</div></div>
+    </div>
+    <div class="loc-full">📍 ${escHtml(getShelfLabel(d.shelf))} · ${d.row}-${d.col}</div>
+  </div>`;
+}
+function getAllMappedSkus() {
+  const seen = new Set();
+  const list = [];
+  for (const [key, val] of Object.entries(db)) {
+    if (!isCellKey(key) || !val || !val.sku) continue;
+    const sku = val.sku;
+    const norm = normalizeSkuToken(sku);
+    if (seen.has(norm)) continue;
+    seen.add(norm);
+    const meta = db[sku] || {};
+    list.push({ sku, name: meta.name || '', shelf: val.shelf, row: val.row, col: val.col });
+  }
+  return list;
+}
+function searchSkuPartial(query) {
+  const exact = lookupSkuLocation(query);
+  if (exact) return [{ sku: exact.sku || query, name: exact.name || '', shelf: exact.shelf, row: exact.row, col: exact.col }];
+  const tokens = query.split(/\s+/).map(t => t.trim()).filter(t => t.length > 0);
+  if (!tokens.length) return [];
+  const matches = getAllMappedSkus().filter(item => {
+    const hay = normalizeSkuToken(item.sku);
+    return tokens.every(tok => hay.includes(tok));
+  });
+  matches.sort((a, b) => a.sku.length - b.sku.length || a.sku.localeCompare(b.sku));
+  return matches.slice(0, 30);
 }
 
 const AMZ_ORDER_RE = /\b(\d{3}-\d{7}-\d{7})\b/;
@@ -1789,7 +1840,7 @@ function renderOrderResults() {
   el.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-let currentGroup='A', currentShelf='A1', scanMode='search', currentCell=null;
+let currentGroup='A', currentShelf='A1', scanMode='search', currentCell=null, mapScanTimer=null, lastSearchMatches=[];
 
 function renderGroupTabs() {
   const groups = getLayout().groups;
@@ -1967,7 +2018,12 @@ function setScanUI(mode){
 }
 function resetPhotoPreview(){document.getElementById('photoPreview').style.display='none';document.getElementById('photoPreview').src='';document.getElementById('photoPlaceholder').style.display='block';}
 function enablePhotoMode(msg){setScanUI('photo');resetPhotoPreview();document.getElementById('ocrStatus').textContent=msg||bi('点「拍照扫描」拍摄标签', 'Tap Snap to photograph label');}
+function cancelMapScanAdvance() {
+  if (mapScanTimer) { clearTimeout(mapScanTimer); mapScanTimer = null; }
+}
 function openScan(mode){
+  cancelMapScanAdvance();
+  if (mode === 'search') currentCell = null;
   scanMode=mode; capturedPhoto=null; scanSnapped=false; frozenOcrCanvas=null;
   document.getElementById('scanModal').classList.add('open');
   document.getElementById('videoWrap').classList.remove('frozen');
@@ -1984,10 +2040,15 @@ function openScan(mode){
     ci.style.display='block';
     ci.textContent=bi(`录入：${getShelfLabel(currentCell.shelf)} 第${currentCell.row}层 第${currentCell.col}个`, `Map: ${getShelfLabel(currentCell.shelf)} R${currentCell.row} C${currentCell.col}`);
     document.getElementById('modalTitle').textContent=`${bi('录入', 'Map')} ${currentCell.shelf}-${currentCell.row}-${currentCell.col}`;
+  } else if (mode === 'search') {
+    ci.style.display='none';
+    document.getElementById('modalTitle').textContent=bi('扫描查找 SKU', 'Scan to find SKU');
   } else {ci.style.display='none';document.getElementById('modalTitle').textContent=bi('扫描 SKU 标签', 'Scan SKU label');}
   if(window.isSecureContext&&navigator.mediaDevices&&navigator.mediaDevices.getUserMedia){
     setScanUI('live');
-    document.getElementById('ocrStatus').textContent=bi('对准红框，点下方「拍照扫描」', 'Align in red box, tap Snap below');
+    document.getElementById('ocrStatus').textContent=mode==='search'
+      ? bi('拍照后只查找库位，不会录入', 'Snap to find location only')
+      : bi('对准红框，点下方「拍照扫描」', 'Align in red box, tap Snap below');
     navigator.mediaDevices.getUserMedia({video:{facingMode:'environment',width:{ideal:1280},height:{ideal:720}}})
       .then(s=>{
         videoStream=s;
@@ -2000,6 +2061,7 @@ function openScan(mode){
   initOcr().catch(()=>{});
 }
 function closeScan(){
+  cancelMapScanAdvance();
   scanSnapped=false; frozenOcrCanvas=null;
   if(videoStream){videoStream.getTracks().forEach(t=>t.stop());videoStream=null;}
   document.getElementById('scanVideo').srcObject=null;
@@ -2123,10 +2185,17 @@ function pickScanCandidate(i){
   document.getElementById('scanSkuInput').focus();
 }
 function confirmScanSku(){
-  const raw=document.getElementById('scanSkuInput').value.trim().toUpperCase().replace(/\s+/g,'');
+  const raw=document.getElementById('scanSkuInput').value.trim().toUpperCase();
   if(!raw){showToast(bi('请输入 SKU', 'Enter SKU'));return;}
-  if(!isSkuCode(raw)){showToast(bi('SKU 格式不对，请检查', 'Invalid SKU format'));return;}
-  selectWord(raw);
+  if(scanMode==='search'){
+    document.getElementById('searchInput').value=raw;
+    closeScan();
+    doSearch();
+    return;
+  }
+  const compact=raw.replace(/\s+/g,'');
+  if(!isSkuCode(compact)){showToast(bi('SKU 格式不对，请检查', 'Invalid SKU format'));return;}
+  selectWord(compact);
 }
 async function runOcrFromCanvas(processed){
   document.getElementById('wordsList').innerHTML='';
@@ -2238,9 +2307,14 @@ function onPhotoSelected(e){
   img.src=url;
 }
 function selectWord(word){
-  word=normalizeText(word).toUpperCase();
-  if(scanMode==='search'){document.getElementById('searchInput').value=word;closeScan();doSearch();}
-  else if((scanMode==='map'||scanMode==='map-rescan')&&currentCell){
+  if(scanMode==='search'){
+    document.getElementById('searchInput').value=normalizeText(word).toUpperCase();
+    closeScan();
+    doSearch();
+    return;
+  }
+  word=normalizeText(word).toUpperCase().replace(/\s+/g,'');
+  if((scanMode==='map'||scanMode==='map-rescan')&&currentCell){
     const {shelf,row,col}=currentCell;
     const old=db[pk(shelf,row,col)];
     if(old&&old.sku!==word) delete db[old.sku];
@@ -2253,7 +2327,15 @@ function selectWord(word){
     const cfg=getShelfCfg(shelf);
     let nr=row,nc=col+1;
     if(nc>cfg.cols){nc=1;nr++;}
-    if(nr<=cfg.rows){currentCell={shelf,row:nr,col:nc};renderMap();setTimeout(()=>openScan('map'),400);}
+    if(nr<=cfg.rows){
+      currentCell={shelf,row:nr,col:nc};
+      renderMap();
+      mapScanTimer=setTimeout(()=>{
+        mapScanTimer=null;
+        if(scanMode==='map'&&currentCell&&document.getElementById('page-map').classList.contains('active'))
+          openScan('map');
+      },400);
+    }
     else{currentCell=null;renderMap();}
   }
 }
