@@ -11088,41 +11088,41 @@
       "row": 5,
       "col": 16
     },
-    "A31-5-18": {
-      "sku": "GEM-2605SY-21",
-      "shelf": "A31",
-      "row": 5,
-      "col": 18
-    },
-    "GEM-2605SY-21": {
-      "name": "",
-      "shelf": "A31",
-      "row": 5,
-      "col": 18
-    },
     "A31-5-19": {
-      "sku": "GEM-2605SY-22",
+      "sku": "GEM-2605SY-21",
       "shelf": "A31",
       "row": 5,
       "col": 19
     },
-    "GEM-2605SY-22": {
+    "GEM-2605SY-21": {
       "name": "",
       "shelf": "A31",
       "row": 5,
       "col": 19
     },
     "A31-5-20": {
-      "sku": "GEM-2605SY-20",
+      "sku": "GEM-2605SY-22",
       "shelf": "A31",
       "row": 5,
       "col": 20
+    },
+    "GEM-2605SY-22": {
+      "name": "",
+      "shelf": "A31",
+      "row": 5,
+      "col": 20
+    },
+    "A31-5-21": {
+      "sku": "GEM-2605SY-20",
+      "shelf": "A31",
+      "row": 5,
+      "col": 21
     },
     "GEM-2605SY-20": {
       "name": "",
       "shelf": "A31",
       "row": 5,
-      "col": 20
+      "col": 21
     }
   },
   "shelfCfg": {
@@ -11225,5 +11225,5 @@
       "GEM-2404MLY-63-10"
     ]
   },
-  "updatedAt": "2026-06-22T16:24:09.151Z"
+  "updatedAt": "2026-06-22T16:24:17.323Z"
 }
