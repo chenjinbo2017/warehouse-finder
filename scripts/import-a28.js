@@ -11,16 +11,18 @@ const DATA_PATH = path.join(ROOT, 'warehouse-data.json');
 
 const A28_ROWS = {
   1: [
-    'GEM-2407SY-02-1', 'GEM-2407SY-02-2', 'GEM-2407SY-02-3', 'GEM-2407SY-02-4', 'GEM-2407SY-02-5',
-    'GEM-2408SY-01-1', 'GEM-2408SY-01-2', 'GEM-2408SY-01-3', 'GEM-2408SY-01-4', 'GEM-2408SY-01-5',
-    'GEM-2408SY-02-1', 'GEM-2408SY-02-2', 'GEM-2408SY-02-3', 'GEM-2408SY-02-4', 'GEM-2408SY-02-5',
-    'GEM-2409SY-01-1', 'GEM-2409SY-01-2', 'GEM-2409SY-01-3', 'GEM-2409SY-01-4', 'GEM-2409SY-01-5',
+    'GEM-1159-6',
+    'COR-0111-02-2', 'COR-0111-02-3', 'COR-0111-02-4', 'COR-0111-02-6', 'COR-0111-02-8',
+    'COR-0111-02-10', 'COR-0111-02-12', 'COR-0111-02-14', 'COR-0111-02-16', 'COR-0111-02-18',
+    'COR-0111-02-20',
+    'COR-0111-04-2', 'COR-0111-04-3', 'COR-0111-04-4', 'COR-0111-04-6', 'COR-0111-04-8',
+    'COR-0111-04-10', 'COR-0111-01-2', 'COR-0111-01-3',
   ],
   2: [
-    'GEM-2409SY-02-1', 'GEM-2409SY-02-2', 'GEM-2409SY-02-3', 'GEM-2409SY-02-4', 'GEM-2409SY-02-5',
-    'GEM-2410SY-01-1', 'GEM-2410SY-01-2', 'GEM-2410SY-01-3', 'GEM-2410SY-01-4', 'GEM-2410SY-01-5',
-    'GEM-2410SY-02-1', 'GEM-2410SY-02-2', 'GEM-2410SY-02-3', 'GEM-2410SY-02-4', 'GEM-2410SY-02-5',
-    'GEM-2411SY-01-1', 'GEM-2411SY-01-2', 'GEM-2411SY-01-3', 'GEM-2411SY-01-4', 'GEM-2411SY-01-5',
+    'GEM-0111-02-2', 'GEM-0111-02-3', 'GEM-0111-02-4', 'GEM-0111-02-6', 'GEM-0111-02-8',
+    'GEM-0111-02-10', 'GEM-0111-02-12', 'GEM-0111-02-14',
+    'GEM-1120-1', 'GEM-1120-2', 'GEM-1120-3', 'GEM-1120-4',
+    'GEM-0111-02-16', 'GEM-0111-02-18', 'GEM-0111-02-20',
   ],
   3: [
     'GEM-2412SY-13', 'GEM-2412SY-14', 'GEM-2412SY-15', 'GEM-2412SY-16', 'GEM-2412SY-17',
@@ -87,10 +89,7 @@ function applyA28(data) {
       maxCol = Math.max(maxCol, col);
       const key = cellKey(shelf, row, col);
       data.db[key] = { sku, shelf, row, col };
-      const prev = data.db[sku];
-      if (!prev || !prev.shelf) {
-        data.db[sku] = { name: '', shelf, row, col };
-      }
+      data.db[sku] = { name: '', shelf, row, col };
       added++;
     });
   }
