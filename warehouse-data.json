@@ -11111,6 +11111,18 @@
       "shelf": "A31",
       "row": 8,
       "col": 20
+    },
+    "A31-5-18": {
+      "sku": "GEM-2605SY-14",
+      "shelf": "A31",
+      "row": 5,
+      "col": 18
+    },
+    "GEM-2605SY-14": {
+      "name": "",
+      "shelf": "A31",
+      "row": 5,
+      "col": 18
     }
   },
   "shelfCfg": {
@@ -11210,9 +11222,8 @@
       "7.GITHUB.IO/WARE",
       "SETNEWLIMIT",
       "R-5-OPA-0323-6",
-      "GEM-2404MLY-63-10",
-      "GEM-2605SY-14"
+      "GEM-2404MLY-63-10"
     ]
   },
-  "updatedAt": "2026-06-22T16:26:44.502Z"
+  "updatedAt": "2026-06-22T17:22:45.327Z"
 }
