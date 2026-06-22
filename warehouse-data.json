@@ -1308,258 +1308,6 @@
       "row": 7,
       "col": 20
     },
-    "A31-8-1": {
-      "sku": "GEM-2408SY-46",
-      "shelf": "A31",
-      "row": 8,
-      "col": 1
-    },
-    "GEM-2408SY-46": {
-      "name": "",
-      "shelf": "A31",
-      "row": 8,
-      "col": 1
-    },
-    "A31-8-2": {
-      "sku": "GEM-2407SY-88",
-      "shelf": "A31",
-      "row": 8,
-      "col": 2
-    },
-    "GEM-2407SY-88": {
-      "name": "",
-      "shelf": "A31",
-      "row": 8,
-      "col": 2
-    },
-    "A31-8-3": {
-      "sku": "GEM-2407SY-89",
-      "shelf": "A31",
-      "row": 8,
-      "col": 3
-    },
-    "GEM-2407SY-89": {
-      "name": "",
-      "shelf": "A31",
-      "row": 8,
-      "col": 3
-    },
-    "A31-8-4": {
-      "sku": "GEM-2407SY-90",
-      "shelf": "A31",
-      "row": 8,
-      "col": 4
-    },
-    "GEM-2407SY-90": {
-      "name": "",
-      "shelf": "A31",
-      "row": 8,
-      "col": 4
-    },
-    "A31-8-5": {
-      "sku": "GEM-2305SY-24",
-      "shelf": "A31",
-      "row": 8,
-      "col": 5
-    },
-    "GEM-2305SY-24": {
-      "name": "",
-      "shelf": "A31",
-      "row": 8,
-      "col": 5
-    },
-    "A31-8-6": {
-      "sku": "GEM-2407SY-91",
-      "shelf": "A31",
-      "row": 8,
-      "col": 6
-    },
-    "GEM-2407SY-91": {
-      "name": "",
-      "shelf": "A31",
-      "row": 8,
-      "col": 6
-    },
-    "A31-8-7": {
-      "sku": "GEM-2411MLY-112",
-      "shelf": "A31",
-      "row": 8,
-      "col": 7
-    },
-    "GEM-2411MLY-112": {
-      "name": "",
-      "shelf": "A31",
-      "row": 8,
-      "col": 7
-    },
-    "A31-8-8": {
-      "sku": "GEM-2411SY-129",
-      "shelf": "A31",
-      "row": 8,
-      "col": 8
-    },
-    "GEM-2411SY-129": {
-      "name": "",
-      "shelf": "A31",
-      "row": 8,
-      "col": 8
-    },
-    "A31-8-9": {
-      "sku": "GEM-2605SY-12",
-      "shelf": "A31",
-      "row": 8,
-      "col": 9
-    },
-    "GEM-2605SY-12": {
-      "name": "",
-      "shelf": "A31",
-      "row": 8,
-      "col": 9
-    },
-    "A31-8-10": {
-      "sku": "GEM-2605SY-13",
-      "shelf": "A31",
-      "row": 8,
-      "col": 10
-    },
-    "GEM-2605SY-13": {
-      "name": "",
-      "shelf": "A31",
-      "row": 8,
-      "col": 10
-    },
-    "A31-8-11": {
-      "sku": "GEM-2605SY-14",
-      "shelf": "A31",
-      "row": 8,
-      "col": 11
-    },
-    "GEM-2605SY-14": {
-      "name": "",
-      "shelf": "A31",
-      "row": 8,
-      "col": 11
-    },
-    "A31-8-12": {
-      "sku": "GEM-2208SY-125",
-      "shelf": "A31",
-      "row": 8,
-      "col": 12
-    },
-    "GEM-2208SY-125": {
-      "name": "",
-      "shelf": "A31",
-      "row": 8,
-      "col": 12
-    },
-    "A31-8-13": {
-      "sku": "GEM-2604SY-24",
-      "shelf": "A31",
-      "row": 8,
-      "col": 13
-    },
-    "GEM-2604SY-24": {
-      "name": "",
-      "shelf": "A31",
-      "row": 8,
-      "col": 13
-    },
-    "A31-8-14": {
-      "sku": "GEM-2511SY-191",
-      "shelf": "A31",
-      "row": 8,
-      "col": 14
-    },
-    "GEM-2511SY-191": {
-      "name": "",
-      "shelf": "A31",
-      "row": 8,
-      "col": 14
-    },
-    "A31-8-15": {
-      "sku": "GEM-2308SY-78",
-      "shelf": "A31",
-      "row": 8,
-      "col": 15
-    },
-    "GEM-2308SY-78": {
-      "name": "",
-      "shelf": "A31",
-      "row": 8,
-      "col": 15
-    },
-    "A31-8-16": {
-      "sku": "20171108-QCZB",
-      "shelf": "A31",
-      "row": 8,
-      "col": 16
-    },
-    "20171108-QCZB": {
-      "name": "",
-      "shelf": "A31",
-      "row": 8,
-      "col": 16
-    },
-    "A31-8-17": {
-      "sku": "GEM-2305SY-10",
-      "shelf": "A31",
-      "row": 8,
-      "col": 17
-    },
-    "GEM-2305SY-10": {
-      "name": "",
-      "shelf": "A31",
-      "row": 8,
-      "col": 17
-    },
-    "A31-8-18": {
-      "sku": "GEM-2306SY-10",
-      "shelf": "A31",
-      "row": 8,
-      "col": 18
-    },
-    "GEM-2306SY-10": {
-      "name": "",
-      "shelf": "A31",
-      "row": 8,
-      "col": 18
-    },
-    "A31-8-19": {
-      "sku": "GEM-2305SY-28",
-      "shelf": "A31",
-      "row": 8,
-      "col": 19
-    },
-    "GEM-2305SY-28": {
-      "name": "",
-      "shelf": "A31",
-      "row": 8,
-      "col": 19
-    },
-    "A31-8-20": {
-      "sku": "GEM-2305SY-12",
-      "shelf": "A31",
-      "row": 8,
-      "col": 20
-    },
-    "GEM-2305SY-12": {
-      "name": "",
-      "shelf": "A31",
-      "row": 8,
-      "col": 20
-    },
-    "A31-8-21": {
-      "sku": "BLOB-1616-6",
-      "shelf": "A31",
-      "row": 8,
-      "col": 21
-    },
-    "BLOB-1616-6": {
-      "name": "",
-      "shelf": "A31",
-      "row": 9,
-      "col": 1
-    },
     "A31-9-1": {
       "sku": "BLOB-1616-6",
       "shelf": "A31",
@@ -11123,6 +10871,246 @@
       "shelf": "A31",
       "row": 5,
       "col": 21
+    },
+    "A31-8-1": {
+      "sku": "GEM-2408SY-46",
+      "shelf": "A31",
+      "row": 8,
+      "col": 1
+    },
+    "GEM-2408SY-46": {
+      "name": "",
+      "shelf": "A31",
+      "row": 8,
+      "col": 1
+    },
+    "A31-8-2": {
+      "sku": "GEM-2407SY-88",
+      "shelf": "A31",
+      "row": 8,
+      "col": 2
+    },
+    "GEM-2407SY-88": {
+      "name": "",
+      "shelf": "A31",
+      "row": 8,
+      "col": 2
+    },
+    "A31-8-3": {
+      "sku": "GEM-2407SY-89",
+      "shelf": "A31",
+      "row": 8,
+      "col": 3
+    },
+    "GEM-2407SY-89": {
+      "name": "",
+      "shelf": "A31",
+      "row": 8,
+      "col": 3
+    },
+    "A31-8-4": {
+      "sku": "GEM-2407SY-90",
+      "shelf": "A31",
+      "row": 8,
+      "col": 4
+    },
+    "GEM-2407SY-90": {
+      "name": "",
+      "shelf": "A31",
+      "row": 8,
+      "col": 4
+    },
+    "A31-8-5": {
+      "sku": "GEM-2305SY-24",
+      "shelf": "A31",
+      "row": 8,
+      "col": 5
+    },
+    "GEM-2305SY-24": {
+      "name": "",
+      "shelf": "A31",
+      "row": 8,
+      "col": 5
+    },
+    "A31-8-6": {
+      "sku": "GEM-2407SY-91",
+      "shelf": "A31",
+      "row": 8,
+      "col": 6
+    },
+    "GEM-2407SY-91": {
+      "name": "",
+      "shelf": "A31",
+      "row": 8,
+      "col": 6
+    },
+    "A31-8-7": {
+      "sku": "GEM-2411MLY-112",
+      "shelf": "A31",
+      "row": 8,
+      "col": 7
+    },
+    "GEM-2411MLY-112": {
+      "name": "",
+      "shelf": "A31",
+      "row": 8,
+      "col": 7
+    },
+    "A31-8-8": {
+      "sku": "GEM-2411SY-129",
+      "shelf": "A31",
+      "row": 8,
+      "col": 8
+    },
+    "GEM-2411SY-129": {
+      "name": "",
+      "shelf": "A31",
+      "row": 8,
+      "col": 8
+    },
+    "A31-8-9": {
+      "sku": "GEM-2605SY-12",
+      "shelf": "A31",
+      "row": 8,
+      "col": 9
+    },
+    "GEM-2605SY-12": {
+      "name": "",
+      "shelf": "A31",
+      "row": 8,
+      "col": 9
+    },
+    "A31-8-10": {
+      "sku": "GEM-2605SY-13",
+      "shelf": "A31",
+      "row": 8,
+      "col": 10
+    },
+    "GEM-2605SY-13": {
+      "name": "",
+      "shelf": "A31",
+      "row": 8,
+      "col": 10
+    },
+    "A31-8-11": {
+      "sku": "GEM-2208SY-125",
+      "shelf": "A31",
+      "row": 8,
+      "col": 11
+    },
+    "GEM-2208SY-125": {
+      "name": "",
+      "shelf": "A31",
+      "row": 8,
+      "col": 11
+    },
+    "A31-8-12": {
+      "sku": "GEM-2604SY-24",
+      "shelf": "A31",
+      "row": 8,
+      "col": 12
+    },
+    "GEM-2604SY-24": {
+      "name": "",
+      "shelf": "A31",
+      "row": 8,
+      "col": 12
+    },
+    "A31-8-13": {
+      "sku": "GEM-2511SY-191",
+      "shelf": "A31",
+      "row": 8,
+      "col": 13
+    },
+    "GEM-2511SY-191": {
+      "name": "",
+      "shelf": "A31",
+      "row": 8,
+      "col": 13
+    },
+    "A31-8-14": {
+      "sku": "GEM-2308SY-78",
+      "shelf": "A31",
+      "row": 8,
+      "col": 14
+    },
+    "GEM-2308SY-78": {
+      "name": "",
+      "shelf": "A31",
+      "row": 8,
+      "col": 14
+    },
+    "A31-8-15": {
+      "sku": "20171108-QCZB",
+      "shelf": "A31",
+      "row": 8,
+      "col": 15
+    },
+    "20171108-QCZB": {
+      "name": "",
+      "shelf": "A31",
+      "row": 8,
+      "col": 15
+    },
+    "A31-8-16": {
+      "sku": "GEM-2305SY-10",
+      "shelf": "A31",
+      "row": 8,
+      "col": 16
+    },
+    "GEM-2305SY-10": {
+      "name": "",
+      "shelf": "A31",
+      "row": 8,
+      "col": 16
+    },
+    "A31-8-17": {
+      "sku": "GEM-2306SY-10",
+      "shelf": "A31",
+      "row": 8,
+      "col": 17
+    },
+    "GEM-2306SY-10": {
+      "name": "",
+      "shelf": "A31",
+      "row": 8,
+      "col": 17
+    },
+    "A31-8-18": {
+      "sku": "GEM-2305SY-28",
+      "shelf": "A31",
+      "row": 8,
+      "col": 18
+    },
+    "GEM-2305SY-28": {
+      "name": "",
+      "shelf": "A31",
+      "row": 8,
+      "col": 18
+    },
+    "A31-8-19": {
+      "sku": "GEM-2305SY-12",
+      "shelf": "A31",
+      "row": 8,
+      "col": 19
+    },
+    "GEM-2305SY-12": {
+      "name": "",
+      "shelf": "A31",
+      "row": 8,
+      "col": 19
+    },
+    "A31-8-20": {
+      "sku": "BLOB-1616-6",
+      "shelf": "A31",
+      "row": 8,
+      "col": 20
+    },
+    "BLOB-1616-6": {
+      "name": "",
+      "shelf": "A31",
+      "row": 8,
+      "col": 20
     }
   },
   "shelfCfg": {
@@ -11222,8 +11210,9 @@
       "7.GITHUB.IO/WARE",
       "SETNEWLIMIT",
       "R-5-OPA-0323-6",
-      "GEM-2404MLY-63-10"
+      "GEM-2404MLY-63-10",
+      "GEM-2605SY-14"
     ]
   },
-  "updatedAt": "2026-06-22T16:24:17.323Z"
+  "updatedAt": "2026-06-22T16:26:44.502Z"
 }
