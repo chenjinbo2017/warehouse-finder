@@ -642,12 +642,6 @@
       "row": 4,
       "col": 6
     },
-    "GEM-2412SY-06": {
-      "name": "",
-      "shelf": "A1",
-      "row": 4,
-      "col": 8
-    },
     "A31-4-7": {
       "sku": "GEM-2412SY-09",
       "shelf": "A31",
@@ -11640,12 +11634,6 @@
       "row": 3,
       "col": 2
     },
-    "GEM-2412SY-14": {
-      "name": "",
-      "shelf": "A1",
-      "row": 4,
-      "col": 12
-    },
     "A28-3-3": {
       "sku": "GEM-2412SY-15",
       "shelf": "A28",
@@ -11844,12 +11832,6 @@
       "row": 4,
       "col": 2
     },
-    "GEM-2412SY-08": {
-      "name": "",
-      "shelf": "A1",
-      "row": 4,
-      "col": 9
-    },
     "A28-4-3": {
       "sku": "GEM-2412SY-06",
       "shelf": "A28",
@@ -12012,22 +11994,10 @@
       "row": 5,
       "col": 1
     },
-    "GEM-2508-100": {
-      "name": "",
-      "shelf": "A1",
-      "row": 9,
-      "col": 1
-    },
     "A28-5-2": {
       "sku": "GEM-2508-27",
       "shelf": "A28",
       "row": 5,
-      "col": 2
-    },
-    "GEM-2508-27": {
-      "name": "",
-      "shelf": "A1",
-      "row": 9,
       "col": 2
     },
     "A28-5-3": {
@@ -12384,23 +12354,11 @@
       "row": 7,
       "col": 1
     },
-    "GEM-4550-10": {
-      "name": "",
-      "shelf": "A1",
-      "row": 5,
-      "col": 2
-    },
     "A28-7-2": {
       "sku": "GEM-4550-8",
       "shelf": "A28",
       "row": 7,
       "col": 2
-    },
-    "GEM-4550-8": {
-      "name": "",
-      "shelf": "A1",
-      "row": 5,
-      "col": 1
     },
     "A28-7-3": {
       "sku": "GEM-4550-6",
@@ -12949,220 +12907,244 @@
       "col": 21
     },
     "A1-1-1": {
-      "sku": "GEM-DS-16001-4",
+      "sku": "GEM-2309SY-101-4",
       "shelf": "A1",
       "row": 1,
       "col": 1
     },
-    "GEM-DS-16001-4": {
+    "GEM-2309SY-101-4": {
       "name": "",
       "shelf": "A1",
       "row": 1,
       "col": 1
     },
     "A1-1-2": {
-      "sku": "GEM-DS-16001-6",
+      "sku": "GEM-2309SY-101-6",
       "shelf": "A1",
       "row": 1,
       "col": 2
     },
-    "GEM-DS-16001-6": {
+    "GEM-2309SY-101-6": {
       "name": "",
       "shelf": "A1",
       "row": 1,
       "col": 2
     },
     "A1-1-3": {
-      "sku": "GEM-DS-16001-8",
+      "sku": "GEM-2309SY-101-8",
       "shelf": "A1",
       "row": 1,
       "col": 3
     },
-    "GEM-DS-16001-8": {
+    "GEM-2309SY-101-8": {
       "name": "",
       "shelf": "A1",
       "row": 1,
       "col": 3
     },
     "A1-1-4": {
-      "sku": "GEM-DS-16001-10",
+      "sku": "GEM-2309SY-101-10",
       "shelf": "A1",
       "row": 1,
       "col": 4
     },
-    "GEM-DS-16001-10": {
+    "GEM-2309SY-101-10": {
       "name": "",
       "shelf": "A1",
       "row": 1,
       "col": 4
     },
     "A1-1-5": {
-      "sku": "GEM-DS-16001-12",
+      "sku": "GEM-2309SY-101-12",
       "shelf": "A1",
       "row": 1,
       "col": 5
     },
-    "GEM-DS-16001-12": {
+    "GEM-2309SY-101-12": {
       "name": "",
       "shelf": "A1",
       "row": 1,
       "col": 5
     },
     "A1-1-6": {
-      "sku": "GEM-DS-16001-14",
+      "sku": "GEM-2309SY-101-14",
       "shelf": "A1",
       "row": 1,
       "col": 6
     },
-    "GEM-DS-16001-14": {
+    "GEM-2309SY-101-14": {
       "name": "",
       "shelf": "A1",
       "row": 1,
       "col": 6
     },
     "A1-1-7": {
-      "sku": "GEM-SY-02-01",
+      "sku": "GEM-2309SY-101-16",
       "shelf": "A1",
       "row": 1,
       "col": 7
     },
-    "GEM-SY-02-01": {
+    "GEM-2309SY-101-16": {
       "name": "",
       "shelf": "A1",
       "row": 1,
       "col": 7
     },
     "A1-1-8": {
-      "sku": "GEM-SY-02-02",
+      "sku": "GEM-2309SY-101-18",
       "shelf": "A1",
       "row": 1,
       "col": 8
     },
-    "GEM-SY-02-02": {
+    "GEM-2309SY-101-18": {
       "name": "",
       "shelf": "A1",
       "row": 1,
       "col": 8
     },
+    "A1-1-9": {
+      "sku": "GEM-2309SY-101-20",
+      "shelf": "A1",
+      "row": 1,
+      "col": 9
+    },
+    "GEM-2309SY-101-20": {
+      "name": "",
+      "shelf": "A1",
+      "row": 1,
+      "col": 9
+    },
     "A1-2-1": {
-      "sku": "GEM-SY-02-03",
+      "sku": "GEM-2309SY-102-6",
       "shelf": "A1",
       "row": 2,
       "col": 1
     },
-    "GEM-SY-02-03": {
+    "GEM-2309SY-102-6": {
       "name": "",
       "shelf": "A1",
       "row": 2,
       "col": 1
     },
     "A1-2-2": {
-      "sku": "GEM-SY-02-04",
+      "sku": "GEM-2309SY-102-8",
       "shelf": "A1",
       "row": 2,
       "col": 2
     },
-    "GEM-SY-02-04": {
+    "GEM-2309SY-102-8": {
       "name": "",
       "shelf": "A1",
       "row": 2,
       "col": 2
     },
     "A1-2-3": {
-      "sku": "GEM-SY-02-05",
+      "sku": "GEM-2309SY-102-10",
       "shelf": "A1",
       "row": 2,
       "col": 3
     },
-    "GEM-SY-02-05": {
+    "GEM-2309SY-102-10": {
       "name": "",
       "shelf": "A1",
       "row": 2,
       "col": 3
     },
     "A1-2-4": {
-      "sku": "GEM-SY-02-06",
+      "sku": "GEM-2309SY-102-12",
       "shelf": "A1",
       "row": 2,
       "col": 4
     },
-    "GEM-SY-02-06": {
+    "GEM-2309SY-102-12": {
       "name": "",
       "shelf": "A1",
       "row": 2,
       "col": 4
     },
     "A1-2-5": {
-      "sku": "GEM-2201SY-01-10",
+      "sku": "GEM-2309SY-103-6",
       "shelf": "A1",
       "row": 2,
       "col": 5
     },
-    "GEM-2201SY-01-10": {
+    "GEM-2309SY-103-6": {
       "name": "",
       "shelf": "A1",
       "row": 2,
       "col": 5
     },
     "A1-2-6": {
-      "sku": "GEM-2208SY-101-8",
+      "sku": "GEM-2309SY-103-8",
       "shelf": "A1",
       "row": 2,
       "col": 6
     },
-    "GEM-2208SY-101-8": {
+    "GEM-2309SY-103-8": {
       "name": "",
       "shelf": "A1",
       "row": 2,
       "col": 6
     },
     "A1-2-7": {
-      "sku": "GEM-2208SY-101-10",
+      "sku": "GEM-2309SY-103-10",
       "shelf": "A1",
       "row": 2,
       "col": 7
     },
-    "GEM-2208SY-101-10": {
+    "GEM-2309SY-103-10": {
       "name": "",
       "shelf": "A1",
       "row": 2,
       "col": 7
     },
     "A1-2-8": {
-      "sku": "GEM-2208SY-101-12",
+      "sku": "GEM-2309SY-103-12",
       "shelf": "A1",
       "row": 2,
       "col": 8
     },
-    "GEM-2208SY-101-12": {
+    "GEM-2309SY-103-12": {
       "name": "",
       "shelf": "A1",
       "row": 2,
       "col": 8
     },
     "A1-2-9": {
-      "sku": "GEM-2208SY-101-14",
+      "sku": "GEM-2309SY-104-6",
       "shelf": "A1",
       "row": 2,
       "col": 9
     },
-    "GEM-2208SY-101-14": {
+    "GEM-2309SY-104-6": {
       "name": "",
       "shelf": "A1",
       "row": 2,
       "col": 9
     },
     "A1-2-10": {
-      "sku": "GEM-2208SY-101-16",
+      "sku": "GEM-2309SY-104-8",
       "shelf": "A1",
       "row": 2,
       "col": 10
     },
-    "GEM-2208SY-101-16": {
+    "GEM-2309SY-104-8": {
       "name": "",
       "shelf": "A1",
       "row": 2,
       "col": 10
+    },
+    "A1-2-11": {
+      "sku": "GEM-2309SY-104-10",
+      "shelf": "A1",
+      "row": 2,
+      "col": 11
+    },
+    "GEM-2309SY-104-10": {
+      "name": "",
+      "shelf": "A1",
+      "row": 2,
+      "col": 11
     },
     "A1-3-1": {
       "sku": "GEM-1114-10",
@@ -13386,8 +13368,20 @@
       "row": 4,
       "col": 8
     },
+    "GEM-2412SY-06": {
+      "name": "",
+      "shelf": "A1",
+      "row": 4,
+      "col": 8
+    },
     "A1-4-9": {
       "sku": "GEM-2412SY-08",
+      "shelf": "A1",
+      "row": 4,
+      "col": 9
+    },
+    "GEM-2412SY-08": {
+      "name": "",
       "shelf": "A1",
       "row": 4,
       "col": 9
@@ -13422,14 +13416,32 @@
       "row": 4,
       "col": 12
     },
+    "GEM-2412SY-14": {
+      "name": "",
+      "shelf": "A1",
+      "row": 4,
+      "col": 12
+    },
     "A1-5-1": {
       "sku": "GEM-4550-8",
       "shelf": "A1",
       "row": 5,
       "col": 1
     },
+    "GEM-4550-8": {
+      "name": "",
+      "shelf": "A1",
+      "row": 5,
+      "col": 1
+    },
     "A1-5-2": {
       "sku": "GEM-4550-10",
+      "shelf": "A1",
+      "row": 5,
+      "col": 2
+    },
+    "GEM-4550-10": {
+      "name": "",
       "shelf": "A1",
       "row": 5,
       "col": 2
@@ -13884,8 +13896,20 @@
       "row": 9,
       "col": 1
     },
+    "GEM-2508-100": {
+      "name": "",
+      "shelf": "A1",
+      "row": 9,
+      "col": 1
+    },
     "A1-9-2": {
       "sku": "GEM-2508-27",
+      "shelf": "A1",
+      "row": 9,
+      "col": 2
+    },
+    "GEM-2508-27": {
+      "name": "",
       "shelf": "A1",
       "row": 9,
       "col": 2
@@ -14106,5 +14130,5 @@
       "GEM-2404MLY-63-10"
     ]
   },
-  "updatedAt": "2026-06-22T23:02:22.620Z"
+  "updatedAt": "2026-06-22T23:34:06.240Z"
 }
