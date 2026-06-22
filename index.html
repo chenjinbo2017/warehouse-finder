@@ -262,7 +262,7 @@ header h1{font-size:22px;font-weight:700;line-height:1.25;letter-spacing:.01em}
   <div id="searchResult"></div>
   <div class="search-box orders-box">
     <div class="search-label">粘贴 Etsy / Amazon 订单 / Paste Orders</div>
-    <textarea id="orderPaste" class="order-paste" placeholder="整段复制即可，描述价格会自动忽略&#10;#10001 · SKU GEM-2408SY-19 · Quantity 9（有空格无空格都行）"></textarea>
+    <textarea id="orderPaste" class="order-paste" placeholder="整段复制，按 # 出现顺序排单&#10;#10001 · SKU GEM-xxx · Quantity 9"></textarea>
     <button class="btn-search" onclick="parseAndMatchOrders()">匹配库位 / Match Locations</button>
   </div>
   <div id="orderResult"></div>
@@ -1481,75 +1481,87 @@ function parseCompanyQtyLine(line) {
 }
 
 function parseCompanyFormat(text) {
-  const items = [];
-  let currentOrder = '';
+  const orders = [];
+  let current = null;
   let pendingSku = '';
   let pendingField = '';
-  const lines = normalizePasteText(text).split('\n').map(l => l.trim()).filter(Boolean);
+  const noOrderId = bi('（未识别订单号）', '(no order ID)');
 
-  for (const line of lines) {
-    const orderId = extractHashOrder(line);
-    if (orderId) currentOrder = orderId;
+  function startOrder(orderId) {
+    const oid = orderId || noOrderId;
+    current = { orderId: oid, platform: AMZ_ORDER_RE.test(orderId || '') ? 'Amazon' : '', lines: [] };
+    orders.push(current);
+    pendingSku = '';
+    pendingField = '';
+  }
 
-    const chunks = parseSkuQuantityChunks(line);
-    if (chunks.length) {
-      pendingSku = '';
-      pendingField = '';
-      const oid = currentOrder || bi('（未识别订单号）', '(no order ID)');
-      const platform = AMZ_ORDER_RE.test(currentOrder) ? 'Amazon' : '';
-      for (const c of chunks) items.push({ orderId: oid, sku: c.sku, qty: c.qty, platform });
-      continue;
-    }
+  function pushLine(sku, qty) {
+    if (!current) startOrder('');
+    current.lines.push({ sku, qty });
+  }
 
-    if (/^SKU\s*:?\s*$/i.test(line)) { pendingField = 'sku'; pendingSku = ''; continue; }
-    if (/^Quantity\s*:?\s*$/i.test(line)) { pendingField = 'qty'; continue; }
+  function processLines(lines) {
+    for (const line of lines) {
+      const orderId = extractHashOrder(line);
+      if (orderId) startOrder(orderId);
 
-    if (pendingField === 'sku') {
-      const sku = normalizeSkuToken(line);
-      if (isSkuCode(sku)) { pendingSku = sku; pendingField = ''; continue; }
-      pendingField = '';
-    }
-    if (pendingField === 'qty' && pendingSku) {
-      const qm = line.match(/^(\d+)\s*$/);
-      if (qm) {
-        const oid = currentOrder || bi('（未识别订单号）', '(no order ID)');
-        items.push({ orderId: oid, sku: pendingSku, qty: parseInt(qm[1], 10) || 1, platform: AMZ_ORDER_RE.test(currentOrder) ? 'Amazon' : '' });
+      const chunks = parseSkuQuantityChunks(line);
+      if (chunks.length) {
         pendingSku = '';
+        pendingField = '';
+        for (const c of chunks) pushLine(c.sku, c.qty);
+        continue;
+      }
+
+      if (/^SKU\s*:?\s*$/i.test(line)) { pendingField = 'sku'; pendingSku = ''; continue; }
+      if (/^Quantity\s*:?\s*$/i.test(line)) { pendingField = 'qty'; continue; }
+
+      if (pendingField === 'sku') {
+        const sku = normalizeSkuToken(line);
+        if (isSkuCode(sku)) { pendingSku = sku; pendingField = ''; continue; }
+        pendingField = '';
+      }
+      if (pendingField === 'qty' && pendingSku) {
+        const qm = line.match(/^(\d+)\s*$/);
+        if (qm) {
+          pushLine(pendingSku, parseInt(qm[1], 10) || 1);
+          pendingSku = '';
+          pendingField = '';
+          continue;
+        }
+        pendingField = '';
+      }
+
+      const skuOnly = parseCompanySkuLine(line);
+      if (skuOnly) {
+        pendingSku = skuOnly;
         pendingField = '';
         continue;
       }
-      pendingField = '';
-    }
-
-    const skuOnly = parseCompanySkuLine(line);
-    if (skuOnly) {
-      pendingSku = skuOnly;
-      pendingField = '';
-      continue;
-    }
-    const qtyOnly = parseCompanyQtyLine(line);
-    if (qtyOnly !== null && pendingSku) {
-      const oid = currentOrder || bi('（未识别订单号）', '(no order ID)');
-      items.push({ orderId: oid, sku: pendingSku, qty: qtyOnly, platform: AMZ_ORDER_RE.test(currentOrder) ? 'Amazon' : '' });
-      pendingSku = '';
-      pendingField = '';
+      const qtyOnly = parseCompanyQtyLine(line);
+      if (qtyOnly !== null && pendingSku) {
+        pushLine(pendingSku, qtyOnly);
+        pendingSku = '';
+        pendingField = '';
+      }
     }
   }
 
-  if (!items.length) {
-    const flat = normalizePasteText(text).replace(/[\r\n]+/g, ' ');
-    const orderId = extractHashOrder(flat);
-    if (orderId) currentOrder = orderId;
-    for (const c of parseSkuQuantityChunks(flat)) {
-      items.push({
-        orderId: currentOrder || bi('（未识别订单号）', '(no order ID)'),
-        sku: c.sku,
-        qty: c.qty,
-        platform: AMZ_ORDER_RE.test(currentOrder) ? 'Amazon' : ''
-      });
+  const lines = normalizePasteText(text).split('\n').map(l => l.trim()).filter(Boolean);
+  processLines(lines);
+
+  if (!orders.some(o => o.lines.length)) {
+    orders.length = 0;
+    current = null;
+    pendingSku = '';
+    pendingField = '';
+    const segments = normalizePasteText(text).split(/(?=#)/).map(s => s.trim()).filter(Boolean);
+    for (const seg of segments) {
+      processLines(seg.split('\n').map(l => l.trim()).filter(Boolean));
     }
   }
-  return items;
+
+  return orders.filter(o => o.lines.length > 0);
 }
 
 function parseOrderFromLine(line) {
@@ -1705,9 +1717,9 @@ function parseOrdersFromPaste(text) {
   if (!raw) return { platform: '', orders: [] };
   const lines = raw.split('\n').filter(l => l.trim());
   if (looksLikeCompanyOrderFormat(raw) || /SKU\s*[A-Z0-9][A-Z0-9\-./]*\s*Quantity\s*\d+/i.test(raw)) {
-    const companyItems = parseCompanyFormat(raw);
-    if (companyItems.length) {
-      return { platform: '', orders: groupOrderLines(companyItems) };
+    const companyOrders = parseCompanyFormat(raw);
+    if (companyOrders.length) {
+      return { platform: '', orders: companyOrders };
     }
   }
   const tabular = lines.length >= 2 ? parseTabularOrders(lines) : null;
