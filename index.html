@@ -262,7 +262,7 @@ header h1{font-size:22px;font-weight:700;line-height:1.25;letter-spacing:.01em}
   <div id="searchResult"></div>
   <div class="search-box orders-box">
     <div class="search-label">粘贴 Etsy / Amazon 订单 / Paste Orders</div>
-    <textarea id="orderPaste" class="order-paste" placeholder="按文字顺序：#订单号 → SKU编号 → Quantity数量 → #下一单&#10;描述价格等会自动忽略"></textarea>
+    <textarea id="orderPaste" class="order-paste" placeholder="按文字顺序：#订单号 → Quantity数量 → SKU编号 → #下一单&#10;描述价格等会自动忽略"></textarea>
     <button class="btn-search" onclick="parseAndMatchOrders()">匹配库位 / Match Locations</button>
   </div>
   <div id="orderResult"></div>
@@ -1467,31 +1467,31 @@ function parseCompanyFormat(text) {
   const raw = normalizePasteText(text);
   const orders = [];
   let current = null;
-  let pendingSku = null;
+  let pendingQty = null;
   const noOrderId = bi('（未识别订单号）', '(no order ID)');
 
-  const re = /#(\d{3}-\d{7}-\d{7})|#([A-Z0-9][A-Z0-9\-]*?)(?=\s*(?:SKU\b)|[\r\n]|$)|SKU\s*:?\s*([A-Z0-9][A-Z0-9\-./]+)|Quantity\s*:?\s*(\d+)/gi;
+  const re = /#(\d{3}-\d{7}-\d{7})|#([A-Z0-9][A-Z0-9\-]*?)(?=\s*(?:Quantity\b|SKU\b)|[\r\n]|$)|Quantity\s*:?\s*(\d+)|SKU\s*:?\s*([A-Z0-9][A-Z0-9\-./]+)/gi;
   let m;
   while ((m = re.exec(raw)) !== null) {
     if (m[1]) {
       current = { orderId: m[1], platform: 'Amazon', lines: [] };
       orders.push(current);
-      pendingSku = null;
+      pendingQty = null;
     } else if (m[2]) {
       current = { orderId: m[2], platform: '', lines: [] };
       orders.push(current);
-      pendingSku = null;
+      pendingQty = null;
     } else if (m[3]) {
-      const sku = normalizeSkuToken(m[3]);
-      pendingSku = isSkuCode(sku) ? sku : null;
+      pendingQty = parseInt(m[3], 10) || 1;
     } else if (m[4]) {
-      if (!pendingSku) continue;
+      const sku = normalizeSkuToken(m[4]);
+      if (!isSkuCode(sku)) continue;
       if (!current) {
         current = { orderId: noOrderId, platform: '', lines: [] };
         orders.push(current);
       }
-      current.lines.push({ sku: pendingSku, qty: parseInt(m[4], 10) || 1 });
-      pendingSku = null;
+      current.lines.push({ sku, qty: pendingQty !== null ? pendingQty : 1 });
+      pendingQty = null;
     }
   }
   return orders.filter(o => o.lines.length > 0);
@@ -1670,7 +1670,7 @@ function parseAndMatchOrders() {
   const { platform, orders } = parseOrdersFromPaste(text);
   if (!orders.length) {
     lastOrderMatch = null;
-    document.getElementById('orderResult').innerHTML = `<div class="order-empty">${bi('没识别到订单内容', 'No orders detected')}<br><span style="font-size:16px">${bi('需要按顺序含 #订单号、SKU编号、Quantity数量', 'Need #order, SKU code, Quantity in text order')}</span></div>`;
+    document.getElementById('orderResult').innerHTML = `<div class="order-empty">${bi('没识别到订单内容', 'No orders detected')}<br><span style="font-size:16px">${bi('需要按顺序含 #订单号、Quantity数量、SKU编号', 'Need #order, Quantity, SKU in text order')}</span></div>`;
     return;
   }
   lastOrderMatch = { platform, orders };
