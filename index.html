@@ -1389,23 +1389,34 @@ function getAllMappedSkus() {
   }
   return list;
 }
-function searchSkuPartial(query) {
-  const exact = lookupSkuLocation(query);
-  if (exact) return [{ sku: exact.sku || query, name: exact.name || '', shelf: exact.shelf, row: exact.row, col: exact.col }];
-  const tokens = query.split(/\s+/).map(t => t.trim()).filter(t => t.length > 0);
-  if (!tokens.length) return [];
+function compactSku(s) { return normalizeSkuToken(s).replace(/[\-./]+/g, ''); }
+function findSkuMatches(query, limit) {
+  const q = normalizeSkuToken(query);
+  if (!q) return [];
+  const max = limit || 30;
+  const exact = lookupSkuLocationExact(q);
+  if (exact) return [{ sku: exact.sku || q, name: exact.name || '', shelf: exact.shelf, row: exact.row, col: exact.col }];
+  const qCompact = compactSku(q);
+  const tokens = q.split(/\s+/).map(t => t.trim()).filter(t => t.length > 0);
   const matches = getAllMappedSkus().filter(item => {
     const hay = normalizeSkuToken(item.sku);
-    return tokens.every(tok => hay.includes(tok));
+    const hayCompact = compactSku(item.sku);
+    if (hay === q || hay.endsWith(q)) return true;
+    if (qCompact.length >= 4 && hayCompact.includes(qCompact)) return true;
+    if (tokens.length && tokens.every(tok => hay.includes(tok))) return true;
+    return false;
   });
   matches.sort((a, b) => a.sku.length - b.sku.length || a.sku.localeCompare(b.sku));
-  return matches.slice(0, 30);
+  return matches.slice(0, max);
+}
+function searchSkuPartial(query) {
+  return findSkuMatches(query, 30);
 }
 
 const AMZ_ORDER_RE = /\b(\d{3}-\d{7}-\d{7})\b/;
 const ETSY_ORDER_RE = /\b(\d{9,10})\b/;
 
-function lookupSkuLocation(sku) {
+function lookupSkuLocationExact(sku) {
   const s = String(sku || '').trim().toUpperCase().replace(/\s+/g, '');
   if (!s) return null;
   if (db[s] && db[s].shelf) return { ...db[s], sku: s };
@@ -1421,6 +1432,13 @@ function lookupSkuLocation(sku) {
       return { sku: e.sku, name: (meta && meta.name) || '', shelf: e.shelf, row: e.row, col: e.col };
     }
   }
+  return null;
+}
+function lookupSkuLocation(sku) {
+  const exact = lookupSkuLocationExact(sku);
+  if (exact) return exact;
+  const matches = findSkuMatches(sku, 2);
+  if (matches.length === 1) return matches[0];
   return null;
 }
 
@@ -1793,8 +1811,13 @@ function enrichOrderLines(orders) {
   return orders.map(order => ({
     ...order,
     lines: order.lines.map(line => {
-      const loc = lookupSkuLocation(line.sku);
-      return { ...line, loc, miss: !loc };
+      let loc = lookupSkuLocation(line.sku);
+      let sku = line.sku;
+      if (!loc) {
+        const matches = findSkuMatches(line.sku, 2);
+        if (matches.length === 1) { loc = matches[0]; sku = matches[0].sku; }
+      }
+      return { ...line, sku, loc, miss: !loc };
     })
   }));
 }
