@@ -1459,7 +1459,7 @@ function extractHashOrder(line) {
 
 function parseSkuQuantityChunks(text) {
   const items = [];
-  const re = /SKU\s*([A-Z0-9][A-Z0-9\-./]+?)\s*Quantity\s*(\d+)/gi;
+  const re = /SKU\s*:?\s*([A-Z0-9][A-Z0-9\-./]+)\s*Quantity\s*:?\s*(\d+)/gi;
   let m;
   while ((m = re.exec(text)) !== null) {
     const sku = normalizeSkuToken(m[1]);
@@ -1468,10 +1468,23 @@ function parseSkuQuantityChunks(text) {
   return items;
 }
 
+function parseCompanySkuLine(line) {
+  const m = line.match(/^SKU\s*:?\s*([A-Z0-9][A-Z0-9\-./]+)\s*$/i);
+  if (!m) return null;
+  const sku = normalizeSkuToken(m[1]);
+  return isSkuCode(sku) ? sku : null;
+}
+
+function parseCompanyQtyLine(line) {
+  const m = line.match(/^Quantity\s*:?\s*(\d+)\s*$/i);
+  return m ? (parseInt(m[1], 10) || 1) : null;
+}
+
 function parseCompanyFormat(text) {
   const items = [];
   let currentOrder = '';
   let pendingSku = '';
+  let pendingField = '';
   const lines = normalizePasteText(text).split('\n').map(l => l.trim()).filter(Boolean);
 
   for (const line of lines) {
@@ -1481,22 +1494,45 @@ function parseCompanyFormat(text) {
     const chunks = parseSkuQuantityChunks(line);
     if (chunks.length) {
       pendingSku = '';
+      pendingField = '';
       const oid = currentOrder || bi('（未识别订单号）', '(no order ID)');
       const platform = AMZ_ORDER_RE.test(currentOrder) ? 'Amazon' : '';
       for (const c of chunks) items.push({ orderId: oid, sku: c.sku, qty: c.qty, platform });
       continue;
     }
 
-    const skuOnly = line.match(/^SKU\s*([A-Z0-9][A-Z0-9\-./]{3,})\s*$/i);
-    if (skuOnly && isSkuCode(normalizeSkuToken(skuOnly[1]))) {
-      pendingSku = normalizeSkuToken(skuOnly[1]);
+    if (/^SKU\s*:?\s*$/i.test(line)) { pendingField = 'sku'; pendingSku = ''; continue; }
+    if (/^Quantity\s*:?\s*$/i.test(line)) { pendingField = 'qty'; continue; }
+
+    if (pendingField === 'sku') {
+      const sku = normalizeSkuToken(line);
+      if (isSkuCode(sku)) { pendingSku = sku; pendingField = ''; continue; }
+      pendingField = '';
+    }
+    if (pendingField === 'qty' && pendingSku) {
+      const qm = line.match(/^(\d+)\s*$/);
+      if (qm) {
+        const oid = currentOrder || bi('（未识别订单号）', '(no order ID)');
+        items.push({ orderId: oid, sku: pendingSku, qty: parseInt(qm[1], 10) || 1, platform: AMZ_ORDER_RE.test(currentOrder) ? 'Amazon' : '' });
+        pendingSku = '';
+        pendingField = '';
+        continue;
+      }
+      pendingField = '';
+    }
+
+    const skuOnly = parseCompanySkuLine(line);
+    if (skuOnly) {
+      pendingSku = skuOnly;
+      pendingField = '';
       continue;
     }
-    const qtyOnly = line.match(/^Quantity\s*(\d+)\s*$/i);
-    if (qtyOnly && pendingSku) {
+    const qtyOnly = parseCompanyQtyLine(line);
+    if (qtyOnly !== null && pendingSku) {
       const oid = currentOrder || bi('（未识别订单号）', '(no order ID)');
-      items.push({ orderId: oid, sku: pendingSku, qty: parseInt(qtyOnly[1], 10) || 1, platform: AMZ_ORDER_RE.test(currentOrder) ? 'Amazon' : '' });
+      items.push({ orderId: oid, sku: pendingSku, qty: qtyOnly, platform: AMZ_ORDER_RE.test(currentOrder) ? 'Amazon' : '' });
       pendingSku = '';
+      pendingField = '';
     }
   }
 
@@ -1528,14 +1564,18 @@ function parseOrderFromLine(line) {
 
 function groupOrderLines(items) {
   const map = new Map();
+  const order = [];
   for (const it of items) {
     const key = it.orderId || bi('（未识别订单号）', '(no order ID)');
-    if (!map.has(key)) map.set(key, { orderId: key, platform: it.platform || '', lines: [] });
+    if (!map.has(key)) {
+      map.set(key, { orderId: key, platform: it.platform || '', lines: [] });
+      order.push(key);
+    }
     const g = map.get(key);
     if (!g.platform && it.platform) g.platform = it.platform;
     g.lines.push({ sku: it.sku, qty: it.qty });
   }
-  return Array.from(map.values());
+  return order.map(k => map.get(k));
 }
 
 function parseTabularOrders(lines) {
@@ -1751,7 +1791,7 @@ function renderPickModeBar() {
   return `<div class="pick-mode-bar">
     <button type="button" class="pick-mode ${pickMode === 'order' ? 'active' : ''}" onclick="setPickMode('order')">
       ${bi('按订单拣货', 'Pick by order')}
-      <small>${bi('每单内按库位排序，少走回头路', 'Lines sorted by bin within each order')}</small>
+      <small>${bi('保持粘贴顺序，附库位', 'Paste order with locations')}</small>
     </button>
     <button type="button" class="pick-mode ${pickMode === 'route' ? 'active' : ''}" onclick="setPickMode('route')">
       ${bi('按库位路线', 'Pick by route')}
@@ -1771,11 +1811,13 @@ function renderOrderResults() {
 
   if (pickMode === 'route') {
     const flat = [];
+    let seq = 0;
     for (const order of enriched) {
       for (const line of order.lines) {
         totalLines++;
         if (line.miss) missLines++;
         flat.push({
+          _seq: seq++,
           orderId: order.orderId,
           platform: order.platform,
           sku: line.sku,
@@ -1785,7 +1827,7 @@ function renderOrderResults() {
         });
       }
     }
-    flat.sort((a, b) => comparePickLocations(a.loc, b.loc) || String(a.orderId).localeCompare(String(b.orderId)) || a.sku.localeCompare(b.sku));
+    flat.sort((a, b) => comparePickLocations(a.loc, b.loc) || (a._seq - b._seq));
 
     const stops = [];
     let stop = null;
@@ -1812,7 +1854,7 @@ function renderOrderResults() {
     html = `<div class="order-card">${html}</div>`;
   } else {
     html = enriched.map(order => {
-      const lines = [...order.lines].sort((a, b) => comparePickLocations(a.loc, b.loc) || a.sku.localeCompare(b.sku));
+      const lines = order.lines;
       const rows = lines.map(line => {
         totalLines++;
         if (line.miss) missLines++;
@@ -1826,7 +1868,7 @@ function renderOrderResults() {
       const pf = order.platform || platform || bi('订单', 'Order');
       return `<div class="order-card">
         <div class="order-head"><span>${bi('订单', 'Order')} ${escHtml(order.orderId)}</span><span class="order-platform">${escHtml(pf)}</span></div>
-        <div class="order-summary">${order.lines.length} ${bi('个产品', 'items')} · ${bi('已按库位排序', 'sorted by location')}</div>
+        <div class="order-summary">${order.lines.length} ${bi('个产品', 'items')} · ${bi('按粘贴顺序', 'paste order')}</div>
         <table class="order-table">
           <thead><tr><th>SKU</th><th>${bi('数量', 'Qty')}</th><th>${bi('库位', 'Location')}</th></tr></thead>
           <tbody>${rows}</tbody>
