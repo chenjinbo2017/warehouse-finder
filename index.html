@@ -262,7 +262,7 @@ header h1{font-size:22px;font-weight:700;line-height:1.25;letter-spacing:.01em}
   <div id="searchResult"></div>
   <div class="search-box orders-box">
     <div class="search-label">粘贴 Etsy / Amazon 订单 / Paste Orders</div>
-    <textarea id="orderPaste" class="order-paste" placeholder="按文字顺序：#订单号 → Quantity数量 → SKU编号 → #下一单&#10;描述价格等会自动忽略"></textarea>
+    <textarea id="orderPaste" class="order-paste" placeholder="Gmail/Etsy 整段复制即可&#10;#4095206308 (Etsy) → Quantity2 → SKUGEM-xxx → 下一单"></textarea>
     <button class="btn-search" onclick="parseAndMatchOrders()">匹配库位 / Match Locations</button>
   </div>
   <div id="orderResult"></div>
@@ -1450,6 +1450,9 @@ function normalizePasteText(text) {
   return String(text || '')
     .replace(/\uFEFF/g, '')
     .replace(/\r\n/g, '\n')
+    .replace(/&#39;/g, "'")
+    .replace(/&quot;/g, '"')
+    .replace(/&amp;/g, '&')
     .replace(/[：﹕]/g, ':')
     .replace(/[，]/g, ',');
 }
@@ -1460,7 +1463,14 @@ function parseQtyFromLine(line) {
 }
 
 function looksLikeCompanyOrderFormat(text) {
-  return /#/i.test(text) && /SKU/i.test(text);
+  return /#/i.test(text) && (/SKU/i.test(text) || /Quantity\s*\d/i.test(text));
+}
+
+function detectOrderPlatform(raw, index) {
+  const ctx = raw.slice(index, index + 80);
+  if (/\(Etsy\)/i.test(ctx)) return 'Etsy';
+  if (/\(Amazon\)/i.test(ctx)) return 'Amazon';
+  return '';
 }
 
 function parseCompanyFormat(text) {
@@ -1470,7 +1480,7 @@ function parseCompanyFormat(text) {
   let pendingQty = null;
   const noOrderId = bi('（未识别订单号）', '(no order ID)');
 
-  const re = /#(\d{3}-\d{7}-\d{7})|#([A-Z0-9][A-Z0-9\-]*?)(?=\s*(?:Quantity\b|SKU\b)|[\r\n]|$)|Quantity\s*:?\s*(\d+)|SKU\s*:?\s*([A-Z0-9][A-Z0-9\-./]+)/gi;
+  const re = /#(\d{3}-\d{7}-\d{7})|#(\d{9,12})(?:\s*\([^)]*\))?(?:\$[\d.]+)?|Quantity\s*:?\s*(\d+)|SKU\s*:?\s*([A-Z][A-Z0-9\-./]*\d[A-Z0-9\-./]*)/gi;
   let m;
   while ((m = re.exec(raw)) !== null) {
     if (m[1]) {
@@ -1478,7 +1488,7 @@ function parseCompanyFormat(text) {
       orders.push(current);
       pendingQty = null;
     } else if (m[2]) {
-      current = { orderId: m[2], platform: '', lines: [] };
+      current = { orderId: m[2], platform: detectOrderPlatform(raw, m.index), lines: [] };
       orders.push(current);
       pendingQty = null;
     } else if (m[3]) {
