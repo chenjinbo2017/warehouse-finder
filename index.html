@@ -1391,13 +1391,14 @@ function getAllMappedSkus() {
 }
 function compactSku(s) { return normalizeSkuToken(s).replace(/[\-./]+/g, ''); }
 function findSkuMatches(query, limit) {
-  const q = normalizeSkuToken(query);
-  if (!q) return [];
+  const raw = String(query || '').trim().toUpperCase();
+  if (!raw) return [];
   const max = limit || 30;
+  const q = raw.replace(/\s+/g, '');
   const exact = lookupSkuLocationExact(q);
   if (exact) return [{ sku: exact.sku || q, name: exact.name || '', shelf: exact.shelf, row: exact.row, col: exact.col }];
   const qCompact = compactSku(q);
-  const tokens = q.split(/\s+/).map(t => t.trim()).filter(t => t.length > 0);
+  const tokens = raw.split(/\s+/).map(t => t.trim()).filter(t => t.length > 0);
   const matches = getAllMappedSkus().filter(item => {
     const hay = normalizeSkuToken(item.sku);
     const hayCompact = compactSku(item.sku);
