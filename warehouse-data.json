@@ -14603,6 +14603,18 @@
       "shelf": "B16",
       "row": 9,
       "col": 1
+    },
+    "B16-9-2": {
+      "sku": "YLTGR-BRC-10M",
+      "shelf": "B16",
+      "row": 9,
+      "col": 2
+    },
+    "YLTGR-BRC-10M": {
+      "name": "",
+      "shelf": "B16",
+      "row": 9,
+      "col": 2
     }
   },
   "shelfCfg": {
@@ -14715,5 +14727,5 @@
       "GEM-2404MLY-63-10"
     ]
   },
-  "updatedAt": "2026-06-23T17:14:08.015Z"
+  "updatedAt": "2026-06-23T17:14:12.396Z"
 }
