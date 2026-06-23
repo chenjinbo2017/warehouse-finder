@@ -14879,6 +14879,18 @@
       "shelf": "C7",
       "row": 4,
       "col": 4
+    },
+    "C7-4-5": {
+      "sku": "HKISTC-OL-22",
+      "shelf": "C7",
+      "row": 4,
+      "col": 5
+    },
+    "HKISTC-OL-22": {
+      "name": "",
+      "shelf": "C7",
+      "row": 4,
+      "col": 5
     }
   },
   "shelfCfg": {
@@ -14991,5 +15003,5 @@
       "GEM-2404MLY-63-10"
     ]
   },
-  "updatedAt": "2026-06-23T20:43:35.608Z"
+  "updatedAt": "2026-06-23T20:43:48.841Z"
 }
