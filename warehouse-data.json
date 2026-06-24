@@ -17711,6 +17711,18 @@
       "shelf": "C12",
       "row": 2,
       "col": 4
+    },
+    "C12-1-1": {
+      "sku": "GEM-2605DS-25-2",
+      "shelf": "C12",
+      "row": 1,
+      "col": 1
+    },
+    "GEM-2605DS-25-2": {
+      "name": "",
+      "shelf": "C12",
+      "row": 1,
+      "col": 1
     }
   },
   "shelfCfg": {
@@ -17845,9 +17857,8 @@
       "7.GITHUB.IO/WARE",
       "SETNEWLIMIT",
       "R-5-OPA-0323-6",
-      "GEM-2404MLY-63-10",
-      "GEM-2605DS-25-2"
+      "GEM-2404MLY-63-10"
     ]
   },
-  "updatedAt": "2026-06-24T23:07:26.424Z"
+  "updatedAt": "2026-06-24T23:07:41.560Z"
 }
