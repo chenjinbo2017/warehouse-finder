@@ -120,11 +120,10 @@ header h1{font-size:22px;font-weight:700;line-height:1.25;letter-spacing:.01em}
 .scan-box{width:88%;height:80px;border:3px solid var(--coral);border-radius:12px;position:relative;box-shadow:0 0 0 2000px rgba(0,0,0,.45),0 0 20px rgba(230,57,70,.4)}
 .scan-box.snap-flash{animation:snapFlash .35s ease}
 @keyframes snapFlash{0%{box-shadow:0 0 0 2000px rgba(0,0,0,.45),0 0 30px #fff}100%{box-shadow:0 0 0 2000px rgba(0,0,0,.45),0 0 20px rgba(230,57,70,.4)}}
-.scan-frozen-img{display:none;position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#0a0f1e;z-index:2}
+.scan-frozen-img{display:none;position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:2}
 .video-wrap.frozen #scanVideo{visibility:hidden}
 .video-wrap.frozen .scan-overlay{display:none}
-.video-wrap.frozen{display:flex;align-items:center;justify-content:center}
-.video-wrap.frozen .scan-frozen-img{display:block;position:relative;inset:auto;width:100%;max-height:100%;height:auto;object-fit:scale-down}
+.video-wrap.frozen .scan-frozen-img{display:block}
 .scan-steps{display:flex;gap:6px;margin-bottom:10px;justify-content:center}
 .scan-step{flex:1;text-align:center;font-size:13px;font-weight:700;color:rgba(255,255,255,.45);padding:8px 4px;border-radius:10px;background:rgba(255,255,255,.08);line-height:1.25}
 .scan-step.active{color:#fff;background:rgba(255,193,7,.35);border:1px solid rgba(255,193,7,.5)}
@@ -152,7 +151,7 @@ header h1{font-size:22px;font-weight:700;line-height:1.25;letter-spacing:.01em}
 .photo-placeholder{text-align:center;color:rgba(255,255,255,.8);font-size:18px}
 .photo-placeholder .icon{font-size:64px;margin-bottom:14px}
 .photo-placeholder .hint{font-size:16px;line-height:1.5;margin-top:10px;color:rgba(255,255,255,.55)}
-#photoPreview{max-width:100%;max-height:100%;object-fit:contain;border-radius:12px;display:none;background:#0a0f1e}
+#photoPreview{max-width:100%;max-height:100%;object-fit:contain;border-radius:12px;display:none}
 .order-paste{min-height:160px;resize:vertical;line-height:1.5;font-family:ui-monospace,monospace}
 .order-card{border-top:4px solid var(--sky);padding:20px;background:linear-gradient(180deg,#fff,#f8fbff)}
 .order-head{font-size:20px;font-weight:800;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;color:var(--navy)}
@@ -2058,44 +2057,19 @@ function renderMap(options) {
 }
 
 let videoStream=null,twk=null,ocrReady=false,usePhotoMode=false,ocrInitPromise=null,lastOcrWords=[],capturedPhoto=null,frozenOcrCanvas=null,scanSnapped=false;
-const TESS_OPTS={
-  workerPath:'https://cdn.jsdelivr.net/npm/tesseract.js@4.1.1/dist/worker.min.js',
-  corePath:'https://cdn.jsdelivr.net/npm/tesseract.js-core@4.0.4/',
-  langPath:'https://tessdata.projectnaptha.com/4.0.0'
-};
-const TESS_OPTS_ALT={
-  workerPath:'https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/4.1.1/worker.min.js',
-  corePath:'https://cdnjs.cloudflare.com/ajax/libs/tesseract.js-core/4.0.4/',
-  langPath:'https://tessdata.projectnaptha.com/4.0.0'
-};
-const OCR_SKU_WHITELIST='ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-./';
-const OCR_INIT_TIMEOUT_MS=45000;
-const OCR_RECOGNIZE_TIMEOUT_MS=45000;
-
-function withTimeout(promise,ms,label){
-  return Promise.race([
-    promise,
-    new Promise((_,reject)=>setTimeout(()=>reject(new Error(label||'timeout')),ms))
-  ]);
-}
+const TESS_OPTS={workerPath:'https://cdn.jsdelivr.net/npm/tesseract.js@4.1.1/dist/worker.min.js',corePath:'https://cdn.jsdelivr.net/npm/tesseract.js-core@4.0.4',langPath:'https://tessdata.projectnaptha.com/4.0.0'};
 
 function initOcr() {
   if(ocrReady&&twk) return Promise.resolve();
   if(ocrInitPromise) return ocrInitPromise;
-  ocrInitPromise=withTimeout((async()=>{
+  ocrInitPromise=(async()=>{
     if(typeof Tesseract==='undefined') throw new Error('ocr-lib');
     if(twk){try{await twk.terminate();}catch(e){} twk=null; ocrReady=false;}
-    let lastErr=null;
-    for(const opts of [TESS_OPTS,TESS_OPTS_ALT,{workerPath:TESS_OPTS.workerPath}]){
-      try{
-        twk=await Tesseract.createWorker('eng',1,opts);
-        try{await twk.setParameters({tessedit_pageseg_mode:'7',tessedit_char_whitelist:OCR_SKU_WHITELIST});}catch(e){}
-        ocrReady=true;
-        return;
-      }catch(e){lastErr=e;if(twk){try{await twk.terminate();}catch(x){} twk=null;}}
-    }
-    throw lastErr||new Error('ocr-init');
-  })(),OCR_INIT_TIMEOUT_MS,'ocr-init').catch(e=>{ocrReady=false;ocrInitPromise=null;twk=null;throw e;});
+    try{twk=await Tesseract.createWorker('eng',1,TESS_OPTS);}
+    catch(e){twk=await Tesseract.createWorker('eng');}
+    try{await twk.setParameters({tessedit_pageseg_mode:'7'});}catch(e){}
+    ocrReady=true;
+  })().catch(e=>{ocrReady=false;ocrInitPromise=null;twk=null;throw e;});
   return ocrInitPromise;
 }
 async function resetOcrWorker(){ocrReady=false;ocrInitPromise=null;if(twk){try{await twk.terminate();}catch(e){} twk=null;}}
@@ -2116,36 +2090,6 @@ function pauseVideoStream(){
 }
 function resumeVideoStream(){
   if(videoStream) videoStream.getTracks().forEach(t=>{t.enabled=true;});
-}
-function makeDisplayPreview(ocrCanvas){
-  if(!ocrCanvas) return null;
-  const minH=180;
-  if(ocrCanvas.height>=minH) return ocrCanvas;
-  const scale=Math.min(5,minH/ocrCanvas.height);
-  const out=document.createElement('canvas');
-  out.width=Math.round(ocrCanvas.width*scale);
-  out.height=Math.round(ocrCanvas.height*scale);
-  const ctx=out.getContext('2d');
-  ctx.fillStyle='#fff';ctx.fillRect(0,0,out.width,out.height);
-  ctx.imageSmoothingEnabled=false;
-  ctx.drawImage(ocrCanvas,0,0,out.width,out.height);
-  return out;
-}
-function showSnapPreview(ocrCanvas){
-  if(!ocrCanvas) return;
-  const display=makeDisplayPreview(ocrCanvas)||ocrCanvas;
-  const dataUrl=display.toDataURL('image/jpeg',0.92);
-  if(usePhotoMode){
-    const preview=document.getElementById('photoPreview');
-    preview.src=dataUrl;
-    preview.style.display='block';
-    document.getElementById('photoPlaceholder').style.display='none';
-  }else{
-    document.getElementById('scanFrozenImg').src=dataUrl;
-    document.getElementById('videoWrap').classList.add('frozen');
-    const box=document.getElementById('scanBox');
-    if(box){box.classList.add('snap-flash');setTimeout(()=>box.classList.remove('snap-flash'),400);}
-  }
 }
 function showFrozenPreview(source){
   let dataUrl='';
@@ -2188,7 +2132,11 @@ function retakeScan(){
 function snapVideoFrame(video){
   const crop=cropScanRegionFromVideo(video);
   const ocrCanvas=buildOcrCanvas(video,crop);
-  return{ocrCanvas};
+  const previewCanvas=document.createElement('canvas');
+  previewCanvas.width=video.videoWidth;
+  previewCanvas.height=video.videoHeight;
+  previewCanvas.getContext('2d').drawImage(video,0,0);
+  return{ocrCanvas,previewCanvas};
 }
 function setScanUI(mode){
   usePhotoMode=mode==='photo';
@@ -2200,60 +2148,6 @@ function resetPhotoPreview(){document.getElementById('photoPreview').style.displ
 function enablePhotoMode(msg){setScanUI('photo');resetPhotoPreview();document.getElementById('ocrStatus').textContent=msg||bi('点「拍照扫描」拍摄标签', 'Tap Snap to photograph label');}
 function cancelMapScanAdvance() {
   if (mapScanTimer) { clearTimeout(mapScanTimer); mapScanTimer = null; }
-}
-function getUserMediaWithTimeout(constraints, timeoutMs) {
-  return Promise.race([
-    navigator.mediaDevices.getUserMedia(constraints),
-    new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), timeoutMs))
-  ]);
-}
-async function waitForVideoPlaying(video, timeoutMs) {
-  const start = Date.now();
-  while (Date.now() - start < timeoutMs) {
-    if (video.videoWidth > 0 && video.readyState >= 2) {
-      try { if (video.paused) await video.play(); } catch (e) {}
-      if (video.videoWidth > 0) return true;
-    }
-    await new Promise(r => setTimeout(r, 80));
-  }
-  return video.videoWidth > 0;
-}
-async function startCameraStream(mode) {
-  const statusEl = document.getElementById('ocrStatus');
-  const hint = mode === 'search'
-    ? bi('拍照后只查找库位，不会录入', 'Snap to find location only')
-    : bi('对准红框，点下方「拍照扫描」', 'Align in red box, tap Snap below');
-  const tries = [
-    { video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } } },
-    { video: { facingMode: { ideal: 'environment' } } },
-    { video: { facingMode: 'environment' } },
-    { video: true }
-  ];
-  for (const constraints of tries) {
-    statusEl.textContent = bi('正在打开相机…', 'Opening camera…');
-    try {
-      const s = await getUserMediaWithTimeout(constraints, 10000);
-      videoStream = s;
-      const v = document.getElementById('scanVideo');
-      v.srcObject = s;
-      const ok = await waitForVideoPlaying(v, 8000);
-      if (!ok) {
-        s.getTracks().forEach(t => t.stop());
-        videoStream = null;
-        v.srcObject = null;
-        continue;
-      }
-      statusEl.textContent = hint;
-      return true;
-    } catch (e) {
-      if (videoStream) {
-        videoStream.getTracks().forEach(t => t.stop());
-        videoStream = null;
-      }
-      document.getElementById('scanVideo').srcObject = null;
-    }
-  }
-  return false;
 }
 function openScan(mode){
   cancelMapScanAdvance();
@@ -2280,11 +2174,19 @@ function openScan(mode){
   } else {ci.style.display='none';document.getElementById('modalTitle').textContent=bi('扫描 SKU 标签', 'Scan SKU label');}
   if(window.isSecureContext&&navigator.mediaDevices&&navigator.mediaDevices.getUserMedia){
     setScanUI('live');
-    startCameraStream(mode).then(ok=>{
-      if(!ok) enablePhotoMode(bi('相机打不开，已切换拍照模式', 'Camera unavailable — photo mode'));
-    });
-  } else {enablePhotoMode(bi('请用拍照模式（HTTP 或无相机权限时）', 'Use photo mode on HTTP or without camera'));}
-  warmupOcr();
+    document.getElementById('ocrStatus').textContent=mode==='search'
+      ? bi('拍照后只查找库位，不会录入', 'Snap to find location only')
+      : bi('对准红框，点下方「拍照扫描」', 'Align in red box, tap Snap below');
+    navigator.mediaDevices.getUserMedia({video:{facingMode:'environment',width:{ideal:1280},height:{ideal:720}}})
+      .then(s=>{
+        videoStream=s;
+        const v=document.getElementById('scanVideo');
+        v.srcObject=s;
+        v.onloadedmetadata=()=>{v.play().catch(()=>{});};
+      })
+      .catch(()=>enablePhotoMode(bi('无法打开相机，请用拍照模式', 'Camera unavailable — use photo mode')));
+  } else {enablePhotoMode(bi('当前环境不支持实时相机，请用拍照模式', 'Live camera unavailable — use photo'));}
+  initOcr().catch(()=>{});
 }
 function closeScan(){
   cancelMapScanAdvance();
@@ -2302,44 +2204,23 @@ function isSkuCode(s){
   if(/[{}[\]|\\<>@#$%^&*+=~`'"«»¢€]/.test(t)) return false;
   return true;
 }
-function repairSkuOcr(s){
-  return String(s||'').toUpperCase().replace(/\s+/g,'').replace(/_/g,'-')
-    .replace(/^1GEM/,'GEM').replace(/^IGEM/,'GEM').replace(/^CEM/,'GEM')
-    .replace(/[|]/g,'I').replace(/[·•]/g,'-');
-}
-function extractSkuFromText(text){
-  const repaired=repairSkuOcr(text);
-  const found=[];
-  const patterns=[
-    /GEM-[A-Z0-9]{2,}(?:-[A-Z0-9]{2,}){1,6}/g,
-    /(?:COR|HEM|HMT|MT|I)-[A-Z0-9]{2,}(?:-[A-Z0-9]{2,}){1,6}/g,
-    /[A-Z]{2,5}-[A-Z0-9]{2,}(?:-[A-Z0-9]{2,}){1,6}/g
-  ];
-  for(const re of patterns){
-    for(const m of repaired.matchAll(re)) found.push(m[0]);
-  }
-  return found;
-}
 function extractWords(data){
   const candidates=[],seen=new Set();
-  const add=(raw)=>{
-    const t=repairSkuOcr(raw);
-    if(!t||!isSkuCode(t)||seen.has(t)) return;
-    seen.add(t); candidates.push(t);
-  };
   const push=(raw)=>{
-    if(!raw) return;
-    add(raw);
-    for(const sku of extractSkuFromText(raw)) add(sku);
-    const repaired=repairSkuOcr(raw);
-    for(const m of repaired.matchAll(/[A-Z0-9]{2,}(?:-[A-Z0-9]{2,}){2,}/g)) add(m[0]);
+    const text=normalizeText(raw).toUpperCase().replace(/\s+/g,'');
+    if(!isSkuCode(text)||seen.has(text)) return;
+    seen.add(text); candidates.push(text);
   };
-  const lines=[...(data.lines||[])].sort((a,b)=>(b.text||'').length-(a.text||'').length);
-  for(const line of lines) push(line.text);
-  push((data.text||'').replace(/\s*\n\s*/g,' '));
-  push(repairSkuOcr(data.text||''));
-  candidates.sort((a,b)=>b.length-a.length||a.localeCompare(b));
-  return candidates.slice(0,3);
+  let bestLine='',bestConf=0;
+  for(const line of(data.lines||[])){
+    if(line.confidence>=bestConf&&normalizeText(line.text).length>=4){bestConf=line.confidence;bestLine=line.text;}
+  }
+  if(bestLine) push(bestLine);
+  const oneRow=(data.text||'').replace(/\s*\n\s*/g,' ');
+  if(oneRow) push(oneRow);
+  const tokens=[...(data.text||'').match(/[A-Z0-9][A-Z0-9\-./]{3,}/gi)||[]].sort((a,b)=>b.length-a.length);
+  for(const t of tokens){push(t);if(candidates.length>=2) break;}
+  return candidates.slice(0,2);
 }
 function centerVideoCrop(vw, vh) {
   const cropW = vw * 0.88;
@@ -2376,22 +2257,15 @@ function cropScanRegionFromImage(img){
 function buildOcrCanvas(source,crop){
   const{cropX,cropY,cropW,cropH}=crop;
   if(!cropW||!cropH||cropW<8||cropH<8) throw new Error('camera');
-  const scale=5,out=document.createElement('canvas');
-  out.width=Math.max(400,Math.min(2400,Math.round(cropW*scale)));
-  out.height=Math.max(100,Math.min(800,Math.round(cropH*scale)));
+  const scale=4,out=document.createElement('canvas');
+  out.width=Math.max(320,Math.round(cropW*scale));
+  out.height=Math.max(80,Math.round(cropH*scale));
   const ctx=out.getContext('2d');
   ctx.fillStyle='#fff';ctx.fillRect(0,0,out.width,out.height);
   ctx.imageSmoothingEnabled=false;
   ctx.drawImage(source,cropX,cropY,cropW,cropH,0,0,out.width,out.height);
   const img=ctx.getImageData(0,0,out.width,out.height),d=img.data;
-  let sum=0,n=0;
-  for(let i=0;i<d.length;i+=4){const g=0.299*d[i]+0.587*d[i+1]+0.114*d[i+2];sum+=g;n++;}
-  const thresh=Math.max(105,Math.min(165,sum/n*0.9));
-  for(let i=0;i<d.length;i+=4){
-    const g=0.299*d[i]+0.587*d[i+1]+0.114*d[i+2];
-    const v=g<thresh?0:255;
-    d[i]=d[i+1]=d[i+2]=v;
-  }
+  for(let i=0;i<d.length;i+=4){let g=0.299*d[i]+0.587*d[i+1]+0.114*d[i+2];g=Math.min(255,Math.max(0,(g-128)*1.5+128));d[i]=d[i+1]=d[i+2]=g;}
   ctx.putImageData(img,0,0);
   return out;
 }
@@ -2410,38 +2284,16 @@ async function waitForVideoReady(video,timeoutMs){
 }
 async function recognizeImage(processed){
   if(!processed||processed.width<20||processed.height<20) throw new Error('camera');
-  await initOcr();
-  const modes=['7','6'];
-  const merged={text:'',lines:[]};
-  let lastErr=null;
-  for(const mode of modes){
-    try{
-      await twk.setParameters({tessedit_pageseg_mode:mode,tessedit_char_whitelist:OCR_SKU_WHITELIST});
-      const{data}=await withTimeout(twk.recognize(processed),22000,'ocr-timeout');
-      const flat=(data.text||'').replace(/\s+/g,'');
-      if(flat.length>merged.text.length) merged.text=flat;
-      merged.lines.push(...(data.lines||[]));
-    }catch(e){lastErr=e;}
-  }
-  if(merged.text||merged.lines.length) return{data:merged};
   const tries=[
-    async()=>Tesseract.recognize(processed,'eng',{...TESS_OPTS,tessedit_char_whitelist:OCR_SKU_WHITELIST,tessedit_pageseg_mode:'7'}),
-    async()=>Tesseract.recognize(processed,'eng',{...TESS_OPTS_ALT,tessedit_char_whitelist:OCR_SKU_WHITELIST,tessedit_pageseg_mode:'6'})
+    async()=>{await initOcr();return twk.recognize(processed);},
+    async()=>Tesseract.recognize(processed,'eng',TESS_OPTS),
+    async()=>{await resetOcrWorker();return Tesseract.recognize(processed,'eng',TESS_OPTS);}
   ];
+  let lastErr=null;
   for(const fn of tries){
-    try{return await withTimeout(fn(),OCR_RECOGNIZE_TIMEOUT_MS,'ocr-timeout');}catch(e){lastErr=e;}
+    try{return await fn();}catch(e){lastErr=e;}
   }
   throw lastErr||new Error('ocr');
-}
-function ocrFailMessage(e){
-  const code=e&&e.message;
-  if(code==='camera') return bi('画面无效，请点「重拍」', 'Bad capture — tap Retake');
-  if(code==='ocr-init'||code==='ocr-timeout'||code==='ocr-lib')
-    return bi('识别服务超时（公司网络可能拦截），请直接输入 SKU', 'OCR timed out — type SKU below');
-  return bi('识别失败，请重拍或手动输入', 'Failed — retake or type SKU');
-}
-function warmupOcr(){
-  initOcr().catch(()=>{});
 }
 function hideScanEdit(){
   document.getElementById('scanEdit').style.display='none';
@@ -2483,7 +2335,6 @@ async function runOcrFromCanvas(processed){
   statusEl.classList.add('ocr-busy');
   statusEl.textContent=bi('✅ 已拍照，可以放下手机 · 正在识别…', '✅ Snapped — lower phone · reading…');
   try{
-    statusEl.textContent=bi('✅ 已拍照 · 正在加载识别引擎…', '✅ Snapped · loading OCR…');
     await initOcr();
     statusEl.textContent=bi('✅ 已拍照 · 识别中，请稍候…', '✅ Snapped · reading, please wait…');
     const{data}=await recognizeImage(processed);
@@ -2493,7 +2344,10 @@ async function runOcrFromCanvas(processed){
   }catch(e){
     console.warn('OCR failed', e);
     statusEl.classList.remove('ocr-busy');
-    statusEl.textContent=ocrFailMessage(e);
+    const msg=(e&&e.message==='camera')
+      ? bi('画面无效，请点「重拍」', 'Bad capture — tap Retake')
+      : bi('识别失败，请重拍或手动输入', 'Failed — retake or type SKU');
+    statusEl.textContent=msg;
     showScanEdit('');
     setCaptureBtn(bi('📷 重拍', '📷 Retake'),false);
   }
@@ -2522,9 +2376,9 @@ async function captureFrame(){
   if(usePhotoMode){
     if(!capturedPhoto){document.getElementById('photoInput').click();return;}
     setScanStep(2);
-    frozenOcrCanvas=captureScanRegionFromImage(capturedPhoto);
+    showFrozenPreview(capturedPhoto);
     scanSnapped=true;
-    showSnapPreview(frozenOcrCanvas);
+    frozenOcrCanvas=captureScanRegionFromImage(capturedPhoto);
     await runOcrFromCanvas(frozenOcrCanvas);
     return;
   }
@@ -2540,11 +2394,11 @@ async function captureFrame(){
     return;
   }
   try{
-    const{ocrCanvas}=snapVideoFrame(video);
+    const{ocrCanvas,previewCanvas}=snapVideoFrame(video);
     scanSnapped=true;
     frozenOcrCanvas=ocrCanvas;
     setScanStep(2);
-    showSnapPreview(ocrCanvas);
+    showFrozenPreview(previewCanvas);
     pauseVideoStream();
     await runOcrFromCanvas(frozenOcrCanvas);
   }catch(e){
@@ -2563,11 +2417,18 @@ function onPhotoSelected(e){
   const img=new Image(),url=URL.createObjectURL(file);
   img.onload=async()=>{
     capturedPhoto=img;
+    const canvas=document.getElementById('captureCanvas');
+    canvas.width=img.width;canvas.height=img.height;
+    canvas.getContext('2d').drawImage(img,0,0);
     URL.revokeObjectURL(url);
+    const preview=document.getElementById('photoPreview');
+    preview.src=canvas.toDataURL('image/jpeg',0.9);
+    preview.style.display='block';
+    document.getElementById('photoPlaceholder').style.display='none';
     setScanStep(2);
+    showFrozenPreview(canvas);
     scanSnapped=true;
     frozenOcrCanvas=captureScanRegionFromImage(capturedPhoto);
-    showSnapPreview(frozenOcrCanvas);
     await runOcrFromCanvas(frozenOcrCanvas);
   };
   img.onerror=()=>{URL.revokeObjectURL(url);showToast(bi('图片加载失败', 'Image load failed'));};
