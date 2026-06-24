@@ -14993,6 +14993,18 @@
       "shelf": "A32",
       "row": 3,
       "col": 4
+    },
+    "A32-3-5": {
+      "sku": "RHEM-FRON3-2",
+      "shelf": "A32",
+      "row": 3,
+      "col": 5
+    },
+    "RHEM-FRON3-2": {
+      "name": "",
+      "shelf": "A32",
+      "row": 3,
+      "col": 5
     }
   },
   "shelfCfg": {
@@ -15124,5 +15136,5 @@
       "GEM-2404MLY-63-10"
     ]
   },
-  "updatedAt": "2026-06-24T21:50:36.991Z"
+  "updatedAt": "2026-06-24T21:50:48.574Z"
 }
