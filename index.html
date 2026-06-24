@@ -99,9 +99,9 @@ header h1{font-size:22px;font-weight:700;line-height:1.25;letter-spacing:.01em}
 .adjust-row:not(.adjust-row-stack) span{max-width:none}
 .adj-btn{background:#fff;border:2px solid #e8ecf2;border-radius:10px;width:36px;height:36px;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--navy);box-shadow:var(--shadow-sm)}
 .adj-val{font-size:20px;font-weight:800;min-width:28px;text-align:center;color:var(--navy)}
-.grid-container{padding:16px 16px 40px;overflow-x:auto;width:100%;margin-bottom:8px}
-.shelf-grid{display:grid;gap:5px;width:100%;--cell-size:58px}
-.row-label{font-size:14px;color:var(--muted);font-weight:800;display:flex;align-items:center;padding-right:4px;min-width:var(--row-label-w)}
+.grid-container{padding:16px 16px 40px;overflow-x:auto;width:100%;margin-bottom:8px;-webkit-overflow-scrolling:touch}
+.shelf-grid{display:grid;gap:5px;width:max-content;min-width:100%;--cell-size:58px}
+.row-label{font-size:14px;color:var(--muted);font-weight:800;display:flex;align-items:center;padding-right:4px;min-width:var(--row-label-w);position:sticky;left:0;z-index:2;background:var(--card);box-shadow:4px 0 6px -2px rgba(22,33,62,.08)}
 .grid-cell{width:var(--cell-size);height:var(--cell-size);border-radius:12px;border:2px solid #e8ecf2;background:linear-gradient(180deg,#fff,#f6f8fb);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:clamp(10px,calc(var(--cell-size)*0.17),14px);color:#999;text-align:center;padding:3px;transition:transform .15s,box-shadow .15s;overflow:hidden}
 .grid-cell:active{transform:scale(.94)}
 .grid-cell.filled{background:linear-gradient(180deg,#edf7ee,#dff0e1);border-color:#81c784;box-shadow:0 3px 10px rgba(46,125,50,.12)}
@@ -280,23 +280,23 @@ header h1{font-size:22px;font-weight:700;line-height:1.25;letter-spacing:.01em}
   <div class="shelf-info">
     <div class="shelf-meta-row">
       <div class="shelf-meta-field">
-        <label class="shelf-meta-label" for="shelfIdInput">货架编号</label>
+        <label class="shelf-meta-label" for="shelfIdInput">货架编号 / Shelf ID</label>
         <input type="text" class="search-input field-full" id="shelfIdInput" placeholder="A31" autocapitalize="characters" autocomplete="off" oninput="this.value=normalizeShelfId(this.value)" onkeydown="if(event.key==='Enter'){event.preventDefault();commitShelfIdInput();}" onblur="commitShelfIdInput()">
       </div>
       <div class="shelf-meta-field">
-        <label class="shelf-meta-label" for="shelfNameInput">名字</label>
-        <input type="text" class="search-input field-full" id="shelfNameInput" placeholder="备注名" onkeydown="if(event.key==='Enter'){event.preventDefault();commitShelfNameInput();}" onblur="commitShelfNameInput()">
+        <label class="shelf-meta-label" for="shelfNameInput">名字 / Name</label>
+        <input type="text" class="search-input field-full" id="shelfNameInput" placeholder="备注名 / Note" onkeydown="if(event.key==='Enter'){event.preventDefault();commitShelfNameInput();}" onblur="commitShelfNameInput()">
       </div>
     </div>
     <div class="shelf-dim-row">
       <div class="shelf-dim-group">
-        <span class="shelf-dim-label">层数</span>
+        <span class="shelf-dim-label">层数 / Rows</span>
         <button type="button" class="adj-btn" onclick="adjustShelf('rows',-1)">−</button>
         <div class="adj-val" id="rowsVal">9</div>
         <button type="button" class="adj-btn" onclick="adjustShelf('rows',1)">+</button>
       </div>
       <div class="shelf-dim-group cols">
-        <span class="shelf-dim-label">格数</span>
+        <span class="shelf-dim-label">格数 / Cols</span>
         <button type="button" class="adj-btn" onclick="adjustShelf('cols',-1)">−</button>
         <div class="adj-val" id="colsVal">15</div>
         <button type="button" class="adj-btn" onclick="adjustShelf('cols',1)">+</button>
@@ -1476,18 +1476,39 @@ function renderSearchResultCard(d) {
 function getAllMappedSkus() {
   const seen = new Set();
   const list = [];
-  for (const [key, val] of Object.entries(db)) {
-    if (!isCellKey(key) || !val || !val.sku) continue;
-    const sku = val.sku;
+  const add = (sku, shelf, row, col) => {
+    if (!sku || !shelf) return;
     const norm = normalizeSkuToken(sku);
-    if (seen.has(norm)) continue;
+    if (seen.has(norm)) return;
     seen.add(norm);
     const meta = db[sku] || {};
-    list.push({ sku, name: meta.name || '', shelf: val.shelf, row: val.row, col: val.col });
+    list.push({ sku, name: meta.name || '', shelf, row, col });
+  };
+  for (const [key, val] of Object.entries(db)) {
+    if (isCellKey(key) && val && val.sku) add(val.sku, val.shelf, val.row, val.col);
+  }
+  for (const [key, val] of Object.entries(db)) {
+    if (isCellKey(key) || !val || !val.shelf) continue;
+    add(key, val.shelf, val.row, val.col);
   }
   return list;
 }
 function compactSku(s) { return normalizeSkuToken(s).replace(/[\-./]+/g, ''); }
+function skuQueryTokens(raw) {
+  return String(raw || '').trim().toUpperCase().split(/\s+/).map(t => t.trim()).filter(Boolean);
+}
+function orderedCompactMatch(hayCompact, tokens) {
+  if (!tokens.length) return false;
+  let pos = 0;
+  for (const tok of tokens) {
+    const part = compactSku(tok);
+    if (!part) continue;
+    const idx = hayCompact.indexOf(part, pos);
+    if (idx < 0) return false;
+    pos = idx + part.length;
+  }
+  return true;
+}
 function findSkuMatches(query, limit) {
   const raw = String(query || '').trim().toUpperCase();
   if (!raw) return [];
@@ -1495,14 +1516,15 @@ function findSkuMatches(query, limit) {
   const q = raw.replace(/\s+/g, '');
   const exact = lookupSkuLocationExact(q);
   if (exact) return [{ sku: exact.sku || q, name: exact.name || '', shelf: exact.shelf, row: exact.row, col: exact.col }];
-  const qCompact = compactSku(q);
-  const tokens = raw.split(/\s+/).map(t => t.trim()).filter(t => t.length > 0);
+  const qCompact = compactSku(raw);
+  const tokens = skuQueryTokens(raw);
   const matches = getAllMappedSkus().filter(item => {
     const hay = normalizeSkuToken(item.sku);
     const hayCompact = compactSku(item.sku);
     if (hay === q || hay.endsWith(q)) return true;
-    if (qCompact.length >= 4 && hayCompact.includes(qCompact)) return true;
-    if (tokens.length && tokens.every(tok => hay.includes(tok))) return true;
+    if (qCompact.length >= 3 && hayCompact.includes(qCompact)) return true;
+    if (tokens.length && orderedCompactMatch(hayCompact, tokens)) return true;
+    if (tokens.length > 1 && tokens.every(tok => hay.includes(tok.replace(/\s+/g, '')))) return true;
     return false;
   });
   matches.sort((a, b) => a.sku.length - b.sku.length || a.sku.localeCompare(b.sku));
@@ -2035,19 +2057,30 @@ function renderMap(options) {
 }
 
 let videoStream=null,twk=null,ocrReady=false,usePhotoMode=false,ocrInitPromise=null,lastOcrWords=[],capturedPhoto=null,frozenOcrCanvas=null,scanSnapped=false;
-const TESS_OPTS={workerPath:'https://cdn.jsdelivr.net/npm/tesseract.js@4.1.1/dist/worker.min.js',corePath:'https://cdn.jsdelivr.net/npm/tesseract.js-core@4.0.4',langPath:'https://tessdata.projectnaptha.com/4.0.0'};
+const TESS_CDN='https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/4.1.1';
+const TESS_CORE='https://cdnjs.cloudflare.com/ajax/libs/tesseract.js-core/4.0.4';
+const TESS_OPTS={workerPath:`${TESS_CDN}/worker.min.js`,corePath:TESS_CORE,langPath:'https://tessdata.projectnaptha.com/4.0.0'};
+const OCR_INIT_TIMEOUT_MS=25000;
+const OCR_RECOGNIZE_TIMEOUT_MS=30000;
+
+function withTimeout(promise,ms,label){
+  return Promise.race([
+    promise,
+    new Promise((_,reject)=>setTimeout(()=>reject(new Error(label||'timeout')),ms))
+  ]);
+}
 
 function initOcr() {
   if(ocrReady&&twk) return Promise.resolve();
   if(ocrInitPromise) return ocrInitPromise;
-  ocrInitPromise=(async()=>{
+  ocrInitPromise=withTimeout((async()=>{
     if(typeof Tesseract==='undefined') throw new Error('ocr-lib');
     if(twk){try{await twk.terminate();}catch(e){} twk=null; ocrReady=false;}
     try{twk=await Tesseract.createWorker('eng',1,TESS_OPTS);}
-    catch(e){twk=await Tesseract.createWorker('eng');}
+    catch(e){twk=await Tesseract.createWorker('eng',{workerPath:`${TESS_CDN}/worker.min.js`});}
     try{await twk.setParameters({tessedit_pageseg_mode:'7'});}catch(e){}
     ocrReady=true;
-  })().catch(e=>{ocrReady=false;ocrInitPromise=null;twk=null;throw e;});
+  })(),OCR_INIT_TIMEOUT_MS,'ocr-init').catch(e=>{ocrReady=false;ocrInitPromise=null;twk=null;throw e;});
   return ocrInitPromise;
 }
 async function resetOcrWorker(){ocrReady=false;ocrInitPromise=null;if(twk){try{await twk.terminate();}catch(e){} twk=null;}}
@@ -2127,6 +2160,59 @@ function enablePhotoMode(msg){setScanUI('photo');resetPhotoPreview();document.ge
 function cancelMapScanAdvance() {
   if (mapScanTimer) { clearTimeout(mapScanTimer); mapScanTimer = null; }
 }
+function getUserMediaWithTimeout(constraints, timeoutMs) {
+  return Promise.race([
+    navigator.mediaDevices.getUserMedia(constraints),
+    new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), timeoutMs))
+  ]);
+}
+async function waitForVideoPlaying(video, timeoutMs) {
+  const start = Date.now();
+  while (Date.now() - start < timeoutMs) {
+    if (video.videoWidth > 0 && video.readyState >= 2) {
+      try { if (video.paused) await video.play(); } catch (e) {}
+      if (video.videoWidth > 0) return true;
+    }
+    await new Promise(r => setTimeout(r, 80));
+  }
+  return video.videoWidth > 0;
+}
+async function startCameraStream(mode) {
+  const statusEl = document.getElementById('ocrStatus');
+  const hint = mode === 'search'
+    ? bi('拍照后只查找库位，不会录入', 'Snap to find location only')
+    : bi('对准红框，点下方「拍照扫描」', 'Align in red box, tap Snap below');
+  const tries = [
+    { video: { facingMode: { ideal: 'environment' } } },
+    { video: { facingMode: 'environment' } },
+    { video: true }
+  ];
+  for (const constraints of tries) {
+    statusEl.textContent = bi('正在打开相机…', 'Opening camera…');
+    try {
+      const s = await getUserMediaWithTimeout(constraints, 10000);
+      videoStream = s;
+      const v = document.getElementById('scanVideo');
+      v.srcObject = s;
+      const ok = await waitForVideoPlaying(v, 8000);
+      if (!ok) {
+        s.getTracks().forEach(t => t.stop());
+        videoStream = null;
+        v.srcObject = null;
+        continue;
+      }
+      statusEl.textContent = hint;
+      return true;
+    } catch (e) {
+      if (videoStream) {
+        videoStream.getTracks().forEach(t => t.stop());
+        videoStream = null;
+      }
+      document.getElementById('scanVideo').srcObject = null;
+    }
+  }
+  return false;
+}
 function openScan(mode){
   cancelMapScanAdvance();
   if (mode === 'search') currentCell = null;
@@ -2152,19 +2238,11 @@ function openScan(mode){
   } else {ci.style.display='none';document.getElementById('modalTitle').textContent=bi('扫描 SKU 标签', 'Scan SKU label');}
   if(window.isSecureContext&&navigator.mediaDevices&&navigator.mediaDevices.getUserMedia){
     setScanUI('live');
-    document.getElementById('ocrStatus').textContent=mode==='search'
-      ? bi('拍照后只查找库位，不会录入', 'Snap to find location only')
-      : bi('对准红框，点下方「拍照扫描」', 'Align in red box, tap Snap below');
-    navigator.mediaDevices.getUserMedia({video:{facingMode:'environment',width:{ideal:1280},height:{ideal:720}}})
-      .then(s=>{
-        videoStream=s;
-        const v=document.getElementById('scanVideo');
-        v.srcObject=s;
-        v.onloadedmetadata=()=>{v.play().catch(()=>{});};
-      })
-      .catch(()=>enablePhotoMode(bi('无法打开相机，请用拍照模式', 'Camera unavailable — use photo mode')));
-  } else {enablePhotoMode(bi('当前环境不支持实时相机，请用拍照模式', 'Live camera unavailable — use photo'));}
-  initOcr().catch(()=>{});
+    startCameraStream(mode).then(ok=>{
+      if(!ok) enablePhotoMode(bi('相机打不开，已切换拍照模式', 'Camera unavailable — photo mode'));
+    });
+  } else {enablePhotoMode(bi('请用拍照模式（HTTP 或无相机权限时）', 'Use photo mode on HTTP or without camera'));}
+  warmupOcr();
 }
 function closeScan(){
   cancelMapScanAdvance();
@@ -2269,9 +2347,19 @@ async function recognizeImage(processed){
   ];
   let lastErr=null;
   for(const fn of tries){
-    try{return await fn();}catch(e){lastErr=e;}
+    try{return await withTimeout(fn(),OCR_RECOGNIZE_TIMEOUT_MS,'ocr-timeout');}catch(e){lastErr=e;}
   }
   throw lastErr||new Error('ocr');
+}
+function ocrFailMessage(e){
+  const code=e&&e.message;
+  if(code==='camera') return bi('画面无效，请点「重拍」', 'Bad capture — tap Retake');
+  if(code==='ocr-init'||code==='ocr-timeout'||code==='ocr-lib')
+    return bi('识别服务超时（公司网络可能拦截），请直接输入 SKU', 'OCR timed out — type SKU below');
+  return bi('识别失败，请重拍或手动输入', 'Failed — retake or type SKU');
+}
+function warmupOcr(){
+  initOcr().catch(()=>{});
 }
 function hideScanEdit(){
   document.getElementById('scanEdit').style.display='none';
@@ -2313,6 +2401,7 @@ async function runOcrFromCanvas(processed){
   statusEl.classList.add('ocr-busy');
   statusEl.textContent=bi('✅ 已拍照，可以放下手机 · 正在识别…', '✅ Snapped — lower phone · reading…');
   try{
+    statusEl.textContent=bi('✅ 已拍照 · 正在加载识别引擎…', '✅ Snapped · loading OCR…');
     await initOcr();
     statusEl.textContent=bi('✅ 已拍照 · 识别中，请稍候…', '✅ Snapped · reading, please wait…');
     const{data}=await recognizeImage(processed);
@@ -2322,10 +2411,7 @@ async function runOcrFromCanvas(processed){
   }catch(e){
     console.warn('OCR failed', e);
     statusEl.classList.remove('ocr-busy');
-    const msg=(e&&e.message==='camera')
-      ? bi('画面无效，请点「重拍」', 'Bad capture — tap Retake')
-      : bi('识别失败，请重拍或手动输入', 'Failed — retake or type SKU');
-    statusEl.textContent=msg;
+    statusEl.textContent=ocrFailMessage(e);
     showScanEdit('');
     setCaptureBtn(bi('📷 重拍', '📷 Retake'),false);
   }
