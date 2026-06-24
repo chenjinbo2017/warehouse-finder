@@ -12407,6 +12407,18 @@
       "shelf": "A31",
       "row": 1,
       "col": 6
+    },
+    "A31-1-7": {
+      "sku": "CRMST-FRNDL-2",
+      "shelf": "A31",
+      "row": 1,
+      "col": 7
+    },
+    "CRMST-FRNDL-2": {
+      "name": "",
+      "shelf": "A31",
+      "row": 1,
+      "col": 7
     }
   },
   "shelfCfg": {
@@ -12538,5 +12550,5 @@
       "GEM-2404MLY-63-10"
     ]
   },
-  "updatedAt": "2026-06-24T20:57:46.077Z"
+  "updatedAt": "2026-06-24T20:57:56.466Z"
 }
