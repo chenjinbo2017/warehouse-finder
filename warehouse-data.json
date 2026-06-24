@@ -14057,6 +14057,18 @@
       "shelf": "A31",
       "row": 8,
       "col": 9
+    },
+    "A31-8-10": {
+      "sku": "BL-TRML-FRNDL-1",
+      "shelf": "A31",
+      "row": 8,
+      "col": 10
+    },
+    "BL-TRML-FRNDL-1": {
+      "name": "",
+      "shelf": "A31",
+      "row": 8,
+      "col": 10
     }
   },
   "shelfCfg": {
@@ -14188,5 +14200,5 @@
       "GEM-2404MLY-63-10"
     ]
   },
-  "updatedAt": "2026-06-24T21:30:13.178Z"
+  "updatedAt": "2026-06-24T21:30:20.527Z"
 }
