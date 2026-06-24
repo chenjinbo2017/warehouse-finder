@@ -13123,12 +13123,12 @@
       "col": 10
     },
     "A31-4-11": {
-      "sku": "STQZ-FRDZ-1",
+      "sku": "STQZ-FRD2-1",
       "shelf": "A31",
       "row": 4,
       "col": 11
     },
-    "STQZ-FRDZ-1": {
+    "STQZ-FRD2-1": {
       "name": "",
       "shelf": "A31",
       "row": 4,
@@ -13264,5 +13264,5 @@
       "GEM-2404MLY-63-10"
     ]
   },
-  "updatedAt": "2026-06-24T21:12:03.943Z"
+  "updatedAt": "2026-06-24T21:12:16.402Z"
 }
