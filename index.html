@@ -2058,6 +2058,7 @@ function renderMap(options) {
 
 let videoStream=null,twk=null,ocrReady=false,usePhotoMode=false,ocrInitPromise=null,lastOcrWords=[],capturedPhoto=null,frozenOcrCanvas=null,scanSnapped=false;
 const TESS_OPTS={workerPath:'https://cdn.jsdelivr.net/npm/tesseract.js@4.1.1/dist/worker.min.js',corePath:'https://cdn.jsdelivr.net/npm/tesseract.js-core@4.0.4',langPath:'https://tessdata.projectnaptha.com/4.0.0'};
+const OCR_CHAR_WHITELIST='0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ-.';
 
 function initOcr() {
   if(ocrReady&&twk) return Promise.resolve();
@@ -2067,7 +2068,10 @@ function initOcr() {
     if(twk){try{await twk.terminate();}catch(e){} twk=null; ocrReady=false;}
     try{twk=await Tesseract.createWorker('eng',1,TESS_OPTS);}
     catch(e){twk=await Tesseract.createWorker('eng');}
-    try{await twk.setParameters({tessedit_pageseg_mode:'7'});}catch(e){}
+    try{await twk.setParameters({
+      tessedit_pageseg_mode:'7',
+      tessedit_char_whitelist:OCR_CHAR_WHITELIST
+    });}catch(e){}
     ocrReady=true;
   })().catch(e=>{ocrReady=false;ocrInitPromise=null;twk=null;throw e;});
   return ocrInitPromise;
@@ -2204,12 +2208,34 @@ function isSkuCode(s){
   if(/[{}[\]|\\<>@#$%^&*+=~`'"«»¢€]/.test(t)) return false;
   return true;
 }
+function fixSkuOcrTypos(raw){
+  const t=normalizeText(raw).toUpperCase().replace(/\s+/g,'');
+  if(!t) return '';
+  return t.split('-').map(seg=>{
+    if(!seg) return seg;
+    if(/^\d+$/.test(seg)) return seg.replace(/O/g,'0').replace(/[IL]/g,'1');
+    let s=seg.replace(/(\d)O(\d)/g,'$10$2').replace(/(\d)O$/g,'$10').replace(/^O(\d)/g,'0$1');
+    s=s.replace(/^(\d{3,4})5Y$/i,'$1SY');
+    s=s.replace(/(\d)5Y/g,'$1SY');
+    s=s.replace(/[IL](?=\d)/g,'1');
+    return s;
+  }).join('-');
+}
+function skuOcrVariants(raw){
+  const base=normalizeText(raw).toUpperCase().replace(/\s+/g,'');
+  const fixed=fixSkuOcrTypos(base);
+  const out=[];
+  if(base) out.push(base);
+  if(fixed&&fixed!==base) out.push(fixed);
+  return out;
+}
 function extractWords(data){
   const candidates=[],seen=new Set();
   const push=(raw)=>{
-    const text=normalizeText(raw).toUpperCase().replace(/\s+/g,'');
-    if(!isSkuCode(text)||seen.has(text)) return;
-    seen.add(text); candidates.push(text);
+    for(const text of skuOcrVariants(raw)){
+      if(!isSkuCode(text)||seen.has(text)) continue;
+      seen.add(text); candidates.push(text);
+    }
   };
   let bestLine='',bestConf=0;
   for(const line of(data.lines||[])){
@@ -2219,8 +2245,14 @@ function extractWords(data){
   const oneRow=(data.text||'').replace(/\s*\n\s*/g,' ');
   if(oneRow) push(oneRow);
   const tokens=[...(data.text||'').match(/[A-Z0-9][A-Z0-9\-./]{3,}/gi)||[]].sort((a,b)=>b.length-a.length);
-  for(const t of tokens){push(t);if(candidates.length>=2) break;}
-  return candidates.slice(0,2);
+  for(const t of tokens){push(t);if(candidates.length>=4) break;}
+  candidates.sort((a,b)=>{
+    const aFix=a.includes('SY')&&!a.includes('5Y')?1:0;
+    const bFix=b.includes('SY')&&!b.includes('5Y')?1:0;
+    if(bFix!==aFix) return bFix-aFix;
+    return b.length-a.length;
+  });
+  return candidates.slice(0,3);
 }
 function centerVideoCrop(vw, vh) {
   const cropW = vw * 0.88;
