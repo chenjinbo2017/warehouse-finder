@@ -14513,6 +14513,18 @@
       "shelf": "A33",
       "row": 9,
       "col": 13
+    },
+    "A33-9-14": {
+      "sku": "GHEM-FRNDL-6",
+      "shelf": "A33",
+      "row": 9,
+      "col": 14
+    },
+    "GHEM-FRNDL-6": {
+      "name": "",
+      "shelf": "A33",
+      "row": 9,
+      "col": 14
     }
   },
   "shelfCfg": {
@@ -14644,5 +14656,5 @@
       "GEM-2404MLY-63-10"
     ]
   },
-  "updatedAt": "2026-06-24T21:39:11.676Z"
+  "updatedAt": "2026-06-24T21:39:21.810Z"
 }
