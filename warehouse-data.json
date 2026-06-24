@@ -16883,6 +16883,18 @@
       "shelf": "C3",
       "row": 6,
       "col": 9
+    },
+    "C3-6-10": {
+      "sku": "AMZ-RONMTT58",
+      "shelf": "C3",
+      "row": 6,
+      "col": 10
+    },
+    "AMZ-RONMTT58": {
+      "name": "",
+      "shelf": "C3",
+      "row": 6,
+      "col": 10
     }
   },
   "shelfCfg": {
@@ -17019,5 +17031,5 @@
       "GEM-2404MLY-63-10"
     ]
   },
-  "updatedAt": "2026-06-24T22:47:48.048Z"
+  "updatedAt": "2026-06-24T22:47:54.667Z"
 }
