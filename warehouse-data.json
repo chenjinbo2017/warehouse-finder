@@ -16703,6 +16703,18 @@
       "shelf": "C3",
       "row": 5,
       "col": 11
+    },
+    "C3-5-13": {
+      "sku": "DZI-BRN-L",
+      "shelf": "C3",
+      "row": 5,
+      "col": 13
+    },
+    "DZI-BRN-L": {
+      "name": "",
+      "shelf": "C3",
+      "row": 5,
+      "col": 13
     }
   },
   "shelfCfg": {
@@ -16834,5 +16846,5 @@
       "GEM-2404MLY-63-10"
     ]
   },
-  "updatedAt": "2026-06-24T22:45:06.225Z"
+  "updatedAt": "2026-06-24T22:45:17.489Z"
 }
