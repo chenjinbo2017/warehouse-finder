@@ -15989,6 +15989,18 @@
       "shelf": "A32",
       "row": 7,
       "col": 12
+    },
+    "A32-7-13": {
+      "sku": "HQ-LABFRNDL-8",
+      "shelf": "A32",
+      "row": 7,
+      "col": 13
+    },
+    "HQ-LABFRNDL-8": {
+      "name": "",
+      "shelf": "A32",
+      "row": 7,
+      "col": 13
     }
   },
   "shelfCfg": {
@@ -16120,5 +16132,5 @@
       "GEM-2404MLY-63-10"
     ]
   },
-  "updatedAt": "2026-06-24T22:08:48.160Z"
+  "updatedAt": "2026-06-24T22:08:56.215Z"
 }
