@@ -17003,6 +17003,18 @@
       "shelf": "C3",
       "row": 7,
       "col": 4
+    },
+    "C3-7-5": {
+      "sku": "AVEBOOO1",
+      "shelf": "C3",
+      "row": 7,
+      "col": 5
+    },
+    "AVEBOOO1": {
+      "name": "",
+      "shelf": "C3",
+      "row": 7,
+      "col": 5
     }
   },
   "shelfCfg": {
@@ -17139,5 +17151,5 @@
       "GEM-2404MLY-63-10"
     ]
   },
-  "updatedAt": "2026-06-24T22:49:22.826Z"
+  "updatedAt": "2026-06-24T22:49:30.235Z"
 }
