@@ -85,9 +85,9 @@ header h1{font-size:22px;font-weight:700;line-height:1.25;letter-spacing:.01em}
 .shelf-btn.has-data{border-color:#a5d6a7;color:var(--mint)}
 .shelf-btn.active.has-data{background:linear-gradient(135deg,#2e7d32,#43a047);border-color:transparent;color:white}
 .shelf-info{overflow:hidden;max-width:100%;padding:16px 18px;margin-bottom:12px}
-.shelf-meta-row{display:grid;grid-template-columns:minmax(88px,1fr) minmax(0,1.5fr);gap:10px}
-.shelf-meta-label{font-size:13px;color:var(--muted);font-weight:700;margin-bottom:6px;display:block}
-.shelf-meta-field .search-input{font-size:20px;padding:12px 14px}
+.shelf-head{font-size:28px;font-weight:800;color:var(--navy);padding:0 0 10px;cursor:pointer;letter-spacing:.02em;font-family:var(--font-mono)}
+.shelf-head:active{opacity:.65}
+.shelf-head-input{width:100%;font-size:28px;font-weight:800;padding:8px 10px;border:2px solid var(--navy);border-radius:12px;font-family:var(--font-mono);box-sizing:border-box;outline:none;margin-bottom:8px}
 .adjust-row{display:flex;align-items:center;gap:10px;font-size:18px;color:#333;margin-bottom:8px;max-width:100%}
 .adjust-row-stack{flex-direction:column;align-items:stretch}
 .adjust-row-stack span{min-width:0}
@@ -274,19 +274,7 @@ header h1{font-size:22px;font-weight:700;line-height:1.25;letter-spacing:.01em}
   <div class="group-tabs" id="groupTabs"></div>
   <div class="shelf-selector" id="shelfSelector"></div>
   <div class="shelf-info">
-    <div class="adjust-row adjust-row-stack">
-      <span>货架 / Shelf</span>
-      <div class="shelf-meta-row">
-        <div class="shelf-meta-field">
-          <label class="shelf-meta-label" for="shelfIdInput">编号 / ID</label>
-          <input type="text" class="search-input field-full" id="shelfIdInput" placeholder="A31" autocapitalize="characters" autocomplete="off" oninput="this.value=normalizeShelfId(this.value)" onkeydown="if(event.key==='Enter'){event.preventDefault();commitShelfIdInput();}" onblur="commitShelfIdInput()">
-        </div>
-        <div class="shelf-meta-field">
-          <label class="shelf-meta-label" for="shelfNameInput">名字 / Name</label>
-          <input type="text" class="search-input field-full" id="shelfNameInput" placeholder="e.g. Rondelle" onkeydown="if(event.key==='Enter'){event.preventDefault();commitShelfNameInput();}" onblur="commitShelfNameInput()">
-        </div>
-      </div>
-    </div>
+    <div class="shelf-head" id="shelfHead" onclick="beginShelfIdEdit()">A1</div>
     <div class="adjust-row">
       <span>层数 / Rows</span>
       <button class="adj-btn" onclick="adjustShelf('rows',-1)">−</button>
@@ -1142,23 +1130,41 @@ function getShelfLabel(key) {
   const n = getShelfCfg(key).name;
   return n ? `${key} · ${n}` : key;
 }
-function commitShelfNameInput() {
-  const el = document.getElementById('shelfNameInput');
-  const name = (el && el.value || '').trim();
-  const cfg = getShelfCfg(currentShelf);
-  if (name === (cfg.name || '')) return;
-  cfg.name = name;
-  shelfCfg[currentShelf] = cfg;
-  saveCfg();
-  renderShelfSelector(true);
-  showToast(bi('货架名已保存', 'Shelf name saved'));
-}
+let shelfIdEditing = false;
 
-function commitShelfIdInput() {
-  const el = document.getElementById('shelfIdInput');
-  const to = normalizeShelfId(el && el.value);
-  if (!to || to === currentShelf) return;
-  if (!renameShelf(currentShelf, to) && el) el.value = currentShelf;
+function beginShelfIdEdit() {
+  if (shelfIdEditing) return;
+  shelfIdEditing = true;
+  const head = document.getElementById('shelfHead');
+  const from = currentShelf;
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.className = 'shelf-head-input';
+  input.value = from;
+  input.autocomplete = 'off';
+  input.autocapitalize = 'characters';
+  input.oninput = () => { input.value = normalizeShelfId(input.value); };
+
+  const finish = (apply) => {
+    if (!shelfIdEditing) return;
+    shelfIdEditing = false;
+    const to = normalizeShelfId(input.value);
+    if (apply && to && to !== from) {
+      if (!renameShelf(from, to)) renderMap();
+      return;
+    }
+    renderMap();
+  };
+
+  input.onkeydown = (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); finish(true); }
+    if (e.key === 'Escape') { e.preventDefault(); finish(false); }
+  };
+  input.onblur = () => finish(true);
+
+  head.replaceWith(input);
+  input.focus();
+  input.select();
 }
 
 function normalizeShelfId(raw) {
@@ -1965,6 +1971,10 @@ function renderShelfSelector(scrollShelf) {
   if (scrollShelf) requestAnimationFrame(scrollShelfTabsToActive);
 }
 function selectShelf(s) {
+  if (s === currentShelf) {
+    beginShelfIdEdit();
+    return;
+  }
   expandGroupCountToShelf(s);
   currentShelf=s;
   renderMap({ scrollShelf: true });
@@ -1995,12 +2005,17 @@ function renderMap(options) {
   renderGroupTabs();
   renderShelfSelector(!!opts.scrollShelf);
   const cfg=getShelfCfg(currentShelf);
-  const idEl=document.getElementById('shelfIdInput');
-  const nameEl=document.getElementById('shelfNameInput');
-  const editing=document.activeElement===idEl||document.activeElement===nameEl;
-  if (!editing) {
-    if (idEl) idEl.value=currentShelf;
-    if (nameEl) nameEl.value=cfg.name||'';
+  if (!shelfIdEditing) {
+    let head = document.getElementById('shelfHead');
+    if (!head) {
+      const row = document.querySelector('.shelf-info');
+      head = document.createElement('div');
+      head.className = 'shelf-head';
+      head.id = 'shelfHead';
+      head.onclick = beginShelfIdEdit;
+      row.insertBefore(head, row.firstChild);
+    }
+    head.textContent = currentShelf;
   }
   document.getElementById('rowsVal').textContent=cfg.rows;
   document.getElementById('colsVal').textContent=cfg.cols;
