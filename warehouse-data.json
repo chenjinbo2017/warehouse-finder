@@ -15317,6 +15317,18 @@
       "shelf": "A32",
       "row": 4,
       "col": 10
+    },
+    "A32-4-11": {
+      "sku": "JD-LPDIJR",
+      "shelf": "A32",
+      "row": 4,
+      "col": 11
+    },
+    "JD-LPDIJR": {
+      "name": "",
+      "shelf": "A32",
+      "row": 4,
+      "col": 11
     }
   },
   "shelfCfg": {
@@ -15448,5 +15460,5 @@
       "GEM-2404MLY-63-10"
     ]
   },
-  "updatedAt": "2026-06-24T21:56:27.227Z"
+  "updatedAt": "2026-06-24T21:56:36.357Z"
 }
