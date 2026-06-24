@@ -12072,11 +12072,29 @@
       "row": 9,
       "col": 10
     },
-    "GEM-2508SY-100": {
+    "GEM-2412SY-05": {
       "name": "",
-      "shelf": "A31",
+      "shelf": "A28",
       "row": 4,
-      "col": 19
+      "col": 4
+    },
+    "GEM-2412SY-09": {
+      "name": "",
+      "shelf": "A28",
+      "row": 8,
+      "col": 1
+    },
+    "GEM-2412SY-30": {
+      "name": "",
+      "shelf": "A28",
+      "row": 3,
+      "col": 18
+    },
+    "GEM-2412SY-06": {
+      "name": "",
+      "shelf": "A1",
+      "row": 4,
+      "col": 8
     }
   },
   "shelfCfg": {
@@ -12159,6 +12177,21 @@
       "rows": 9,
       "cols": 20,
       "name": ""
+    },
+    "A28": {
+      "rows": 9,
+      "cols": 21,
+      "name": ""
+    },
+    "A01": {
+      "rows": 9,
+      "cols": 12,
+      "name": ""
+    },
+    "A1": {
+      "rows": 9,
+      "cols": 12,
+      "name": ""
     }
   },
   "tombstones": {
@@ -12179,5 +12212,5 @@
       "GEM-2404MLY-63-10"
     ]
   },
-  "updatedAt": "2026-06-24T04:00:13.995Z"
+  "updatedAt": "2026-06-24T04:11:50.509Z"
 }
