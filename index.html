@@ -274,6 +274,14 @@ header h1{font-size:22px;font-weight:700;line-height:1.25;letter-spacing:.01em}
   <div class="shelf-info">
     <div class="shelf-title" id="shelfTitle">A1</div>
     <div class="adjust-row adjust-row-stack">
+      <span>货架编号 / ID</span>
+      <div class="search-row" style="margin:0">
+        <input type="text" class="search-input field-full" id="shelfIdInput" placeholder="A31" autocapitalize="characters" autocomplete="off" oninput="this.value=this.value.toUpperCase().replace(/[^A-Z0-9]/g,'')" onkeydown="if(event.key==='Enter')renameCurrentShelf()">
+        <button type="button" class="btn-search" style="min-width:96px;padding:14px 16px;margin:0;font-size:17px" onclick="renameCurrentShelf()">改编号</button>
+      </div>
+      <div class="sync-field-hint" style="margin-top:6px">与仓库实物标签一致，如 A31→A53 / Match physical shelf label</div>
+    </div>
+    <div class="adjust-row adjust-row-stack">
       <span>货架名 / Name</span>
       <input type="text" class="search-input field-full" id="shelfNameInput" placeholder="e.g. Sample Left" onchange="saveShelfName(this.value)">
     </div>
@@ -452,6 +460,7 @@ const DEFAULT_GH_REPO = 'warehouse-finder';
 const DEFAULT_GROUPS = ['A','B','C','D'];
 const DEFAULT_SHELF_COUNT = 9;
 const MAX_SHELF_DIM = 50;
+const MAX_ZONE_SHELVES = 99;
 
 function getGhOwner() { return (localStorage.getItem('wdb4_gh_owner') || '').trim(); }
 function getGhRepo() { return (localStorage.getItem('wdb4_gh_repo') || DEFAULT_GH_REPO).trim(); }
@@ -1008,7 +1017,7 @@ function ensureGroupCountFitsData() {
   for (const g of getLayout().groups) {
     const used = maxUsedShelfInGroup(g.id);
     if (used > g.count) {
-      g.count = Math.min(MAX_SHELF_DIM, used);
+      g.count = Math.min(MAX_ZONE_SHELVES, used);
       changed = true;
     }
   }
@@ -1028,7 +1037,7 @@ function expandGroupCountToShelf(shelfKey, quiet) {
   if (!p) return;
   const g = getLayout().groups.find(x => x.id === p.group);
   if (!g || p.num <= g.count) return;
-  g.count = Math.min(MAX_SHELF_DIM, p.num);
+  g.count = Math.min(MAX_ZONE_SHELVES, p.num);
   saveCfg();
   if (!quiet) showToast(bi(`已把 ${p.group} 区扩展到 ${g.count} 个货架`, `Expanded zone ${p.group} to ${g.count} shelves`));
 }
@@ -1080,7 +1089,7 @@ function adjustGroupCount(groupId, delta) {
   const g = groups.find(x => x.id === groupId);
   if (!g) return;
   const used = maxUsedShelfInGroup(groupId);
-  const next = Math.max(1, Math.min(MAX_SHELF_DIM, g.count + delta));
+  const next = Math.max(1, Math.min(MAX_ZONE_SHELVES, g.count + delta));
   if (next < used) {
     showToast(bi(`${groupId} 区已用到 ${groupId}${used}，不能少于 ${used}`, `Zone ${groupId}: in use through ${groupId}${used}`));
     return;
@@ -1138,6 +1147,92 @@ function saveShelfName(name) {
   saveCfg();
   renderMap();
   showToast(bi('货架名已保存', 'Shelf name saved'));
+}
+
+function normalizeShelfId(raw) {
+  return String(raw || '').trim().toUpperCase().replace(/\s+/g, '');
+}
+
+function shelfTargetTaken(key, except) {
+  if (key === except) return false;
+  return shelfHasData(key);
+}
+
+function renameShelf(fromKey, toKeyRaw) {
+  const from = normalizeShelfId(fromKey);
+  const to = normalizeShelfId(toKeyRaw);
+  if (!from || !to) {
+    showToast(bi('请输入新编号', 'Enter new shelf ID'));
+    return false;
+  }
+  if (from === to) {
+    showToast(bi('编号未变', 'Shelf ID unchanged'));
+    return false;
+  }
+  const pf = parseShelfKey(from);
+  const pt = parseShelfKey(to);
+  if (!pf || !pt) {
+    showToast(bi('编号格式如 A31、B12', 'Use format like A31, B12'));
+    return false;
+  }
+  if (pf.group !== pt.group) {
+    showToast(bi('区字母须一致（如 A31→A53）', 'Keep zone letter — e.g. A31→A53'));
+    return false;
+  }
+  if (pt.num < 1 || pt.num > MAX_ZONE_SHELVES) {
+    showToast(bi(`编号须在 1–${MAX_ZONE_SHELVES} 之间`, `Shelf number must be 1–${MAX_ZONE_SHELVES}`));
+    return false;
+  }
+  if (shelfTargetTaken(to, from)) {
+    showToast(bi(`${to} 已有货位数据`, `${to} already has bin data`));
+    return false;
+  }
+
+  const cfg = { ...getShelfCfg(from) };
+  delete shelfCfg[from];
+  shelfCfg[to] = cfg;
+
+  for (const key of Object.keys(db)) {
+    if (!isCellKey(key) || !key.startsWith(from + '-')) continue;
+    const m = key.match(/^([A-Z]+\d+)-(\d+)-(\d+)$/);
+    if (!m || m[1] !== from) continue;
+    const val = db[key];
+    delete db[key];
+    const row = parseInt(m[2], 10);
+    const col = parseInt(m[3], 10);
+    db[pk(to, row, col)] = { sku: val.sku, shelf: to, row, col };
+  }
+
+  for (const [key, val] of Object.entries(db)) {
+    if (isCellKey(key) || !val || typeof val !== 'object') continue;
+    if (val.shelf === from) db[key] = { ...val, shelf: to };
+  }
+
+  tombstones.cells = (tombstones.cells || []).map(c =>
+    c.startsWith(from + '-') ? pk(to, ...c.slice(from.length + 1).split('-').map(Number)) : c
+  );
+  saveTombstones();
+  rebuildSkuKeysFromCells();
+
+  if (currentShelf === from) currentShelf = to;
+  expandGroupCountToShelf(to, true);
+  ensureGroupCountFitsData();
+  persistAll();
+  renderMap({ scrollShelf: true });
+  showToast(bi(`已改编号 ${from} → ${to}`, `Renamed ${from} → ${to}`));
+  return true;
+}
+
+function renameCurrentShelf() {
+  const input = document.getElementById('shelfIdInput');
+  const to = normalizeShelfId(input && input.value);
+  if (!to || to === currentShelf) return;
+  const msg = bi(`把 ${currentShelf} 改成 ${to}？库位数据会一起迁移。`, `Rename ${currentShelf} to ${to}? All bin data moves with it.`);
+  if (!confirm(msg)) {
+    if (input) input.value = currentShelf;
+    return;
+  }
+  if (!renameShelf(currentShelf, to) && input) input.value = currentShelf;
 }
 
 function pk(shelf, row, col) { return `${shelf}-${row}-${col}`; }
@@ -1901,6 +1996,7 @@ function renderMap(options) {
   renderShelfSelector(!!opts.scrollShelf);
   const cfg=getShelfCfg(currentShelf);
   document.getElementById('shelfTitle').textContent=getShelfLabel(currentShelf);
+  document.getElementById('shelfIdInput').value=currentShelf;
   document.getElementById('shelfNameInput').value=cfg.name||'';
   document.getElementById('rowsVal').textContent=cfg.rows;
   document.getElementById('colsVal').textContent=cfg.cols;
