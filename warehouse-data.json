@@ -18359,6 +18359,18 @@
       "shelf": "C13",
       "row": 6,
       "col": 10
+    },
+    "C13-6-11": {
+      "sku": "CEWASOESV1S",
+      "shelf": "C13",
+      "row": 6,
+      "col": 11
+    },
+    "CEWASOESV1S": {
+      "name": "",
+      "shelf": "C13",
+      "row": 6,
+      "col": 11
     }
   },
   "shelfCfg": {
@@ -18518,5 +18530,5 @@
       "GEM-12132018-4"
     ]
   },
-  "updatedAt": "2026-06-26T17:24:43.663Z"
+  "updatedAt": "2026-06-26T17:24:50.032Z"
 }
