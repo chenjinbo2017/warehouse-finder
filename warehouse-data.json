@@ -18479,6 +18479,18 @@
       "shelf": "A1",
       "row": 1,
       "col": 4
+    },
+    "B1-1-1": {
+      "sku": "HG-FWPBRQ-A",
+      "shelf": "B1",
+      "row": 1,
+      "col": 1
+    },
+    "HG-FWPBRQ-A": {
+      "name": "",
+      "shelf": "B1",
+      "row": 1,
+      "col": 1
     }
   },
   "shelfCfg": {
@@ -18643,5 +18655,5 @@
       "GEM-12132018-4"
     ]
   },
-  "updatedAt": "2026-06-26T18:00:30.816Z"
+  "updatedAt": "2026-06-26T18:04:29.520Z"
 }
